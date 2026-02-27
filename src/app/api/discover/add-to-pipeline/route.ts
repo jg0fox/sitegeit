@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { addToPipelineSchema } from '@/lib/utils/schemas'
+import { enrichmentQueue } from '@/lib/queue/queues'
 
 export async function POST(request: Request) {
   try {
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
       const addressParts = result.formatted_address.split(',').map((p: string) => p.trim())
 
       // Insert business record
-      const { error: insertError } = await supabase.from('businesses').insert({
+      const { data: inserted, error: insertError } = await supabase.from('businesses').insert({
         user_id: user.id,
         name: result.name,
         category,
@@ -63,9 +64,9 @@ export async function POST(request: Request) {
         website_url: result.website || null,
         website_status: result.website_status,
         status: 'discovered',
-      })
+      }).select('id').single()
 
-      if (insertError) {
+      if (insertError || !inserted) {
         console.error(`Failed to insert business ${result.name}:`, insertError)
         continue
       }
@@ -73,8 +74,16 @@ export async function POST(request: Request) {
       // Log the activity
       await supabase.from('activity_log').insert({
         user_id: user.id,
+        business_id: inserted.id,
         event_type: 'lead_discovered',
         event_data: { business_name: result.name, category },
+      })
+
+      // Auto-queue enrichment
+      await enrichmentQueue.add('enrich', { businessId: inserted.id }, {
+        jobId: `enrich-${inserted.id}`,
+      }).catch(err => {
+        console.error(`Failed to queue enrichment for ${inserted.id}:`, err)
       })
 
       added++
