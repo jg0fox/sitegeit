@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { siteGenerationQueue } from '@/lib/queue/queues'
+import { publishToWorker } from '@/lib/qstash/client'
 
 export async function POST(request: Request) {
   try {
@@ -36,18 +36,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No businesses eligible for site generation' }, { status: 400 })
     }
 
-    // Queue site generation jobs
-    const jobs = await Promise.all(
-      validIds.map(id =>
-        siteGenerationQueue.add('generate-site', { businessId: id }, {
-          jobId: `site-gen-${id}`,
-        })
-      )
+    // Queue site generation jobs via QStash
+    const messageIds = await Promise.all(
+      validIds.map(id => publishToWorker('generate-site', { businessId: id }))
     )
 
     return NextResponse.json({
       queued: validIds.length,
-      jobIds: jobs.map(j => j.id),
+      messageIds,
     })
   } catch (err) {
     console.error('[api/pipeline/generate] Error:', err)

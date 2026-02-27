@@ -34,10 +34,13 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // If user is not logged in and trying to access dashboard routes, redirect to login
+  // Skip auth for worker routes (QStash uses its own signature verification)
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/api/workers') &&
+    !request.nextUrl.pathname.startsWith('/sites')
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'

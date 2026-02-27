@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { addToPipelineSchema } from '@/lib/utils/schemas'
-import { enrichmentQueue } from '@/lib/queue/queues'
+import { publishToWorker } from '@/lib/qstash/client'
 
 export async function POST(request: Request) {
   try {
@@ -79,10 +79,8 @@ export async function POST(request: Request) {
         event_data: { business_name: result.name, category },
       })
 
-      // Auto-queue enrichment
-      await enrichmentQueue.add('enrich', { businessId: inserted.id }, {
-        jobId: `enrich-${inserted.id}`,
-      }).catch(err => {
+      // Auto-queue enrichment via QStash
+      await publishToWorker('enrich', { businessId: inserted.id }).catch(err => {
         console.error(`Failed to queue enrichment for ${inserted.id}:`, err)
       })
 

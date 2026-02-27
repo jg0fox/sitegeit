@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { enrichmentQueue } from '@/lib/queue/queues'
+import { publishToWorker } from '@/lib/qstash/client'
 
 export async function POST(request: Request) {
   try {
@@ -36,18 +36,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No businesses eligible for enrichment' }, { status: 400 })
     }
 
-    // Queue enrichment jobs
-    const jobs = await Promise.all(
-      validIds.map(id =>
-        enrichmentQueue.add('enrich', { businessId: id }, {
-          jobId: `enrich-${id}`,
-        })
-      )
+    // Queue enrichment jobs via QStash
+    const messageIds = await Promise.all(
+      validIds.map(id => publishToWorker('enrich', { businessId: id }))
     )
 
     return NextResponse.json({
       queued: validIds.length,
-      jobIds: jobs.map(j => j.id),
+      messageIds,
     })
   } catch (err) {
     console.error('[api/pipeline/enrich] Error:', err)
