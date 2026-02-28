@@ -27,7 +27,7 @@ export const addToPipelineSchema = z.object({
         geometry: z.object({ lat: z.number(), lng: z.number() }),
         rating: z.number().optional(),
         user_ratings_total: z.number().optional(),
-        types: z.array(z.string()),
+        types: z.array(z.string()).optional(),
         formatted_phone_number: z.string().optional(),
         website: z.string().optional(),
         website_status: z.enum([

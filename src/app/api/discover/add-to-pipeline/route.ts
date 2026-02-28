@@ -14,6 +14,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Ensure user profile exists in public.users (FK target for businesses)
+    await supabase.from('users').upsert(
+      { id: user.id, email: user.email ?? '' },
+      { onConflict: 'id', ignoreDuplicates: true }
+    )
+
     const body = await request.json()
     const parsed = addToPipelineSchema.safeParse(body)
 
