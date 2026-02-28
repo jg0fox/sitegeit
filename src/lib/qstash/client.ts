@@ -9,7 +9,10 @@ export function getQStashClient(): Client {
     if (!token) {
       throw new Error('QSTASH_TOKEN is not configured')
     }
-    qstashClient = new Client({ token })
+    qstashClient = new Client({
+      token,
+      baseUrl: process.env.QSTASH_URL || 'https://qstash.upstash.io',
+    })
   }
   return qstashClient
 }
