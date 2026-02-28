@@ -15,14 +15,15 @@ async function getSiteData(slug: string) {
     { auth: { persistSession: false } }
   )
 
-  const { data: site } = await supabase
+  const { data: sites } = await supabase
     .from('generated_sites')
     .select('*, businesses(*)')
-    .eq('deploy_url', `${slug}.sitegeit.com`)
+    .eq('deploy_url', slug)
     .eq('deploy_status', 'live')
-    .single()
+    .order('created_at', { ascending: false })
+    .limit(1)
 
-  return site
+  return sites?.[0] ?? null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
