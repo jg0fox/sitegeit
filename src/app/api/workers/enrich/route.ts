@@ -47,7 +47,10 @@ async function handler(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const stack = err instanceof Error ? err.stack : undefined
+    const cause = err instanceof Error ? (err as unknown as Record<string, unknown>).cause : undefined
     console.error('[worker/enrich] CATCH:', message)
+    console.error('[worker/enrich] Error type:', err?.constructor?.name)
+    console.error('[worker/enrich] Cause:', cause instanceof Error ? cause.message : String(cause ?? 'none'))
     console.error('[worker/enrich] Stack:', stack)
     return NextResponse.json(
       { error: message },
