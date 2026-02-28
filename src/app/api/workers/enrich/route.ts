@@ -5,36 +5,17 @@ import { enrichBusiness } from '@/lib/ai/enrich'
 
 async function handler(request: Request) {
   try {
-    console.log('[worker/enrich] Handler entered')
-
-    // Parse body — try request.json() first, fall back to text parsing
-    let data: Record<string, unknown>
-    try {
-      data = await request.json()
-    } catch (parseErr) {
-      console.error('[worker/enrich] request.json() failed:', parseErr instanceof Error ? parseErr.message : parseErr)
-      // Try reading as text
-      const text = await request.text().catch(() => '')
-      console.log('[worker/enrich] Raw body text:', text.substring(0, 200))
-      if (text) {
-        data = JSON.parse(text)
-      } else {
-        return NextResponse.json({ error: 'Could not read request body' }, { status: 400 })
-      }
-    }
-
+    const data = await request.json()
     const businessId = data.businessId as string
-    console.log('[worker/enrich] businessId:', businessId)
 
     if (!businessId) {
       return NextResponse.json({ error: 'Missing businessId' }, { status: 400 })
     }
 
-    console.log(`[worker/enrich] ENV: SUPABASE_URL=${!!process.env.NEXT_PUBLIC_SUPABASE_URL}, SERVICE_KEY=${!!process.env.SUPABASE_SERVICE_ROLE_KEY}, ANTHROPIC=${!!process.env.ANTHROPIC_API_KEY}`)
-    console.log(`[worker/enrich] Starting enrichment...`)
+    console.log(`[worker/enrich] Processing business ${businessId}`)
     const result = await enrichBusiness(businessId)
-    console.log(`[worker/enrich] Enrichment complete, queuing generate-site...`)
 
+    // Chain: queue site generation
     const messageId = await publishToWorker('generate-site', { businessId })
 
     console.log(`[worker/enrich] Done. Queued generate-site (${messageId})`)
@@ -45,20 +26,9 @@ async function handler(request: Request) {
       nextMessageId: messageId,
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    const stack = err instanceof Error ? err.stack : undefined
-    const cause = err instanceof Error ? (err as unknown as Record<string, unknown>).cause : undefined
-    console.error('[worker/enrich] CATCH:', message)
-    console.error('[worker/enrich] Error type:', err?.constructor?.name)
-    console.error('[worker/enrich] Cause:', cause instanceof Error ? cause.message : String(cause ?? 'none'))
-    console.error('[worker/enrich] Stack:', stack)
+    console.error('[worker/enrich] Error:', err)
     return NextResponse.json(
-      {
-        error: message,
-        type: err?.constructor?.name,
-        cause: cause instanceof Error ? cause.message : String(cause ?? 'none'),
-        stack: stack?.substring(0, 500),
-      },
+      { error: err instanceof Error ? err.message : 'Unknown error' },
       { status: 500 }
     )
   }
