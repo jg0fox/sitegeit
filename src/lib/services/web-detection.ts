@@ -97,11 +97,8 @@ export async function detectWebPresence(
 
     // If we got here, the site is functional
     return 'active'
-  } catch (err) {
-    // Network errors, timeouts, DNS failures
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      return 'dead'
-    }
+  } catch {
+    // Network errors, timeouts, DNS failures — all mean the site is unreachable
     return 'dead'
   }
 }

@@ -127,7 +127,7 @@ export async function getPlaceDetails(
     'rating',
     'user_ratings_total',
     'business_status',
-    'type',
+    'types',
     'photos',
     'opening_hours',
     'url',
