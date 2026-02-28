@@ -5,15 +5,18 @@ import { enrichBusiness } from '@/lib/ai/enrich'
 
 async function handler(request: Request) {
   try {
+    console.log('[worker/enrich] Handler entered, parsing body...')
     const data = await request.json()
     const businessId = data.businessId as string
+    console.log('[worker/enrich] Body parsed, businessId:', businessId)
 
     if (!businessId) {
       return NextResponse.json({ error: 'Missing businessId' }, { status: 400 })
     }
 
-    console.log(`[worker/enrich] Processing business ${businessId}`)
+    console.log(`[worker/enrich] Starting enrichment for ${businessId}`)
     const result = await enrichBusiness(businessId)
+    console.log(`[worker/enrich] Enrichment complete, queuing generate-site...`)
 
     // Chain: queue site generation
     const messageId = await publishToWorker('generate-site', { businessId })
@@ -26,10 +29,11 @@ async function handler(request: Request) {
       nextMessageId: messageId,
     })
   } catch (err) {
-    console.error('[worker/enrich] Error:', err)
-    // Return 500 so QStash retries
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    const stack = err instanceof Error ? err.stack : undefined
+    console.error('[worker/enrich] Error:', message, '\nStack:', stack)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: message },
       { status: 500 }
     )
   }
