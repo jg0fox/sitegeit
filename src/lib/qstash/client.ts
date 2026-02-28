@@ -63,13 +63,15 @@ export async function verifyRequest(request: Request): Promise<Record<string, un
   // Create a fresh receiver each time to avoid stale key caching
   const receiver = new Receiver({ currentSigningKey, nextSigningKey })
 
+  // Try verification without URL first (Vercel rewrites can change request.url)
   const isValid = await receiver.verify({
     signature,
     body,
-    url: request.url,
   }).catch(() => false)
 
   if (!isValid) {
+    // Log details for debugging
+    console.error('[QStash verify] Failed. Signature present:', !!signature, 'Body length:', body.length, 'Keys configured:', !!currentSigningKey && !!nextSigningKey)
     throw new Error('signature verification failed')
   }
 
