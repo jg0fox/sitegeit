@@ -15,7 +15,7 @@ export function SiteHeader({ businessName, phone, phoneTel }: SiteHeaderProps) {
     >
       <div
         className="mx-auto flex items-center justify-between px-4 py-3"
-        style={{ maxWidth: 'var(--space-section, 1200px)' }}
+        style={{ maxWidth: 'var(--container-max-width, 1200px)' }}
       >
         <span
           className="text-lg font-bold"

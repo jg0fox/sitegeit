@@ -21,7 +21,7 @@ export function SiteTestimonials({ ratingDisplay, testimonials }: SiteTestimonia
         backgroundColor: 'var(--color-surface)',
       }}
     >
-      <div className="mx-auto" style={{ maxWidth: 'var(--space-section, 1200px)' }}>
+      <div className="mx-auto" style={{ maxWidth: 'var(--container-max-width, 1200px)' }}>
         {/* Rating badge */}
         <div className="mb-8 flex flex-col items-center gap-2">
           <div className="flex gap-1">

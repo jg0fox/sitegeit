@@ -16,7 +16,7 @@ export function SiteServices({ heading, services }: SiteServicesProps) {
       className="px-4"
       style={{ paddingTop: 'var(--space-section, 5rem)', paddingBottom: 'var(--space-section, 5rem)' }}
     >
-      <div className="mx-auto" style={{ maxWidth: 'var(--space-section, 1200px)' }}>
+      <div className="mx-auto" style={{ maxWidth: 'var(--container-max-width, 1200px)' }}>
         <h2
           className="mb-8 text-center text-2xl sm:text-3xl"
           style={{

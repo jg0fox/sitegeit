@@ -155,5 +155,6 @@ export function themeConfigToCSSVars(config: ThemeConfig): Record<string, string
     '--radius-button': config.shape.radiusButton,
     '--radius-card': config.shape.radiusCard,
     '--space-section': config.spacing.sectionGap,
+    '--container-max-width': config.spacing.containerMaxWidth,
   }
 }
