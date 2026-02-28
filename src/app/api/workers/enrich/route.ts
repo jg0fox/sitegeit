@@ -53,7 +53,12 @@ async function handler(request: Request) {
     console.error('[worker/enrich] Cause:', cause instanceof Error ? cause.message : String(cause ?? 'none'))
     console.error('[worker/enrich] Stack:', stack)
     return NextResponse.json(
-      { error: message },
+      {
+        error: message,
+        type: err?.constructor?.name,
+        cause: cause instanceof Error ? cause.message : String(cause ?? 'none'),
+        stack: stack?.substring(0, 500),
+      },
       { status: 500 }
     )
   }
