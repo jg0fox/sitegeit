@@ -1,22 +1,44 @@
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils/cn'
+import { createClient } from '@/lib/supabase/server'
 
-const STAGES = [
-  { label: 'Discovered', count: 24, icon: 'search', color: 'text-gray-500', bg: 'bg-gray-50' },
-  { label: 'Enriching', count: 5, icon: 'auto_awesome', color: 'text-blue-500', bg: 'bg-blue-50' },
-  { label: 'Generating', count: 3, icon: 'web', color: 'text-purple-500', bg: 'bg-purple-50' },
-  { label: 'Ready for Review', count: 8, icon: 'rate_review', color: 'text-amber-500', bg: 'bg-amber-50' },
-  { label: 'Sent', count: 12, icon: 'send', color: 'text-primary', bg: 'bg-primary-light' },
-  { label: 'Responded', count: 4, icon: 'forum', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-  { label: 'Meeting Scheduled', count: 2, icon: 'event', color: 'text-green-600', bg: 'bg-green-50' },
-]
+const STAGE_CONFIG = [
+  { status: 'discovered', label: 'Discovered', icon: 'search', color: 'text-gray-500', bg: 'bg-gray-50' },
+  { status: 'enriching', label: 'Enriching', icon: 'auto_awesome', color: 'text-blue-500', bg: 'bg-blue-50' },
+  { status: 'generating', label: 'Generating', icon: 'web', color: 'text-purple-500', bg: 'bg-purple-50' },
+  { status: 'review_ready', label: 'Ready for Review', icon: 'rate_review', color: 'text-amber-500', bg: 'bg-amber-50' },
+  { status: 'sent', label: 'Sent', icon: 'send', color: 'text-primary', bg: 'bg-primary-light' },
+  { status: 'responded', label: 'Responded', icon: 'forum', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+  { status: 'meeting_scheduled', label: 'Meeting Scheduled', icon: 'event', color: 'text-green-600', bg: 'bg-green-50' },
+] as const
 
-export function PipelineSummary() {
+export async function PipelineSummary() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const stages = await Promise.all(
+    STAGE_CONFIG.map(async (stage) => {
+      if (!user) return { ...stage, count: 0 }
+      const { count } = await supabase
+        .from('businesses')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', stage.status)
+      return { ...stage, count: count ?? 0 }
+    })
+  )
+
+  const total = stages.reduce((sum, s) => sum + s.count, 0)
+
+  if (total === 0) {
+    return null
+  }
+
   return (
     <div>
       <h2 className="mb-3 text-sm font-semibold text-gray-900">Pipeline overview</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-        {STAGES.map((stage) => (
+        {stages.map((stage) => (
           <Card
             key={stage.label}
             className="flex cursor-pointer flex-col items-center px-3 py-4 transition-shadow hover:shadow-md"

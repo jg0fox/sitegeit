@@ -11,6 +11,26 @@ import type { DiscoveryResult, SearchParams, SavedSearch } from '@/lib/utils/typ
 
 type Tab = 'search' | 'saved'
 
+const STORAGE_KEY = 'sitegeit_discover_state'
+
+function loadCachedState(): { results: DiscoveryResult[]; params: SearchParams | null } | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function saveCachedState(results: DiscoveryResult[], params: SearchParams | null) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ results, params }))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 export default function DiscoverPage() {
   const [activeTab, setActiveTab] = useState<Tab>('search')
   const [results, setResults] = useState<DiscoveryResult[]>([])
@@ -21,6 +41,16 @@ export default function DiscoverPage() {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([])
   const [isSavedLoading, setIsSavedLoading] = useState(false)
   const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null)
+
+  // Restore cached results on mount
+  useEffect(() => {
+    const cached = loadCachedState()
+    if (cached && cached.results.length > 0) {
+      setResults(cached.results)
+      setLastSearchParams(cached.params)
+      setHasSearched(true)
+    }
+  }, [])
 
   const loadSavedSearches = useCallback(async () => {
     setIsSavedLoading(true)
@@ -62,6 +92,7 @@ export default function DiscoverPage() {
 
       const data = await res.json()
       setResults(data.results)
+      saveCachedState(data.results, params)
 
       // Auto-save the search
       await fetch('/api/discover/saved-searches', {
@@ -149,13 +180,15 @@ export default function DiscoverPage() {
       const data = await res.json()
 
       // Mark added results as already in pipeline
-      setResults((prev) =>
-        prev.map((r) =>
+      setResults((prev) => {
+        const updated = prev.map((r) =>
           selectedIds.has(r.place_id)
             ? { ...r, already_in_pipeline: true }
             : r
         )
-      )
+        saveCachedState(updated, lastSearchParams)
+        return updated
+      })
       setSelectedIds(new Set())
 
       const parts = []
