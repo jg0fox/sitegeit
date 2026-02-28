@@ -67,13 +67,13 @@ export async function verifyRequest(request: Request): Promise<Record<string, un
     throw new Error('Missing upstash-signature header')
   }
 
-  const isValid = await receiver.verify({
-    signature,
-    body,
-  })
-
-  if (!isValid) {
-    throw new Error('Invalid QStash signature')
+  try {
+    await receiver.verify({
+      signature,
+      body,
+    })
+  } catch {
+    throw new Error('signature verification failed')
   }
 
   return JSON.parse(body)
