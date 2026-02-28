@@ -15,6 +15,7 @@ async function handler(request: Request) {
     }
 
     console.log(`[worker/enrich] Starting enrichment for ${businessId}`)
+    console.log(`[worker/enrich] ENV check: SUPABASE_URL=${!!process.env.NEXT_PUBLIC_SUPABASE_URL}, SERVICE_KEY=${!!process.env.SUPABASE_SERVICE_ROLE_KEY}, ANTHROPIC=${!!process.env.ANTHROPIC_API_KEY}`)
     const result = await enrichBusiness(businessId)
     console.log(`[worker/enrich] Enrichment complete, queuing generate-site...`)
 
