@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatDistanceToNow } from 'date-fns'
+import { createBrowserClient } from '@supabase/ssr'
+import Link from 'next/link'
 
 type FilterTab = 'all' | 'emails' | 'pipeline' | 'system'
 
@@ -22,6 +24,7 @@ const NOTIFICATION_CATEGORY_MAP: Record<string, FilterTab> = {
   email_bounced: 'emails',
   email_drafted: 'emails',
   email_sent: 'emails',
+  pipeline: 'pipeline',
   site_generated: 'pipeline',
   lead_imported: 'pipeline',
   enrichment_complete: 'pipeline',
@@ -35,6 +38,7 @@ const ICON_MAP: Record<string, { icon: string; color: string }> = {
   email_clicked: { icon: 'ads_click', color: 'text-cyan-500' },
   email_bounced: { icon: 'warning', color: 'text-error' },
   email_drafted: { icon: 'edit_note', color: 'text-amber-500' },
+  pipeline: { icon: 'check_circle', color: 'text-success' },
   site_generated: { icon: 'check_circle', color: 'text-success' },
   lead_imported: { icon: 'person_add', color: 'text-gray-500' },
   campaign_launched: { icon: 'rocket_launch', color: 'text-primary' },
@@ -46,20 +50,10 @@ interface NotificationItem {
   type: string
   title: string
   body: string
+  href: string | null
   read: boolean
-  createdAt: Date
+  created_at: string
 }
-
-const MOCK_NOTIFICATIONS: NotificationItem[] = [
-  { id: '1', type: 'email_replied', title: 'New reply from Oakland Auto Repair', body: 'They want to schedule a meeting this week', read: false, createdAt: new Date(Date.now() - 1000 * 60 * 15) },
-  { id: '2', type: 'site_generated', title: "Website ready for Joe's Plumbing", body: 'Review the generated site and approve the email draft', read: false, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2) },
-  { id: '3', type: 'email_opened', title: 'Sunrise Bakery opened your email', body: '3rd open — this looks like a warm lead', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5) },
-  { id: '4', type: 'email_drafted', title: 'Email draft ready for Bay Area Dental', body: 'Review and approve to send', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24) },
-  { id: '5', type: 'email_clicked', title: 'Fresh Cuts Barber clicked your landing page', body: 'High intent signal — consider following up', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 26) },
-  { id: '6', type: 'lead_imported', title: '12 new leads imported', body: 'From "Plumbers in Berkeley" search', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48) },
-  { id: '7', type: 'campaign_launched', title: 'Batch of 8 emails sent', body: 'Delivery tracking will update as recipients open', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72) },
-  { id: '8', type: 'system_alert', title: 'Instantly.ai domain health dropped below 80', body: 'Consider pausing sends on outreach@sitegeit.com', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 96) },
-]
 
 function groupByDate(items: NotificationItem[]) {
   const now = new Date()
@@ -75,9 +69,10 @@ function groupByDate(items: NotificationItem[]) {
   ]
 
   items.forEach((item) => {
-    if (item.createdAt >= today) groups[0].items.push(item)
-    else if (item.createdAt >= yesterday) groups[1].items.push(item)
-    else if (item.createdAt >= weekAgo) groups[2].items.push(item)
+    const d = new Date(item.created_at)
+    if (d >= today) groups[0].items.push(item)
+    else if (d >= yesterday) groups[1].items.push(item)
+    else if (d >= weekAgo) groups[2].items.push(item)
     else groups[3].items.push(item)
   })
 
@@ -86,11 +81,59 @@ function groupByDate(items: NotificationItem[]) {
 
 export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>('all')
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const fetchNotifications = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('notifications')
+      .select('id, type, title, body, href, read, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (data) {
+      setNotifications(data)
+    }
+    setLoading(false)
+  }, [supabase])
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [fetchNotifications])
+
+  async function markAllRead() {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ markAllRead: true }),
+    })
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+  }
+
+  async function markRead(id: string) {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    )
+  }
 
   const filtered =
     activeTab === 'all'
-      ? MOCK_NOTIFICATIONS
-      : MOCK_NOTIFICATIONS.filter(
+      ? notifications
+      : notifications.filter(
           (n) => NOTIFICATION_CATEGORY_MAP[n.type] === activeTab
         )
 
@@ -102,9 +145,11 @@ export default function NotificationsPage() {
         <p className="text-sm text-gray-500">
           Stay on top of pipeline events, email engagement, and system alerts.
         </p>
-        <Button variant="ghost" size="sm">
-          Mark all read
-        </Button>
+        {notifications.some((n) => !n.read) && (
+          <Button variant="ghost" size="sm" onClick={markAllRead}>
+            Mark all read
+          </Button>
+        )}
       </div>
 
       {/* Filter tabs */}
@@ -126,12 +171,20 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notification groups */}
-      {groups.length === 0 ? (
+      {loading ? (
+        <Card className="px-6 py-12 text-center">
+          <p className="text-sm text-gray-500">Loading notifications...</p>
+        </Card>
+      ) : groups.length === 0 ? (
         <Card className="px-6 py-12 text-center">
           <span className="material-symbols-outlined mb-2 text-4xl text-gray-300">
             notifications_off
           </span>
-          <p className="text-sm text-gray-500">No notifications in this category.</p>
+          <p className="text-sm text-gray-500">
+            {activeTab === 'all'
+              ? 'No notifications yet.'
+              : 'No notifications in this category.'}
+          </p>
         </Card>
       ) : (
         <div className="space-y-6">
@@ -146,9 +199,9 @@ export default function NotificationsPage() {
                     icon: 'info',
                     color: 'text-gray-400',
                   }
-                  return (
-                    <button
-                      key={item.id}
+
+                  const inner = (
+                    <div
                       className={cn(
                         'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50',
                         !item.read && 'bg-primary-light/20'
@@ -177,7 +230,7 @@ export default function NotificationsPage() {
                           {item.body}
                         </p>
                         <p className="mt-1 text-xs text-gray-400">
-                          {formatDistanceToNow(item.createdAt, {
+                          {formatDistanceToNow(new Date(item.created_at), {
                             addSuffix: true,
                           })}
                         </p>
@@ -185,6 +238,28 @@ export default function NotificationsPage() {
                       {!item.read && (
                         <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
                       )}
+                    </div>
+                  )
+
+                  if (item.href) {
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        onClick={() => markRead(item.id)}
+                      >
+                        {inner}
+                      </Link>
+                    )
+                  }
+
+                  return (
+                    <button
+                      key={item.id}
+                      className="w-full"
+                      onClick={() => markRead(item.id)}
+                    >
+                      {inner}
                     </button>
                   )
                 })}

@@ -47,7 +47,7 @@ export async function generateLandingPage(
     rating: business.google_rating,
     review_count: business.google_review_count,
     website_status: business.website_status || 'none',
-    preview_site_url: `https://${site.deploy_url}`,
+    preview_site_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/${site.deploy_url}`,
     theme_id: site.theme_id,
     services_count: servicePages.length,
     calendly_url: calendlyUrl,
@@ -61,24 +61,48 @@ export async function generateLandingPage(
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-  // Create landing_pages record
-  const { data: landingPage, error: insertError } = await supabase
+  // Upsert landing_pages record (idempotent — retries update instead of duplicating)
+  const lpPayload = {
+    business_id: businessId,
+    site_id: siteId,
+    headline: content.headline,
+    strategy_summary: content.strategy_section.heading,
+    site_preview_data: content,
+    deploy_url: slug,
+    deploy_status: 'live',
+    calendly_link: calendlyUrl,
+  }
+
+  const { data: existingLP } = await supabase
     .from('landing_pages')
-    .insert({
-      business_id: businessId,
-      site_id: siteId,
-      headline: content.headline,
-      strategy_summary: content.strategy_section.heading,
-      site_preview_data: content,
-      deploy_url: `go.sitegeit.com/${slug}`,
-      deploy_status: 'live',
-      calendly_link: calendlyUrl,
-    })
     .select('id')
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .single()
 
-  if (insertError || !landingPage) {
-    throw new Error(`Failed to create landing page: ${insertError?.message}`)
+  let landingPage: { id: string }
+  if (existingLP) {
+    const { data: updated, error: updateError } = await supabase
+      .from('landing_pages')
+      .update(lpPayload)
+      .eq('id', existingLP.id)
+      .select('id')
+      .single()
+    if (updateError || !updated) {
+      throw new Error(`Failed to update landing page: ${updateError?.message}`)
+    }
+    landingPage = updated
+  } else {
+    const { data: inserted, error: insertError } = await supabase
+      .from('landing_pages')
+      .insert(lpPayload)
+      .select('id')
+      .single()
+    if (insertError || !inserted) {
+      throw new Error(`Failed to create landing page: ${insertError?.message}`)
+    }
+    landingPage = inserted
   }
 
   // Log activity

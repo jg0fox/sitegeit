@@ -12,12 +12,19 @@ import type { DiscoveryResult, SearchParams, SavedSearch } from '@/lib/utils/typ
 type Tab = 'search' | 'saved'
 
 const STORAGE_KEY = 'sitegeit_discover_state'
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 function loadCachedState(): { results: DiscoveryResult[]; params: SearchParams | null } | null {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    return JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    // Check TTL
+    if (parsed.cachedAt && Date.now() - parsed.cachedAt > CACHE_TTL_MS) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return parsed
   } catch {
     return null
   }
@@ -25,7 +32,7 @@ function loadCachedState(): { results: DiscoveryResult[]; params: SearchParams |
 
 function saveCachedState(results: DiscoveryResult[], params: SearchParams | null) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ results, params }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ results, params, cachedAt: Date.now() }))
   } catch {
     // Storage full or unavailable
   }

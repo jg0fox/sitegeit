@@ -16,14 +16,15 @@ async function getLandingData(slug: string) {
     { auth: { persistSession: false } }
   )
 
-  const { data: landingPage } = await supabase
+  const { data: landingPages } = await supabase
     .from('landing_pages')
     .select('*, businesses(*), generated_sites(*)')
-    .eq('deploy_url', `go.sitegeit.com/${slug}`)
+    .eq('deploy_url', slug)
     .eq('deploy_status', 'live')
-    .single()
+    .order('created_at', { ascending: false })
+    .limit(1)
 
-  return landingPage
+  return landingPages?.[0] ?? null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -1,14 +1,35 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 import { NAV_ITEMS } from '@/lib/utils/constants'
 import { useSidebar } from './SidebarContext'
+import { createBrowserClient } from '@supabase/ssr'
 
 export function Sidebar() {
   const pathname = usePathname()
   const { collapsed, mobileOpen, closeMobile } = useSidebar()
+  const [pipelineCount, setPipelineCount] = useState(0)
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    async function fetchCount() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { count } = await supabase
+        .from('businesses')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'review_ready')
+      setPipelineCount(count ?? 0)
+    }
+    fetchCount()
+  }, [pathname])
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
@@ -94,14 +115,14 @@ export function Sidebar() {
                 {item.label}
               </span>
               {/* Pipeline badge */}
-              {item.key === 'pipeline' && (
+              {item.key === 'pipeline' && pipelineCount > 0 && (
                 <span
                   className={cn(
                     'ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-warning px-1.5 text-[10px] font-semibold text-white',
                     collapsed && 'lg:absolute lg:right-1 lg:top-1 lg:ml-0'
                   )}
                 >
-                  3
+                  {pipelineCount}
                 </span>
               )}
             </Link>

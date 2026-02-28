@@ -1,0 +1,155 @@
+import { Card } from '@/components/ui/card'
+import { StatusBadge } from '@/components/shared/StatusBadge'
+import { PipelineProgress } from './PipelineProgress'
+import Link from 'next/link'
+import { formatDistanceToNow } from 'date-fns'
+
+interface GeneratedSite {
+  id: string
+  deploy_url: string
+  deploy_status: string
+}
+
+interface LandingPage {
+  id: string
+  deploy_url: string
+  deploy_status: string
+}
+
+interface OutreachEmail {
+  id: string
+  review_status: string
+  sequence_position: number
+}
+
+interface Business {
+  id: string
+  name: string
+  category: string
+  status: string
+  phone: string | null
+  address_city: string | null
+  address_state: string | null
+  google_rating: number | null
+  google_review_count: number | null
+  website_status: string | null
+  created_at: string
+  enriched_at: string | null
+  generated_sites: GeneratedSite[]
+  landing_pages: LandingPage[]
+  outreach_emails: OutreachEmail[]
+}
+
+export function PipelineList({ businesses }: { businesses: Business[] }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-400">
+        {businesses.length} prospect{businesses.length !== 1 ? 's' : ''}
+      </p>
+      {businesses.map((biz) => {
+        const liveSite = biz.generated_sites?.find((s) => s.deploy_status === 'live')
+        const liveLanding = biz.landing_pages?.find((lp) => lp.deploy_status === 'live')
+        const draftEmails = biz.outreach_emails?.filter((e) => e.review_status === 'draft') ?? []
+        const hasGeneratedMaterial = liveSite || liveLanding || draftEmails.length > 0
+
+        return (
+          <Card key={biz.id} className="overflow-hidden">
+            <div className="p-4">
+              {/* Header row */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/pipeline/${biz.id}`}
+                      className="truncate text-sm font-semibold text-gray-900 hover:text-primary"
+                    >
+                      {biz.name}
+                    </Link>
+                    <StatusBadge status={biz.status} />
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                    {biz.category && (
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">category</span>
+                        {biz.category}
+                      </span>
+                    )}
+                    {(biz.address_city || biz.address_state) && (
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">location_on</span>
+                        {[biz.address_city, biz.address_state].filter(Boolean).join(', ')}
+                      </span>
+                    )}
+                    {biz.google_rating != null && (
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px] text-amber-400">star</span>
+                        {biz.google_rating}
+                        {biz.google_review_count ? ` (${biz.google_review_count})` : ''}
+                      </span>
+                    )}
+                    {biz.phone && (
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">phone</span>
+                        {biz.phone}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p className="flex-shrink-0 text-xs text-gray-400">
+                  {formatDistanceToNow(new Date(biz.created_at), { addSuffix: true })}
+                </p>
+              </div>
+
+              {/* Progress stepper */}
+              <div className="mt-3">
+                <PipelineProgress status={biz.status} />
+              </div>
+
+              {/* Quick action links for generated material */}
+              {hasGeneratedMaterial && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+                  {liveSite && (
+                    <Link
+                      href={`/sites/${liveSite.deploy_url}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-100"
+                    >
+                      <span className="material-symbols-outlined text-[14px] text-primary">web</span>
+                      View site
+                    </Link>
+                  )}
+                  {liveLanding && (
+                    <Link
+                      href={`/sites/go/${liveLanding.deploy_url}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-100"
+                    >
+                      <span className="material-symbols-outlined text-[14px] text-purple-500">campaign</span>
+                      Landing page
+                    </Link>
+                  )}
+                  {draftEmails.length > 0 && (
+                    <Link
+                      href="/email-review"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200 transition-colors hover:bg-amber-100"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">rate_review</span>
+                      Review {draftEmails.length} email{draftEmails.length !== 1 ? 's' : ''}
+                    </Link>
+                  )}
+                  <Link
+                    href={`/pipeline/${biz.id}`}
+                    className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-gray-500 transition-colors hover:text-primary"
+                  >
+                    Details
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </Card>
+        )
+      })}
+    </div>
+  )
+}

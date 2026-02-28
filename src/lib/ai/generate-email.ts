@@ -52,13 +52,20 @@ export async function generateEmail(
     rating: business.google_rating,
     review_count: business.google_review_count,
     unique_detail: uniqueDetail,
-    landing_page_url: `https://${landingPage.deploy_url}`,
+    landing_page_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/go/${landingPage.deploy_url}`,
     sender_name: senderName,
     sender_company: 'Sitegeit',
     calendly_url: calendlyUrl,
   })
 
   const content = await generateJSON<EmailOutput>(EMAIL_SYSTEM_PROMPT, userPrompt)
+
+  // Delete any existing draft emails for this business (idempotent — retries replace instead of duplicating)
+  await supabase
+    .from('outreach_emails')
+    .delete()
+    .eq('business_id', businessId)
+    .eq('review_status', 'draft')
 
   const emailIds: string[] = []
 

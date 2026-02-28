@@ -72,28 +72,55 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-  // Create generated_sites record
-  const { data: site, error: insertError } = await supabase
+  // Upsert generated_sites record (idempotent — retries update instead of duplicating)
+  const sitePayload = {
+    business_id: businessId,
+    theme_id: themeId,
+    layout_variant: layoutVariant,
+    theme_config: { ...themeConfig, cssVars: themeConfigToCSSVars(themeConfig) },
+    homepage_content: content.homepage,
+    service_pages: content.service_pages,
+    about_content: content.about_page,
+    contact_content: content.contact_page,
+    faq_content: content.faq_page,
+    seo_meta: content.seo,
+    deploy_url: slug,
+    deploy_status: 'pending',
+  }
+
+  // Check for existing site for this business
+  const { data: existingSite } = await supabase
     .from('generated_sites')
-    .insert({
-      business_id: businessId,
-      theme_id: themeId,
-      layout_variant: layoutVariant,
-      theme_config: { ...themeConfig, cssVars: themeConfigToCSSVars(themeConfig) },
-      homepage_content: content.homepage,
-      service_pages: content.service_pages,
-      about_content: content.about_page,
-      contact_content: content.contact_page,
-      faq_content: content.faq_page,
-      seo_meta: content.seo,
-      deploy_url: `${slug}.sitegeit.com`,
-      deploy_status: 'pending',
-    })
     .select('id')
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .single()
 
-  if (insertError || !site) {
-    throw new Error(`Failed to create generated site: ${insertError?.message}`)
+  let site: { id: string }
+  if (existingSite) {
+    // Update existing record
+    const { data: updated, error: updateError } = await supabase
+      .from('generated_sites')
+      .update(sitePayload)
+      .eq('id', existingSite.id)
+      .select('id')
+      .single()
+    if (updateError || !updated) {
+      throw new Error(`Failed to update generated site: ${updateError?.message}`)
+    }
+    site = updated
+  } else {
+    // Insert new record
+    const { data: inserted, error: insertError } = await supabase
+      .from('generated_sites')
+      .insert(sitePayload)
+      .select('id')
+      .single()
+    if (insertError || !inserted) {
+      throw new Error(`Failed to create generated site: ${insertError?.message}`)
+    }
+    site = inserted
   }
 
   // Update business with generated_at timestamp

@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { formatDistanceToNow } from 'date-fns'
+import { createBrowserClient } from '@supabase/ssr'
 
 const NOTIFICATION_ICON_MAP: Record<string, string> = {
+  pipeline: 'check_circle',
   email_opened: 'visibility',
   email_clicked: 'ads_click',
   email_replied: 'reply',
@@ -17,61 +19,67 @@ const NOTIFICATION_ICON_MAP: Record<string, string> = {
   lead_imported: 'person_add',
 }
 
-interface MockNotification {
+interface Notification {
   id: string
   type: string
   title: string
   body: string
-  href: string
+  href: string | null
   read: boolean
-  createdAt: Date
+  created_at: string
 }
-
-const MOCK_NOTIFICATIONS: MockNotification[] = [
-  {
-    id: '1',
-    type: 'email_replied',
-    title: 'New reply from Oakland Auto Repair',
-    body: 'They want to schedule a meeting this week',
-    href: '/pipeline',
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 15),
-  },
-  {
-    id: '2',
-    type: 'site_generated',
-    title: "Website ready for Joe's Plumbing",
-    body: 'Review the generated site and approve the email draft',
-    href: '/pipeline',
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  },
-  {
-    id: '3',
-    type: 'email_opened',
-    title: 'Sunrise Bakery opened your email',
-    body: '3rd open — this looks like a warm lead',
-    href: '/pipeline',
-    read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
-  },
-  {
-    id: '4',
-    type: 'email_drafted',
-    title: 'Email draft ready for Bay Area Dental',
-    body: 'Review and approve to send',
-    href: '/email-review',
-    read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-]
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const fetchNotifications = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('notifications')
+      .select('id, type, title, body, href, read, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    if (data) {
+      setNotifications(data)
+    }
+    setLoading(false)
+  }, [supabase])
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [fetchNotifications])
+
+  // Realtime subscription for new notifications
+  useEffect(() => {
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        (payload) => {
+          const newNotif = payload.new as Notification
+          setNotifications((prev) => [newNotif, ...prev].slice(0, 10))
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -87,6 +95,28 @@ export function NotificationBell() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const unreadCount = notifications.filter((n) => !n.read).length
+
+  async function markAllRead() {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ markAllRead: true }),
+    })
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+  }
+
+  async function markRead(id: string) {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    )
+  }
 
   return (
     <div className="relative">
@@ -116,60 +146,99 @@ export function NotificationBell() {
             <h3 className="text-sm font-semibold text-gray-900">
               Notifications
             </h3>
-            <button className="text-xs font-medium text-primary hover:text-primary-hover">
-              Mark all read
-            </button>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                className="text-xs font-medium text-primary hover:text-primary-hover"
+              >
+                Mark all read
+              </button>
+            )}
           </div>
 
           <div className="max-h-80 overflow-y-auto">
-            {MOCK_NOTIFICATIONS.map((notification) => (
-              <Link
-                key={notification.id}
-                href={notification.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  'flex gap-3 border-b border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50',
-                  !notification.read && 'bg-primary-light/30'
-                )}
-              >
-                <span
-                  className={cn(
-                    'material-symbols-outlined mt-0.5 text-[18px]',
-                    notification.type === 'email_replied'
-                      ? 'text-success'
-                      : notification.type === 'email_bounced' ||
-                          notification.type === 'system_alert'
-                        ? 'text-error'
-                        : 'text-gray-400'
-                  )}
-                >
-                  {NOTIFICATION_ICON_MAP[notification.type] || 'info'}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p
+            {loading ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-400">
+                Loading...
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-400">
+                No notifications yet
+              </div>
+            ) : (
+              notifications.map((notification) => {
+                const content = (
+                  <div
                     className={cn(
-                      'truncate text-sm',
-                      notification.read
-                        ? 'text-gray-600'
-                        : 'font-medium text-gray-900'
+                      'flex gap-3 border-b border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50',
+                      !notification.read && 'bg-primary-light/30'
                     )}
                   >
-                    {notification.title}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-gray-500">
-                    {notification.body}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-400">
-                    {formatDistanceToNow(notification.createdAt, {
-                      addSuffix: true,
-                    })}
-                  </p>
-                </div>
-                {!notification.read && (
-                  <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
-                )}
-              </Link>
-            ))}
+                    <span
+                      className={cn(
+                        'material-symbols-outlined mt-0.5 text-[18px]',
+                        notification.type === 'email_replied'
+                          ? 'text-success'
+                          : notification.type === 'email_bounced' ||
+                              notification.type === 'system_alert'
+                            ? 'text-error'
+                            : 'text-gray-400'
+                      )}
+                    >
+                      {NOTIFICATION_ICON_MAP[notification.type] || 'info'}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          'truncate text-sm',
+                          notification.read
+                            ? 'text-gray-600'
+                            : 'font-medium text-gray-900'
+                        )}
+                      >
+                        {notification.title}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-gray-500">
+                        {notification.body}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {formatDistanceToNow(new Date(notification.created_at), {
+                          addSuffix: true,
+                        })}
+                      </p>
+                    </div>
+                    {!notification.read && (
+                      <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
+                    )}
+                  </div>
+                )
+
+                if (notification.href) {
+                  return (
+                    <Link
+                      key={notification.id}
+                      href={notification.href}
+                      onClick={() => {
+                        markRead(notification.id)
+                        setOpen(false)
+                      }}
+                    >
+                      {content}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <button
+                    key={notification.id}
+                    className="w-full text-left"
+                    onClick={() => markRead(notification.id)}
+                  >
+                    {content}
+                  </button>
+                )
+              })
+            )}
           </div>
 
           <div className="border-t border-gray-200 px-4 py-2">
