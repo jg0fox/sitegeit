@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { verifyRequest, publishToWorker } from '@/lib/qstash/client'
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'
+import { publishToWorker } from '@/lib/qstash/client'
 import { generateSite } from '@/lib/ai/generate-site'
 
-export async function POST(request: Request) {
+async function handler(request: Request) {
   try {
-    const data = await verifyRequest(request)
+    const data = await request.json()
     const businessId = data.businessId as string
 
     if (!businessId) {
@@ -33,3 +34,7 @@ export async function POST(request: Request) {
     )
   }
 }
+
+export const POST = process.env.NODE_ENV === 'development'
+  ? handler
+  : verifySignatureAppRouter(handler)
