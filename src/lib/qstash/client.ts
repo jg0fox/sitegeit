@@ -1,7 +1,6 @@
 import { Client, Receiver } from '@upstash/qstash'
 
 let qstashClient: Client | null = null
-let qstashReceiver: Receiver | null = null
 
 export function getQStashClient(): Client {
   if (!qstashClient) {
@@ -15,18 +14,6 @@ export function getQStashClient(): Client {
     })
   }
   return qstashClient
-}
-
-export function getQStashReceiver(): Receiver {
-  if (!qstashReceiver) {
-    const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY
-    const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY
-    if (!currentSigningKey || !nextSigningKey) {
-      throw new Error('QSTASH signing keys are not configured')
-    }
-    qstashReceiver = new Receiver({ currentSigningKey, nextSigningKey })
-  }
-  return qstashReceiver
 }
 
 function getBaseUrl(): string {
@@ -54,7 +41,6 @@ export async function publishToWorker(
 }
 
 export async function verifyRequest(request: Request): Promise<Record<string, unknown>> {
-  const receiver = getQStashReceiver()
   const body = await request.text()
 
   // In development, skip signature verification
@@ -67,12 +53,23 @@ export async function verifyRequest(request: Request): Promise<Record<string, un
     throw new Error('Missing upstash-signature header')
   }
 
-  try {
-    await receiver.verify({
-      signature,
-      body,
-    })
-  } catch {
+  const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY
+  const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY
+
+  if (!currentSigningKey || !nextSigningKey) {
+    throw new Error('QSTASH signing keys are not configured')
+  }
+
+  // Create a fresh receiver each time to avoid stale key caching
+  const receiver = new Receiver({ currentSigningKey, nextSigningKey })
+
+  const isValid = await receiver.verify({
+    signature,
+    body,
+    url: request.url,
+  }).catch(() => false)
+
+  if (!isValid) {
     throw new Error('signature verification failed')
   }
 
