@@ -5,21 +5,36 @@ import { enrichBusiness } from '@/lib/ai/enrich'
 
 async function handler(request: Request) {
   try {
-    console.log('[worker/enrich] Handler entered, parsing body...')
-    const data = await request.json()
+    console.log('[worker/enrich] Handler entered')
+
+    // Parse body — try request.json() first, fall back to text parsing
+    let data: Record<string, unknown>
+    try {
+      data = await request.json()
+    } catch (parseErr) {
+      console.error('[worker/enrich] request.json() failed:', parseErr instanceof Error ? parseErr.message : parseErr)
+      // Try reading as text
+      const text = await request.text().catch(() => '')
+      console.log('[worker/enrich] Raw body text:', text.substring(0, 200))
+      if (text) {
+        data = JSON.parse(text)
+      } else {
+        return NextResponse.json({ error: 'Could not read request body' }, { status: 400 })
+      }
+    }
+
     const businessId = data.businessId as string
-    console.log('[worker/enrich] Body parsed, businessId:', businessId)
+    console.log('[worker/enrich] businessId:', businessId)
 
     if (!businessId) {
       return NextResponse.json({ error: 'Missing businessId' }, { status: 400 })
     }
 
-    console.log(`[worker/enrich] Starting enrichment for ${businessId}`)
-    console.log(`[worker/enrich] ENV check: SUPABASE_URL=${!!process.env.NEXT_PUBLIC_SUPABASE_URL}, SERVICE_KEY=${!!process.env.SUPABASE_SERVICE_ROLE_KEY}, ANTHROPIC=${!!process.env.ANTHROPIC_API_KEY}`)
+    console.log(`[worker/enrich] ENV: SUPABASE_URL=${!!process.env.NEXT_PUBLIC_SUPABASE_URL}, SERVICE_KEY=${!!process.env.SUPABASE_SERVICE_ROLE_KEY}, ANTHROPIC=${!!process.env.ANTHROPIC_API_KEY}`)
+    console.log(`[worker/enrich] Starting enrichment...`)
     const result = await enrichBusiness(businessId)
     console.log(`[worker/enrich] Enrichment complete, queuing generate-site...`)
 
-    // Chain: queue site generation
     const messageId = await publishToWorker('generate-site', { businessId })
 
     console.log(`[worker/enrich] Done. Queued generate-site (${messageId})`)
@@ -32,7 +47,8 @@ async function handler(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const stack = err instanceof Error ? err.stack : undefined
-    console.error('[worker/enrich] Error:', message, '\nStack:', stack)
+    console.error('[worker/enrich] CATCH:', message)
+    console.error('[worker/enrich] Stack:', stack)
     return NextResponse.json(
       { error: message },
       { status: 500 }
