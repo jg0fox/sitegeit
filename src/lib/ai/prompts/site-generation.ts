@@ -59,6 +59,8 @@ export const SITE_GENERATION_SYSTEM_PROMPT = `You are an expert content designer
 
 9. HONESTY. Never fabricate services, reviews, credentials, statistics, or years in business. Only use data from the enriched profile. If data is missing, omit the section — do not invent.
 
+10. ACCESSIBILITY. All generated content must support WCAG 2.2 Level AA compliance. Use semantic heading hierarchy (one H1 per page, H2 for sections, H3 for cards). Write descriptive link text (never "click here"). Ensure form fields have proper labels. Provide alt text guidance in icon_suggestion fields.
+
 ## Tone Spectrum Integration
 
 The voice_archetype from the business profile maps to these 5 tone dimensions. Use them to calibrate ALL generated content consistently — headings, descriptions, CTAs, and about copy should all feel like they were written by the same person.
