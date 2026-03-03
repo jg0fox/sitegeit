@@ -1,3 +1,13 @@
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+function sortHours(hours: Record<string, string>): [string, string][] {
+  return Object.entries(hours).sort(([a], [b]) => {
+    const ai = DAY_ORDER.indexOf(a.toLowerCase())
+    const bi = DAY_ORDER.indexOf(b.toLowerCase())
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+  })
+}
+
 interface SiteFooterProps {
   businessName: string
   phone: string | null
@@ -34,7 +44,7 @@ export function SiteFooter({ businessName, phone, address, hours, siteSlug }: Si
           )}
           {phone && (
             <p className="text-sm">
-              <a href={`tel:${phone}`} style={{ color: 'var(--color-primary)' }}>
+              <a href={`tel:${phone}`} style={{ color: 'var(--color-link, var(--color-primary))' }}>
                 {phone}
               </a>
             </p>
@@ -85,7 +95,7 @@ export function SiteFooter({ businessName, phone, address, hours, siteSlug }: Si
               Hours
             </h3>
             <dl className="space-y-1 text-sm">
-              {Object.entries(hours).map(([day, time]) => (
+              {sortHours(hours).map(([day, time]) => (
                 <div key={day} className="flex justify-between gap-4">
                   <dt className="capitalize" style={{ color: 'var(--color-text-secondary)' }}>
                     {day}
@@ -104,7 +114,7 @@ export function SiteFooter({ businessName, phone, address, hours, siteSlug }: Si
           </p>
           <p className="mt-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             Website by{' '}
-            <a href="https://sitegeit.com" style={{ color: 'var(--color-primary)' }}>
+            <a href="https://sitegeit.com" style={{ color: 'var(--color-link, var(--color-primary))' }}>
               Sitegeit
             </a>
           </p>

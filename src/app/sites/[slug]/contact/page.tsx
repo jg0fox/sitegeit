@@ -12,6 +12,34 @@ interface ContactContent {
   response_expectation: string
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  name: 'Name',
+  phone: 'Phone Number',
+  email: 'Email Address',
+  message: 'Message',
+  preferred_contact: 'Preferred Contact Method',
+  details: 'Details',
+  comment: 'Comment',
+  company: 'Company',
+  service: 'Service Needed',
+}
+
+function formatFieldLabel(field: string): string {
+  const lower = field.toLowerCase().trim()
+  if (FIELD_LABELS[lower]) return FIELD_LABELS[lower]
+  return field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+function sortHours(hours: Record<string, string>): [string, string][] {
+  return Object.entries(hours).sort(([a], [b]) => {
+    const ai = DAY_ORDER.indexOf(a.toLowerCase())
+    const bi = DAY_ORDER.indexOf(b.toLowerCase())
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+  })
+}
+
 interface Props {
   params: Promise<{ slug: string }>
 }
@@ -110,7 +138,7 @@ export default async function ContactPage({ params }: Props) {
                   <a
                     href={`tel:${contact.phone}`}
                     className="inline-flex items-center gap-2 text-lg font-medium transition-colors hover:underline"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-link, var(--color-primary))' }}
                   >
                     <span
                       className="material-symbols-outlined"
@@ -135,7 +163,7 @@ export default async function ContactPage({ params }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-start gap-2 transition-colors hover:underline"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-link, var(--color-primary))' }}
                   >
                     <span
                       className="material-symbols-outlined mt-0.5 shrink-0"
@@ -157,7 +185,7 @@ export default async function ContactPage({ params }: Props) {
                       Hours
                     </h2>
                     <dl className="space-y-2 text-sm">
-                      {Object.entries(contact.hours).map(([day, time]) => (
+                      {sortHours(contact.hours).map(([day, time]) => (
                         <div key={day} className="flex justify-between gap-4">
                           <dt
                             className="font-medium capitalize"
@@ -199,7 +227,7 @@ export default async function ContactPage({ params }: Props) {
                           className="mb-1.5 block text-sm font-medium"
                           style={{ color: 'var(--color-text-primary)' }}
                         >
-                          {field}
+                          {formatFieldLabel(field)}
                         </label>
                         {isTextarea ? (
                           <textarea

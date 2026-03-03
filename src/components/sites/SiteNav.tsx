@@ -88,7 +88,7 @@ export function SiteNav({
 
   const navLinkStyle = (key: string) => ({
     color: isActive(key)
-      ? 'var(--color-primary)'
+      ? 'var(--color-link, var(--color-primary))'
       : 'var(--color-text-primary)',
     fontWeight: isActive(key) ? 600 : 400,
   })
@@ -172,7 +172,7 @@ export function SiteNav({
                 className="flex items-center gap-1 text-sm transition-colors duration-200 hover:opacity-80"
                 style={{
                   color: isServiceActive
-                    ? 'var(--color-primary)'
+                    ? 'var(--color-link, var(--color-primary))'
                     : 'var(--color-text-primary)',
                   fontWeight: isServiceActive ? 600 : 400,
                   background: 'none',
@@ -216,7 +216,7 @@ export function SiteNav({
                       className="block px-4 py-2 text-sm transition-colors duration-150"
                       style={{
                         color: isActive(service.slug)
-                          ? 'var(--color-primary)'
+                          ? 'var(--color-link, var(--color-primary))'
                           : 'var(--color-text-primary)',
                         fontWeight: isActive(service.slug) ? 600 : 400,
                       }}
@@ -224,7 +224,7 @@ export function SiteNav({
                       onClick={() => setServicesDropdownOpen(false)}
                       onMouseEnter={(e) => {
                         if (!isActive(service.slug)) {
-                          e.currentTarget.style.color = 'var(--color-primary)'
+                          e.currentTarget.style.color = 'var(--color-link, var(--color-primary))'
                           e.currentTarget.style.backgroundColor =
                             'var(--color-primary-light, rgba(62, 99, 221, 0.06))'
                         }
@@ -322,7 +322,7 @@ export function SiteNav({
                   className="block py-2.5 pl-3 text-base transition-colors duration-200"
                   style={{
                     color: isActive(service.slug)
-                      ? 'var(--color-primary)'
+                      ? 'var(--color-link, var(--color-primary))'
                       : 'var(--color-text-primary)',
                     fontWeight: isActive(service.slug) ? 600 : 400,
                   }}

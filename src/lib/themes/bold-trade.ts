@@ -8,6 +8,7 @@ export const boldTrade: ThemeConfig = {
     primaryHover: '#1e3a8a',
     primaryLight: '#eff6ff',
     accent: '#f97316',
+    link: '#93b4ff',
     background: '#0f172a',
     surface: '#1e293b',
     textPrimary: '#f8fafc',

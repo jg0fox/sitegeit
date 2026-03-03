@@ -8,6 +8,7 @@ export const freshActive: ThemeConfig = {
     primaryHover: '#16a34a',
     primaryLight: '#f0fdf4',
     accent: '#facc15',
+    link: '#4ade80',
     background: '#09090b',
     surface: '#18181b',
     textPrimary: '#fafafa',

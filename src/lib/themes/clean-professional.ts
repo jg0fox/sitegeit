@@ -8,6 +8,7 @@ export const cleanProfessional: ThemeConfig = {
     primaryHover: '#162d4a',
     primaryLight: '#f0f4f8',
     accent: '#d4a843',
+    link: '#1e3a5f',
     background: '#ffffff',
     surface: '#f8f9fa',
     textPrimary: '#1a1a2e',

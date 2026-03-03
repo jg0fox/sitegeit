@@ -8,6 +8,7 @@ export const naturalEarth: ThemeConfig = {
     primaryHover: '#166534',
     primaryLight: '#f0fdf4',
     accent: '#a16207',
+    link: '#15803d',
     background: '#fefce8',
     surface: '#f5f0e8',
     textPrimary: '#1c1917',

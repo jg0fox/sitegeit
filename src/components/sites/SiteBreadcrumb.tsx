@@ -37,7 +37,7 @@ export function SiteBreadcrumb({ items, siteSlug }: SiteBreadcrumbProps) {
                 <a
                   href={item.href}
                   className="transition-colors hover:underline"
-                  style={{ color: 'var(--color-primary)' }}
+                  style={{ color: 'var(--color-link, var(--color-primary))' }}
                 >
                   {item.label}
                 </a>

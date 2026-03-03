@@ -8,6 +8,7 @@ export const warmCraft: ThemeConfig = {
     primaryHover: '#9a3412',
     primaryLight: '#fff7ed',
     accent: '#fbbf24',
+    link: '#c2410c',
     background: '#fffbeb',
     surface: '#fef3c7',
     textPrimary: '#451a03',

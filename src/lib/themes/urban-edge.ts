@@ -8,6 +8,7 @@ export const urbanEdge: ThemeConfig = {
     primaryHover: '#be123c',
     primaryLight: '#fff1f2',
     accent: '#fbbf24',
+    link: '#fb7185',
     background: '#09090b',
     surface: '#18181b',
     textPrimary: '#fafafa',

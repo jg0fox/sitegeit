@@ -8,6 +8,7 @@ export const modernMinimal: ThemeConfig = {
     primaryHover: '#0a0a0a',
     primaryLight: '#f5f5f5',
     accent: '#a3a3a3',
+    link: '#171717',
     background: '#ffffff',
     surface: '#fafafa',
     textPrimary: '#0a0a0a',

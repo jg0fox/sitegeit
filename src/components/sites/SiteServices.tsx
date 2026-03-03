@@ -60,7 +60,7 @@ export function SiteServices({ heading, services, siteSlug, servicePageSlugs }: 
                 {href && (
                   <span
                     className="mt-3 inline-flex items-center gap-1 text-sm font-medium"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-link, var(--color-primary))' }}
                   >
                     Learn more
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>

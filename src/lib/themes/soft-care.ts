@@ -8,6 +8,7 @@ export const softCare: ThemeConfig = {
     primaryHover: '#0284c7',
     primaryLight: '#f0f9ff',
     accent: '#99f6e4',
+    link: '#0ea5e9',
     background: '#ffffff',
     surface: '#f8fafc',
     textPrimary: '#1e293b',

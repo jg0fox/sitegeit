@@ -15,6 +15,7 @@ export interface ThemeConfig {
     primaryHover: string
     primaryLight: string
     accent: string
+    link: string
     background: string
     surface: string
     textPrimary: string
@@ -140,6 +141,7 @@ export function themeConfigToCSSVars(config: ThemeConfig): Record<string, string
     '--color-primary-hover': config.colors.primaryHover,
     '--color-primary-light': config.colors.primaryLight,
     '--color-accent': config.colors.accent,
+    '--color-link': config.colors.link,
     '--color-background': config.colors.background,
     '--color-surface': config.colors.surface,
     '--color-text-primary': config.colors.textPrimary,
