@@ -33,14 +33,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const site = await getSiteData(slug)
   if (!site) return {}
 
+  const business = site.businesses as Record<string, unknown>
+  const businessName = (business.name as string) || slug
   const seo = site.seo_meta as {
     homepage_title?: string
     homepage_description?: string
   } | null
 
+  const title = seo?.homepage_title || businessName
+  const description = seo?.homepage_description || ''
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
+  const pageUrl = `${baseUrl}/sites/${slug}`
+
   return {
-    title: seo?.homepage_title || site.businesses?.name || slug,
-    description: seo?.homepage_description || '',
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: businessName,
+      type: 'website',
+      locale: 'en_US',
+    },
   }
 }
 

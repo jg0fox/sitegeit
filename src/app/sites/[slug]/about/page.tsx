@@ -42,8 +42,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = (business.address_city as string) || ''
   const category = (business.category as string) || ''
 
+  const about = site.about_content as { story?: string } | null
+  const title = `About ${businessName} | ${city} ${category}`.trim()
+  const description = about?.story?.slice(0, 160) || `Learn about ${businessName} in ${city}.`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
+  const pageUrl = `${baseUrl}/sites/${slug}/about`
+
   return {
-    title: `About ${businessName} | ${city} ${category}`.trim(),
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: businessName,
+      type: 'website',
+    },
   }
 }
 

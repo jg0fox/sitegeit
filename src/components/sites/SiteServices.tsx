@@ -14,6 +14,7 @@ interface SiteServicesProps {
   servicePageSlugs?: Record<string, string>
   cardVariant?: 'flat' | 'bordered' | 'accent-top' | 'accent-left'
   iconStyle?: 'bare' | 'circle-bg' | 'square-bg'
+  dataSource?: 'verified' | 'inferred' | 'default'
 }
 
 function toSlug(name: string) {
@@ -117,6 +118,7 @@ export function SiteServices({
   servicePageSlugs,
   cardVariant = 'bordered',
   iconStyle = 'bare',
+  dataSource,
 }: SiteServicesProps) {
   const cardStyle = getCardStyle(cardVariant)
 
@@ -125,6 +127,7 @@ export function SiteServices({
       id="services"
       className="px-4"
       style={{ paddingTop: 'var(--space-section, 6rem)', paddingBottom: 'var(--space-section, 6rem)' }}
+      {...(dataSource && { 'data-source': dataSource })}
     >
       <div className="mx-auto" style={{ maxWidth: 'var(--container-max-width, 1200px)' }}>
         <h2

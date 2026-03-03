@@ -6,6 +6,7 @@ import { SiteServiceDetails } from '@/components/sites/SiteServiceDetails'
 import { SiteServiceWhy } from '@/components/sites/SiteServiceWhy'
 import { SiteServiceRelated } from '@/components/sites/SiteServiceRelated'
 import { SiteSectionDivider } from '@/components/sites/SiteSectionDivider'
+import { buildServiceSchema } from '@/lib/utils/schema-org'
 
 interface ServicePage {
   slug: string
@@ -53,8 +54,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${service.h1} | ${businessName}`.slice(0, 60)
   const description = service.opening.slice(0, 160)
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
+  const pageUrl = `${baseUrl}/sites/${slug}/${serviceSlug}`
 
-  return { title, description }
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: businessName,
+      type: 'website',
+    },
+  }
 }
 
 export default async function ServicePageRoute({ params }: Props) {
@@ -99,6 +115,7 @@ export default async function ServicePageRoute({ params }: Props) {
     .slice(0, 3)
 
   return (
+    <>
     <main>
         <SiteServiceHero
           h1={service.h1}
@@ -194,5 +211,18 @@ export default async function ServicePageRoute({ params }: Props) {
           </>
         )}
     </main>
+
+    {/* JSON-LD Service schema */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(buildServiceSchema({
+          serviceName: service.h1,
+          description: service.opening,
+          businessName: business.name as string,
+        })),
+      }}
+    />
+    </>
   )
 }

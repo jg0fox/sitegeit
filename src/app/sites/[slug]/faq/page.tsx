@@ -38,8 +38,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const business = site.businesses as Record<string, unknown>
   const businessName = business.name as string
 
+  const title = `FAQ | ${businessName}`
+  const description = `Frequently asked questions about ${businessName} — answers to common questions.`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
+  const pageUrl = `${baseUrl}/sites/${slug}/faq`
+
   return {
-    title: `FAQ | ${businessName}`,
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: businessName,
+      type: 'website',
+    },
   }
 }
 
@@ -57,7 +73,22 @@ export default async function FAQPage({ params }: Props) {
     notFound()
   }
 
+  // Build FAQPage JSON-LD schema
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faq.questions.map((q) => ({
+      '@type': 'Question',
+      name: q.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: q.answer,
+      },
+    })),
+  }
+
   return (
+    <>
     <main>
       <SiteFAQ
         h1={faq.h1}
@@ -65,5 +96,12 @@ export default async function FAQPage({ params }: Props) {
         siteSlug={slug}
       />
     </main>
+
+    {/* JSON-LD FAQPage schema */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+    />
+    </>
   )
 }

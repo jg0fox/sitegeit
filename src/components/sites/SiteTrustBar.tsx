@@ -76,6 +76,7 @@ export function SiteTrustBar({ items, iconStyle = 'bare' }: SiteTrustBarProps) {
           <div
             key={i}
             className="flex flex-col items-center gap-2 text-center"
+            data-source={item.source}
           >
             {renderTrustIcon(item.icon, iconStyle)}
             <span

@@ -7,6 +7,7 @@ import { SiteAbout } from '@/components/sites/SiteAbout'
 import { SiteCTA } from '@/components/sites/SiteCTA'
 import { SiteTrustBar } from '@/components/sites/SiteTrustBar'
 import { SiteSectionDivider } from '@/components/sites/SiteSectionDivider'
+import { buildLocalBusinessSchema } from '@/lib/utils/schema-org'
 import type { ReactNode } from 'react'
 
 interface Props {
@@ -77,8 +78,27 @@ export default async function SitePage({ params }: Props) {
     phone_display?: string
     phone_tel?: string
   } | undefined
-  const seo = site.seo_meta as { schema_type?: string; schema_data?: Record<string, unknown> } | null
+  const seo = site.seo_meta as {
+    homepage_description?: string
+  } | null
   const phoneTel = globalContent?.phone_tel || (business.phone as string)
+
+  // Build JSON-LD schema server-side using verified business data
+  const categorySlug = (business.category_slug as string) || (business.category as string || '').toLowerCase().replace(/\s+/g, '_')
+  const localBusinessSchema = buildLocalBusinessSchema({
+    businessName: business.name as string,
+    phone: globalContent?.phone_tel || (business.phone as string),
+    address: {
+      street: business.address_street as string | null,
+      city: business.address_city as string | null,
+      state: business.address_state as string | null,
+      zip: business.address_zip as string | null,
+    },
+    categorySlug,
+    rating: business.google_rating as number | null,
+    reviewCount: business.google_review_count as number | null,
+    description: seo?.homepage_description || undefined,
+  })
 
   // Extract component variants from theme config (populated by generate-site.ts)
   const themeConfig = site.theme_config as {
@@ -94,6 +114,12 @@ export default async function SitePage({ params }: Props) {
   const heroBackground = variants?.heroBackground || 'solid'
   const sectionDivider = variants?.sectionDivider || 'none'
   const iconStyle = variants?.iconStyle || 'bare'
+
+  // Extract content metadata for data-source attributes
+  const contentMetadata = site.content_metadata as {
+    default_fields?: string[]
+  } | null
+  const defaultFields = contentMetadata?.default_fields || []
 
   // Data-driven section ordering — use section_order from AI output, or fallback for legacy sites
   const sectionOrder = homepage.section_order || FALLBACK_SECTION_ORDER
@@ -163,6 +189,7 @@ export default async function SitePage({ params }: Props) {
         servicePageSlugs={servicePageSlugs}
         cardVariant={cardVariant}
         iconStyle={iconStyle}
+        dataSource={defaultFields.includes('services') ? 'default' : 'verified'}
       />
     ),
     social_proof: (
@@ -211,19 +238,13 @@ export default async function SitePage({ params }: Props) {
         ))}
       </main>
 
-      {/* Schema.org markup */}
-      {seo?.schema_data && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': seo.schema_type || 'LocalBusiness',
-              ...seo.schema_data,
-            }),
-          }}
-        />
-      )}
+      {/* JSON-LD LocalBusiness schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(localBusinessSchema),
+        }}
+      />
     </>
   )
 }
