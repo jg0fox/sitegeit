@@ -5,6 +5,7 @@ import { SiteServiceHero } from '@/components/sites/SiteServiceHero'
 import { SiteServiceDetails } from '@/components/sites/SiteServiceDetails'
 import { SiteServiceWhy } from '@/components/sites/SiteServiceWhy'
 import { SiteServiceRelated } from '@/components/sites/SiteServiceRelated'
+import { SiteSectionDivider } from '@/components/sites/SiteSectionDivider'
 
 interface ServicePage {
   slug: string
@@ -78,6 +79,21 @@ export default async function ServicePageRoute({ params }: Props) {
   } | undefined
   const phone = globalContent?.phone_tel || (business.phone as string) || null
 
+  // Extract component variants
+  const themeConfig = site.theme_config as {
+    componentVariants?: {
+      card: 'flat' | 'bordered' | 'accent-top' | 'accent-left'
+      heroBackground: 'solid' | 'gradient' | 'pattern'
+      sectionDivider: 'none' | 'angled' | 'curved' | 'line'
+      iconStyle: 'bare' | 'circle-bg' | 'square-bg'
+    }
+  } | null
+  const variants = themeConfig?.componentVariants
+  const cardVariant = variants?.card || 'bordered'
+  const heroBackground = variants?.heroBackground || 'solid'
+  const sectionDivider = variants?.sectionDivider || 'none'
+  const iconStyle = variants?.iconStyle || 'bare'
+
   const relatedServices = servicePages
     .filter((s) => s.slug !== serviceSlug)
     .slice(0, 3)
@@ -94,73 +110,88 @@ export default async function ServicePageRoute({ params }: Props) {
             { label: service.h1 },
           ]}
           siteSlug={slug}
+          heroBackground={heroBackground}
         />
+
+        <SiteSectionDivider variant={sectionDivider} />
 
         <SiteServiceDetails
           items={service.whats_involved}
+          cardVariant={cardVariant}
+          iconStyle={iconStyle}
         />
 
         {service.pricing && (
-          <section
-            className="px-4"
-            style={{
-              paddingTop: 'var(--space-section, 5rem)',
-              paddingBottom: 'var(--space-section, 5rem)',
-              backgroundColor: 'var(--color-surface)',
-            }}
-          >
-            <div
-              className="mx-auto"
-              style={{ maxWidth: 'var(--container-max-width, 1200px)' }}
+          <>
+            <SiteSectionDivider variant={sectionDivider} />
+            <section
+              className="px-4"
+              style={{
+                paddingTop: 'var(--space-section, 6rem)',
+                paddingBottom: 'var(--space-section, 6rem)',
+                backgroundColor: 'var(--color-section-alternate, var(--color-surface))',
+              }}
             >
               <div
-                className="border p-6 sm:p-8"
-                style={{
-                  borderColor: 'var(--color-border)',
-                  borderRadius: 'var(--radius-card)',
-                  backgroundColor: 'var(--color-primary-light, var(--color-background))',
-                }}
+                className="mx-auto"
+                style={{ maxWidth: 'var(--container-max-width, 1200px)' }}
               >
-                <div className="flex items-start gap-3">
-                  <span
-                    className="material-symbols-outlined mt-0.5"
-                    style={{ fontSize: '24px', color: 'var(--color-primary)' }}
-                  >
-                    payments
-                  </span>
-                  <div>
-                    <h2
-                      className="mb-2 text-lg font-semibold"
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontWeight: 'var(--font-weight-heading, 700)',
-                      }}
+                <div
+                  className="border p-6 sm:p-8"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    borderRadius: 'var(--radius-card)',
+                    backgroundColor: 'var(--color-primary-light, var(--color-background))',
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className="material-symbols-outlined mt-0.5"
+                      style={{ fontSize: '24px', color: 'var(--color-accent, var(--color-primary))' }}
                     >
-                      Pricing
-                    </h2>
-                    <p
-                      className="leading-relaxed"
-                      style={{ color: 'var(--color-text-secondary)' }}
-                    >
-                      {service.pricing}
-                    </p>
+                      payments
+                    </span>
+                    <div>
+                      <h2
+                        className="mb-2 text-lg font-semibold"
+                        style={{
+                          fontFamily: 'var(--font-heading)',
+                          fontWeight: 'var(--font-weight-heading, 700)',
+                        }}
+                      >
+                        Pricing
+                      </h2>
+                      <p
+                        className="leading-relaxed"
+                        style={{ color: 'var(--color-text-secondary)' }}
+                      >
+                        {service.pricing}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </>
         )}
+
+        <SiteSectionDivider variant={sectionDivider} />
 
         <SiteServiceWhy
           items={service.why_this_business}
           businessName={business.name as string}
+          cardVariant={cardVariant}
         />
 
         {relatedServices.length > 0 && (
-          <SiteServiceRelated
-            services={relatedServices.map((s) => ({ name: s.h1, slug: s.slug }))}
-            siteSlug={slug}
-          />
+          <>
+            <SiteSectionDivider variant={sectionDivider} />
+            <SiteServiceRelated
+              services={relatedServices.map((s) => ({ name: s.h1, slug: s.slug }))}
+              siteSlug={slug}
+              cardVariant={cardVariant}
+            />
+          </>
         )}
     </main>
   )

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { SiteBreadcrumb } from './SiteBreadcrumb'
 
 interface SiteServiceHeroProps {
@@ -7,6 +8,26 @@ interface SiteServiceHeroProps {
   phoneTel: string | null
   breadcrumbs: { label: string; href?: string }[]
   siteSlug: string
+  heroBackground?: 'solid' | 'gradient' | 'pattern'
+}
+
+function getHeroBgStyle(variant: string): CSSProperties {
+  switch (variant) {
+    case 'gradient':
+      return {
+        background: 'linear-gradient(135deg, var(--color-section-primary, var(--color-surface)) 0%, var(--color-background) 100%)',
+      }
+    case 'pattern':
+      return {
+        backgroundColor: 'var(--color-section-primary, var(--color-surface))',
+        backgroundImage: 'radial-gradient(circle at 25px 25px, rgba(var(--color-primary-rgb, 0,0,0), 0.04) 2px, transparent 0)',
+        backgroundSize: '50px 50px',
+      }
+    default:
+      return {
+        backgroundColor: 'var(--color-section-primary, var(--color-background))',
+      }
+  }
 }
 
 export function SiteServiceHero({
@@ -16,6 +37,7 @@ export function SiteServiceHero({
   phoneTel,
   breadcrumbs,
   siteSlug,
+  heroBackground = 'solid',
 }: SiteServiceHeroProps) {
   function getCtaHref(type: string) {
     if (type === 'phone' && phoneTel) return `tel:${phoneTel}`
@@ -27,8 +49,9 @@ export function SiteServiceHero({
     <section
       className="px-4"
       style={{
-        paddingTop: 'var(--space-section, 5rem)',
-        paddingBottom: 'var(--space-section, 5rem)',
+        paddingTop: 'clamp(3rem, 6vw, 6rem)',
+        paddingBottom: 'var(--space-section, 6rem)',
+        ...getHeroBgStyle(heroBackground),
       }}
     >
       <div className="mx-auto" style={{ maxWidth: 'var(--container-max-width, 1200px)' }}>
@@ -38,19 +61,20 @@ export function SiteServiceHero({
 
         <div className="max-w-2xl">
           <h1
-            className="mb-4 text-3xl sm:text-4xl md:text-5xl"
+            className="mb-4"
             style={{
               fontFamily: 'var(--font-heading)',
               fontWeight: 'var(--font-weight-heading, 700)',
               letterSpacing: 'var(--tracking-heading, -0.02em)',
-              lineHeight: 1.15,
+              lineHeight: 1.1,
+              fontSize: 'clamp(2rem, 4vw, 3.5rem)',
             }}
           >
             {h1}
           </h1>
 
           <p
-            className="mb-8 text-lg leading-relaxed"
+            className="mb-8 text-lg leading-relaxed sm:text-xl"
             style={{ color: 'var(--color-text-secondary)' }}
           >
             {opening}
@@ -58,7 +82,7 @@ export function SiteServiceHero({
 
           <a
             href={getCtaHref(cta.type)}
-            className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white transition-colors"
+            className="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold text-white transition-colors"
             style={{
               backgroundColor: 'var(--color-primary)',
               borderRadius: 'var(--radius-button)',

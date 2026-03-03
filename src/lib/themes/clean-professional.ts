@@ -39,4 +39,15 @@ export const cleanProfessional: ThemeConfig = {
     durationNormal: '250ms',
     reducedMotion: false,
   },
+  componentVariants: {
+    card: 'bordered',
+    heroBackground: 'solid',
+    sectionDivider: 'line',
+    iconStyle: 'bare',
+  },
+  sectionBackgrounds: {
+    primary: '#f0f4f8',
+    default: '#ffffff',
+    alternate: '#f8f9fa',
+  },
 }

@@ -6,6 +6,7 @@ import { SiteTestimonials } from '@/components/sites/SiteTestimonials'
 import { SiteAbout } from '@/components/sites/SiteAbout'
 import { SiteCTA } from '@/components/sites/SiteCTA'
 import { SiteTrustBar } from '@/components/sites/SiteTrustBar'
+import { SiteSectionDivider } from '@/components/sites/SiteSectionDivider'
 import type { ReactNode } from 'react'
 
 interface Props {
@@ -79,6 +80,21 @@ export default async function SitePage({ params }: Props) {
   const seo = site.seo_meta as { schema_type?: string; schema_data?: Record<string, unknown> } | null
   const phoneTel = globalContent?.phone_tel || (business.phone as string)
 
+  // Extract component variants from theme config (populated by generate-site.ts)
+  const themeConfig = site.theme_config as {
+    componentVariants?: {
+      card: 'flat' | 'bordered' | 'accent-top' | 'accent-left'
+      heroBackground: 'solid' | 'gradient' | 'pattern'
+      sectionDivider: 'none' | 'angled' | 'curved' | 'line'
+      iconStyle: 'bare' | 'circle-bg' | 'square-bg'
+    }
+  } | null
+  const variants = themeConfig?.componentVariants
+  const cardVariant = variants?.card || 'bordered'
+  const heroBackground = variants?.heroBackground || 'solid'
+  const sectionDivider = variants?.sectionDivider || 'none'
+  const iconStyle = variants?.iconStyle || 'bare'
+
   // Data-driven section ordering — use section_order from AI output, or fallback for legacy sites
   const sectionOrder = homepage.section_order || FALLBACK_SECTION_ORDER
 
@@ -128,12 +144,14 @@ export default async function SitePage({ params }: Props) {
         primaryCta={homepage.hero.primary_cta}
         secondaryCta={homepage.hero.secondary_cta}
         phoneTel={phoneTel}
+        heroBackground={heroBackground}
       />
     ),
     trust_bar: homepage.trust_bar ? (
       <SiteTrustBar
         key="trust_bar"
         items={homepage.trust_bar.items}
+        iconStyle={iconStyle}
       />
     ) : null,
     services: (
@@ -143,6 +161,8 @@ export default async function SitePage({ params }: Props) {
         services={homepage.services_section.services}
         siteSlug={slug}
         servicePageSlugs={servicePageSlugs}
+        cardVariant={cardVariant}
+        iconStyle={iconStyle}
       />
     ),
     social_proof: (
@@ -150,6 +170,8 @@ export default async function SitePage({ params }: Props) {
         key="social_proof"
         ratingDisplay={homepage.social_proof?.rating_display ?? null}
         testimonials={homepage.social_proof?.featured_testimonials ?? []}
+        businessName={business.name as string}
+        cardVariant={cardVariant}
       />
     ),
     about: homepage.about_snippet ? (
@@ -171,10 +193,22 @@ export default async function SitePage({ params }: Props) {
     ),
   }
 
+  // Render sections with dividers between them
+  const renderedSections = sectionOrder
+    .map(key => sectionMap[key])
+    .filter(Boolean)
+
   return (
     <>
       <main>
-        {sectionOrder.map(key => sectionMap[key]).filter(Boolean)}
+        {renderedSections.map((section, i) => (
+          <div key={i}>
+            {section}
+            {i < renderedSections.length - 1 && (
+              <SiteSectionDivider variant={sectionDivider} />
+            )}
+          </div>
+        ))}
       </main>
 
       {/* Schema.org markup */}

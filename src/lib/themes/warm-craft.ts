@@ -39,4 +39,15 @@ export const warmCraft: ThemeConfig = {
     durationNormal: '250ms',
     reducedMotion: false,
   },
+  componentVariants: {
+    card: 'bordered',
+    heroBackground: 'solid',
+    sectionDivider: 'curved',
+    iconStyle: 'circle-bg',
+  },
+  sectionBackgrounds: {
+    primary: '#fef3c7',
+    default: '#fffbeb',
+    alternate: '#fef9e7',
+  },
 }

@@ -39,4 +39,15 @@ export const naturalEarth: ThemeConfig = {
     durationNormal: '250ms',
     reducedMotion: false,
   },
+  componentVariants: {
+    card: 'bordered',
+    heroBackground: 'pattern',
+    sectionDivider: 'curved',
+    iconStyle: 'circle-bg',
+  },
+  sectionBackgrounds: {
+    primary: '#f5f0e8',
+    default: '#fefce8',
+    alternate: '#faf5e0',
+  },
 }

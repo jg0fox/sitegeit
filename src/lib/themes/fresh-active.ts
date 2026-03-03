@@ -39,4 +39,15 @@ export const freshActive: ThemeConfig = {
     durationNormal: '150ms',
     reducedMotion: true,
   },
+  componentVariants: {
+    card: 'accent-top',
+    heroBackground: 'gradient',
+    sectionDivider: 'angled',
+    iconStyle: 'square-bg',
+  },
+  sectionBackgrounds: {
+    primary: '#18181b',
+    default: '#09090b',
+    alternate: '#111113',
+  },
 }

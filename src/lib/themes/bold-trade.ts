@@ -39,4 +39,15 @@ export const boldTrade: ThemeConfig = {
     durationNormal: '200ms',
     reducedMotion: true,
   },
+  componentVariants: {
+    card: 'accent-top',
+    heroBackground: 'gradient',
+    sectionDivider: 'angled',
+    iconStyle: 'square-bg',
+  },
+  sectionBackgrounds: {
+    primary: '#1e293b',
+    default: '#0f172a',
+    alternate: '#162036',
+  },
 }

@@ -39,4 +39,15 @@ export const softCare: ThemeConfig = {
     durationNormal: '300ms',
     reducedMotion: false,
   },
+  componentVariants: {
+    card: 'bordered',
+    heroBackground: 'solid',
+    sectionDivider: 'none',
+    iconStyle: 'circle-bg',
+  },
+  sectionBackgrounds: {
+    primary: '#f0f9ff',
+    default: '#ffffff',
+    alternate: '#f8fafc',
+  },
 }

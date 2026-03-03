@@ -39,4 +39,15 @@ export const modernMinimal: ThemeConfig = {
     durationNormal: '200ms',
     reducedMotion: false,
   },
+  componentVariants: {
+    card: 'flat',
+    heroBackground: 'solid',
+    sectionDivider: 'none',
+    iconStyle: 'bare',
+  },
+  sectionBackgrounds: {
+    primary: '#f5f5f5',
+    default: '#ffffff',
+    alternate: '#fafafa',
+  },
 }

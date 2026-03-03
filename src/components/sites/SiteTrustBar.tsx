@@ -1,13 +1,66 @@
 interface SiteTrustBarProps {
   items: { icon: string; text: string; source: 'verified' | 'inferred' | 'default' }[]
+  iconStyle?: 'bare' | 'circle-bg' | 'square-bg'
 }
 
-export function SiteTrustBar({ items }: SiteTrustBarProps) {
+function renderTrustIcon(iconName: string, style: string) {
+  const icon = (
+    <span
+      className="material-symbols-outlined"
+      style={{ fontSize: '24px', color: 'var(--color-primary)' }}
+    >
+      {iconName}
+    </span>
+  )
+
+  if (style === 'circle-bg') {
+    return (
+      <span
+        className="inline-flex items-center justify-center"
+        style={{
+          width: '44px',
+          height: '44px',
+          borderRadius: '50%',
+          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+        }}
+      >
+        {icon}
+      </span>
+    )
+  }
+
+  if (style === 'square-bg') {
+    return (
+      <span
+        className="inline-flex items-center justify-center"
+        style={{
+          width: '44px',
+          height: '44px',
+          borderRadius: 'var(--radius-sm, 4px)',
+          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+        }}
+      >
+        {icon}
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className="material-symbols-outlined"
+      style={{ fontSize: '28px', color: 'var(--color-accent, var(--color-primary))' }}
+    >
+      {iconName}
+    </span>
+  )
+}
+
+export function SiteTrustBar({ items, iconStyle = 'bare' }: SiteTrustBarProps) {
   return (
     <section
       className="px-4 py-8 sm:py-10"
       style={{
-        backgroundColor: 'color-mix(in srgb, var(--color-surface) 85%, var(--color-primary) 15%)',
+        backgroundColor: 'var(--color-section-alternate, var(--color-surface))',
         borderTop: '1px solid var(--color-border)',
         borderBottom: '1px solid var(--color-border)',
       }}
@@ -21,15 +74,7 @@ export function SiteTrustBar({ items }: SiteTrustBarProps) {
             key={i}
             className="flex flex-col items-center gap-2 text-center"
           >
-            <span
-              className="material-symbols-outlined"
-              style={{
-                fontSize: '28px',
-                color: 'var(--color-primary)',
-              }}
-            >
-              {item.icon}
-            </span>
+            {renderTrustIcon(item.icon, iconStyle)}
             <span
               className="text-xs font-medium sm:text-sm"
               style={{ color: 'var(--color-text-secondary)' }}

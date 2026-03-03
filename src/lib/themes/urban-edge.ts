@@ -39,4 +39,15 @@ export const urbanEdge: ThemeConfig = {
     durationNormal: '150ms',
     reducedMotion: true,
   },
+  componentVariants: {
+    card: 'accent-left',
+    heroBackground: 'gradient',
+    sectionDivider: 'line',
+    iconStyle: 'square-bg',
+  },
+  sectionBackgrounds: {
+    primary: '#18181b',
+    default: '#09090b',
+    alternate: '#111113',
+  },
 }

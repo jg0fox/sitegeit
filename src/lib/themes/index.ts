@@ -46,6 +46,17 @@ export interface ThemeConfig {
     durationNormal: string
     reducedMotion: boolean
   }
+  componentVariants: {
+    card: 'flat' | 'bordered' | 'accent-top' | 'accent-left'
+    heroBackground: 'solid' | 'gradient' | 'pattern'
+    sectionDivider: 'none' | 'angled' | 'curved' | 'line'
+    iconStyle: 'bare' | 'circle-bg' | 'square-bg'
+  }
+  sectionBackgrounds: {
+    primary: string
+    default: string
+    alternate: string
+  }
 }
 
 export const THEMES: Record<string, ThemeConfig> = {
@@ -135,18 +146,31 @@ export function getThemeId(categorySlug: string): string {
   return CATEGORY_THEME_MAP[categorySlug] || 'clean-professional'
 }
 
+function hexToRgb(hex: string): string {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.substring(0, 2), 16)
+  const g = parseInt(h.substring(2, 4), 16)
+  const b = parseInt(h.substring(4, 6), 16)
+  return `${r}, ${g}, ${b}`
+}
+
 export function themeConfigToCSSVars(config: ThemeConfig): Record<string, string> {
   return {
     '--color-primary': config.colors.primary,
     '--color-primary-hover': config.colors.primaryHover,
     '--color-primary-light': config.colors.primaryLight,
     '--color-accent': config.colors.accent,
+    '--color-accent-rgb': hexToRgb(config.colors.accent),
+    '--color-primary-rgb': hexToRgb(config.colors.primary),
     '--color-link': config.colors.link,
     '--color-background': config.colors.background,
     '--color-surface': config.colors.surface,
     '--color-text-primary': config.colors.textPrimary,
     '--color-text-secondary': config.colors.textSecondary,
     '--color-border': config.colors.border,
+    '--color-section-primary': config.sectionBackgrounds.primary,
+    '--color-section-default': config.sectionBackgrounds.default,
+    '--color-section-alternate': config.sectionBackgrounds.alternate,
     '--font-heading': config.typography.headingFont,
     '--font-body': config.typography.bodyFont,
     '--font-weight-heading': String(config.typography.headingWeight),
