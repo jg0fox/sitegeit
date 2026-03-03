@@ -171,6 +171,7 @@ export default async function SitePage({ params }: Props) {
         secondaryCta={homepage.hero.secondary_cta}
         phoneTel={phoneTel}
         heroBackground={heroBackground}
+        heroImageUrl={site.hero_image_url as string | null}
       />
     ),
     trust_bar: homepage.trust_bar ? (
@@ -199,6 +200,7 @@ export default async function SitePage({ params }: Props) {
         testimonials={homepage.social_proof?.featured_testimonials ?? []}
         businessName={business.name as string}
         cardVariant={cardVariant}
+        googlePlaceId={business.google_place_id as string | null}
       />
     ),
     about: homepage.about_snippet ? (
@@ -207,6 +209,7 @@ export default async function SitePage({ params }: Props) {
         heading={homepage.about_snippet.heading}
         body={homepage.about_snippet.body}
         ownerName={homepage.about_snippet.owner_name}
+        imageUrl={site.about_image_url as string | null}
       />
     ) : null,
     cta: (

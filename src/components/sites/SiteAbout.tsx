@@ -2,9 +2,10 @@ interface SiteAboutProps {
   heading: string
   body: string
   ownerName: string | null
+  imageUrl?: string | null
 }
 
-export function SiteAbout({ heading, body, ownerName }: SiteAboutProps) {
+export function SiteAbout({ heading, body, ownerName, imageUrl }: SiteAboutProps) {
   return (
     <section
       className="px-4"
@@ -34,6 +35,21 @@ export function SiteAbout({ heading, body, ownerName }: SiteAboutProps) {
             borderRadius: '2px',
           }}
         />
+        {imageUrl && (
+          <div className="mb-6">
+            <img
+              src={imageUrl}
+              alt=""
+              className="mx-auto rounded-lg"
+              style={{
+                maxWidth: '280px',
+                width: '100%',
+                height: 'auto',
+                borderRadius: 'var(--radius-card, 12px)',
+              }}
+            />
+          </div>
+        )}
         <p
           className="mb-4 text-base leading-relaxed sm:text-lg"
           style={{ color: 'var(--color-text-secondary)' }}

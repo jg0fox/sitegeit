@@ -44,6 +44,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = seo?.homepage_description || ''
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
   const pageUrl = `${baseUrl}/sites/${slug}`
+  const heroImageUrl = site.hero_image_url as string | null
+
+  const ogImages = heroImageUrl
+    ? [{ url: heroImageUrl, width: 1600, height: 900, alt: businessName }]
+    : undefined
 
   return {
     title,
@@ -58,6 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: businessName,
       type: 'website',
       locale: 'en_US',
+      images: ogImages,
     },
   }
 }
@@ -100,6 +106,10 @@ export default async function SiteLayout({ children, params }: Props) {
   return (
     <html lang="en">
       <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+          rel="stylesheet"
+        />
         {fontsUrl && <link rel="stylesheet" href={fontsUrl} />}
       </head>
       <body style={cssVars as React.CSSProperties}>

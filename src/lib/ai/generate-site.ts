@@ -8,6 +8,7 @@ import {
 import { getThemeForCategory, getThemeId, getLayoutForCategory, themeConfigToCSSVars } from '@/lib/themes'
 import { getCategoryDefaults } from '@/lib/defaults/category-defaults'
 import { mergeEnrichmentWithDefaults } from '@/lib/defaults/merge'
+import { getCategoryImageUrls } from '@/lib/images/category-images'
 import type { DataConfidence } from './prompts/enrichment'
 
 export async function generateSite(businessId: string): Promise<{ siteId: string; content: SiteContentOutput }> {
@@ -36,10 +37,18 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
   const layoutVariant = getLayoutForCategory(categorySlug)
   const themeConfig = getThemeForCategory(categorySlug)
 
+  // Resolve category stock images
+  const categoryImages = getCategoryImageUrls(categorySlug)
+
   // Merge enrichment data with category defaults
   const categoryDefaults = getCategoryDefaults(categorySlug)
   const enrichmentConfidence = (business.enrichment_confidence as DataConfidence) || null
-  const mergedProfile = mergeEnrichmentWithDefaults(business, enrichmentConfidence, categoryDefaults)
+  const mergedProfile = mergeEnrichmentWithDefaults(
+    business,
+    enrichmentConfidence,
+    categoryDefaults,
+    { hero: !!categoryImages, about: !!categoryImages },
+  )
 
   const userPrompt = buildSiteGenerationPrompt({
     enriched_profile_json: JSON.stringify(mergedProfile, null, 2),
@@ -69,6 +78,8 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
     seo_meta: content.seo,
     trust_bar: content.homepage.trust_bar,
     content_metadata: content.content_metadata,
+    hero_image_url: categoryImages?.heroUrl ?? null,
+    about_image_url: categoryImages?.aboutUrl ?? null,
     deploy_url: slug,
     deploy_status: 'pending',
   }

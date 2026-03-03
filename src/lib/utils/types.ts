@@ -43,6 +43,14 @@ export interface ActivityEvent {
 // Discovery / Google Places types
 // ============================================================
 
+export interface PlaceReview {
+  author_name: string
+  rating: number
+  text: string
+  time: number
+  language?: string
+}
+
 export interface PlaceResult {
   place_id: string
   name: string
@@ -56,6 +64,7 @@ export interface PlaceResult {
   website?: string
   opening_hours?: { open_now?: boolean; weekday_text?: string[] }
   photos?: { photo_reference: string; width: number; height: number }[]
+  reviews?: PlaceReview[]
 }
 
 export interface DiscoveryResult extends PlaceResult {

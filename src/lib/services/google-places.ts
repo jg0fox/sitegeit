@@ -44,6 +44,7 @@ interface GooglePlaceDetails {
   photos?: { photo_reference: string; width: number; height: number }[]
   opening_hours?: { open_now?: boolean; weekday_text?: string[] }
   url?: string // Google Maps URL
+  reviews?: { author_name: string; rating: number; text: string; time: number; language?: string }[]
 }
 
 interface GeocodeResponse {
@@ -131,6 +132,7 @@ export async function getPlaceDetails(
     'photos',
     'opening_hours',
     'url',
+    'reviews',
   ].join(',')
 
   const url = `${PLACES_BASE}/details/json?place_id=${placeId}&fields=${fields}&key=${API_KEY}`
@@ -157,6 +159,13 @@ export async function getPlaceDetails(
     website: d.website,
     photos: d.photos,
     opening_hours: d.opening_hours,
+    reviews: d.reviews?.map(r => ({
+      author_name: r.author_name,
+      rating: r.rating,
+      text: r.text,
+      time: r.time,
+      language: r.language,
+    })),
   }
 }
 

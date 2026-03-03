@@ -107,6 +107,13 @@ ALWAYS include but ADAPT:
 When a section is omitted, add its name to content_metadata.sections_omitted.
 The section_order array must only list sections that ARE included.
 
+## Image Awareness
+
+The profile includes _has_hero_image and _has_about_image flags:
+- When _has_hero_image is true: the hero section will render with a background image and dark overlay. Write headline/subheadline text that works on a dark background. Keep the og_image_text short (3-5 words) since it will overlay the hero image.
+- When _has_about_image is true: the about page will include a float-layout image. The about_snippet on the homepage will also show the image.
+- Images are stock category photos — do not reference specific image content.
+
 You generate content as structured JSON.`
 
 export interface SiteGenerationInput {

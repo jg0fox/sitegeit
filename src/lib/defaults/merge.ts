@@ -20,6 +20,7 @@ export interface MergedProfile {
   service_area: string | null
   target_audience: string | null
   review_sentiment: string | null
+  top_review_excerpts: string[]
   owner_name: string | null
 
   // From category defaults (always present after merge)
@@ -28,6 +29,10 @@ export interface MergedProfile {
   faq_templates: { question: string; answer_template: string }[]
   hero_options: { headline_template: string; subheadline_template: string }[]
   cta_language: { primary: string; secondary: string }
+
+  // Image availability (resolved by generate-site.ts, passed to prompt for context)
+  _has_hero_image: boolean
+  _has_about_image: boolean
 
   // Confidence metadata (passes through to generation prompt)
   _confidence: DataConfidence
@@ -75,6 +80,7 @@ export function mergeEnrichmentWithDefaults(
   business: Record<string, unknown>,
   enrichmentConfidence: DataConfidence | null,
   defaults: CategoryDefaults | null,
+  imageAvailability?: { hero: boolean; about: boolean },
 ): MergedProfile {
   const confidence = enrichmentConfidence ?? DEFAULT_CONFIDENCE
 
@@ -153,12 +159,15 @@ export function mergeEnrichmentWithDefaults(
     service_area: (business.service_area as string) || null,
     target_audience: (business.target_audience as string) || null,
     review_sentiment: (business.review_sentiment as string) || null,
+    top_review_excerpts: (business.top_review_excerpts as string[]) ?? [],
     owner_name: (business.owner_name as string) || null,
     service_details: serviceDetails,
     trust_signals: defaults?.trust_signals ?? FALLBACK_DEFAULTS.trust_signals,
     faq_templates: faqTemplates,
     hero_options: heroOptions,
     cta_language: defaults?.cta_language ?? FALLBACK_DEFAULTS.cta_language,
+    _has_hero_image: imageAvailability?.hero ?? false,
+    _has_about_image: imageAvailability?.about ?? false,
     _confidence: confidence,
     _source: {
       services: confidence.fields.services,

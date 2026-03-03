@@ -73,6 +73,7 @@ export default async function AboutPage({ params }: Props) {
   }
 
   const about = site.about_content as AboutContent | null
+  const aboutImageUrl = site.about_image_url as string | null
 
   if (!about) {
     notFound()
@@ -110,6 +111,17 @@ export default async function AboutPage({ params }: Props) {
             </h1>
 
             <div className="mx-auto max-w-3xl">
+              {/* Float image right on desktop, stack on mobile */}
+              {aboutImageUrl && (
+                <div className="mb-6 sm:float-right sm:mb-4 sm:ml-8 sm:w-[280px] md:w-[320px]">
+                  <img
+                    src={aboutImageUrl}
+                    alt=""
+                    className="w-full rounded-lg"
+                    style={{ borderRadius: 'var(--radius-card, 12px)' }}
+                  />
+                </div>
+              )}
               <p
                 className="mb-10 text-base leading-relaxed sm:text-lg"
                 style={{
