@@ -8,13 +8,14 @@ interface SiteServicesProps {
   heading: string
   services: Service[]
   siteSlug?: string
+  servicePageSlugs?: Map<string, string> // service name → slug
 }
 
 function toSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
-export function SiteServices({ heading, services, siteSlug }: SiteServicesProps) {
+export function SiteServices({ heading, services, siteSlug, servicePageSlugs }: SiteServicesProps) {
   return (
     <section
       id="services"
@@ -34,7 +35,8 @@ export function SiteServices({ heading, services, siteSlug }: SiteServicesProps)
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => {
-            const href = siteSlug ? `/sites/${siteSlug}/${toSlug(service.name)}` : undefined
+            const serviceSlug = servicePageSlugs?.get(service.name) ?? toSlug(service.name)
+            const href = siteSlug ? `/sites/${siteSlug}/${serviceSlug}` : undefined
             const cardContent = (
               <>
                 <span

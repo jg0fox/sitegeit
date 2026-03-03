@@ -82,6 +82,17 @@ export default async function SitePage({ params }: Props) {
   // Data-driven section ordering — use section_order from AI output, or fallback for legacy sites
   const sectionOrder = homepage.section_order || FALLBACK_SECTION_ORDER
 
+  // Build service name → slug lookup from service_pages for correct internal linking
+  const servicePages = (site.service_pages || []) as { slug: string; h1: string }[]
+  const servicePageSlugs = new Map<string, string>()
+  for (const sp of servicePages) {
+    // Match service card name to its page slug
+    // Service card name: "Engine Diagnostics"
+    // Service page h1: "Engine Diagnostics in Denver, CO"
+    const shortName = sp.h1.replace(/\s+in\s+.*$/, '')
+    servicePageSlugs.set(shortName, sp.slug)
+  }
+
   // Map section keys to rendered components
   const sectionMap: Record<string, ReactNode> = {
     hero: (
@@ -106,6 +117,7 @@ export default async function SitePage({ params }: Props) {
         heading={homepage.services_section.heading}
         services={homepage.services_section.services}
         siteSlug={slug}
+        servicePageSlugs={servicePageSlugs}
       />
     ),
     social_proof: (
