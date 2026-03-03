@@ -83,14 +83,39 @@ export default async function SitePage({ params }: Props) {
   const sectionOrder = homepage.section_order || FALLBACK_SECTION_ORDER
 
   // Build service name → slug lookup from service_pages for correct internal linking
+  // AI generates card names and page h1s independently, so we use multiple matching strategies
   const servicePages = (site.service_pages || []) as { slug: string; h1: string }[]
   const servicePageSlugs = new Map<string, string>()
-  for (const sp of servicePages) {
-    // Match service card name to its page slug
-    // Service card name: "Engine Diagnostics"
-    // Service page h1: "Engine Diagnostics in Denver, CO"
-    const shortName = sp.h1.replace(/\s+in\s+.*$/, '')
-    servicePageSlugs.set(shortName, sp.slug)
+
+  function toSlug(name: string) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  }
+
+  for (const cardService of homepage.services_section.services) {
+    const cardSlug = toSlug(cardService.name)
+    // Strategy 1: exact h1 short name match
+    const exactMatch = servicePages.find(sp => {
+      const shortName = sp.h1.replace(/\s+in\s+.*$/, '')
+      return shortName === cardService.name
+    })
+    if (exactMatch) {
+      servicePageSlugs.set(cardService.name, exactMatch.slug)
+      continue
+    }
+    // Strategy 2: card slug is a prefix of a service page slug
+    const prefixMatch = servicePages.find(sp => sp.slug.startsWith(cardSlug))
+    if (prefixMatch) {
+      servicePageSlugs.set(cardService.name, prefixMatch.slug)
+      continue
+    }
+    // Strategy 3: service page slug is contained in the card slug
+    const containsMatch = servicePages.find(sp => {
+      const spBase = sp.slug.replace(/-[a-z]+$/, '') // strip trailing city name
+      return cardSlug.includes(spBase) || spBase.includes(cardSlug)
+    })
+    if (containsMatch) {
+      servicePageSlugs.set(cardService.name, containsMatch.slug)
+    }
   }
 
   // Map section keys to rendered components
