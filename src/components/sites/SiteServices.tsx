@@ -8,7 +8,7 @@ interface SiteServicesProps {
   heading: string
   services: Service[]
   siteSlug?: string
-  servicePageSlugs?: Map<string, string> // service name → slug
+  servicePageSlugs?: Record<string, string> // service name → slug
 }
 
 function toSlug(name: string) {
@@ -35,7 +35,7 @@ export function SiteServices({ heading, services, siteSlug, servicePageSlugs }: 
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => {
-            const serviceSlug = servicePageSlugs?.get(service.name) ?? toSlug(service.name)
+            const serviceSlug = servicePageSlugs?.[service.name] ?? toSlug(service.name)
             const href = siteSlug ? `/sites/${siteSlug}/${serviceSlug}` : undefined
             const cardContent = (
               <>
