@@ -10,6 +10,7 @@ interface SiteNavProps {
   phoneTel: string | null
   services: { name: string; slug: string }[]
   siteSlug: string
+  navLabels?: { services?: string; faq?: string }
 }
 
 export function SiteNav({
@@ -18,6 +19,7 @@ export function SiteNav({
   phoneTel,
   services,
   siteSlug,
+  navLabels,
 }: SiteNavProps) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -37,11 +39,14 @@ export function SiteNav({
     if (services.some(s => s.slug === segment)) currentPage = segment
   }
 
+  const servicesLabel = navLabels?.services || 'Services'
+  const faqLabel = navLabels?.faq || 'FAQ'
+
   const navLinks = [
     { label: 'Home', href: basePath, key: 'home' },
     { label: 'About', href: `${basePath}/about`, key: 'about' },
     { label: 'Contact', href: `${basePath}/contact`, key: 'contact' },
-    { label: 'FAQ', href: `${basePath}/faq`, key: 'faq' },
+    { label: faqLabel, href: `${basePath}/faq`, key: 'faq' },
   ]
 
   // Close services dropdown when clicking outside
@@ -185,7 +190,7 @@ export function SiteNav({
                 aria-expanded={servicesDropdownOpen}
                 aria-haspopup="true"
               >
-                Services
+                {servicesLabel}
                 <span
                   className="material-symbols-outlined transition-transform duration-200"
                   style={{
@@ -313,7 +318,7 @@ export function SiteNav({
                 className="block py-3 text-xs font-semibold uppercase tracking-wider"
                 style={{ color: 'var(--color-text-secondary, #64748b)' }}
               >
-                Services
+                {servicesLabel}
               </span>
               {services.map((service) => (
                 <Link

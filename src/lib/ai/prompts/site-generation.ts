@@ -61,6 +61,8 @@ export const SITE_GENERATION_SYSTEM_PROMPT = `You are an expert content designer
 
 10. ACCESSIBILITY. All generated content must support WCAG 2.2 Level AA compliance. Use semantic heading hierarchy (one H1 per page, H2 for sections, H3 for cards). Write descriptive link text (never "click here"). Ensure form fields have proper labels. Provide alt text guidance in icon_suggestion fields.
 
+11. ICON NAMES. All icon values (icon_suggestion, icon fields in trust_bar items) must be a single valid Material Symbols Outlined identifier — a short lowercase_underscore name like "plumbing", "bakery_dining", "verified", "build", "electrical_services". NEVER use descriptive phrases like "A round loaf of artisan bread" or "wrench and pipe". Common valid icons: plumbing, electrical_services, build, roofing, hvac, directions_car, bakery_dining, restaurant, coffee, cake, dentistry, pets, spa, fitness_center, content_cut, gavel, calculate, home, photo_camera, yard, cleaning_services, local_florist, storefront, schedule, payments, verified, check_circle, star, shield, workspace_premium, health_and_safety, eco, local_shipping, speed, bolt.
+
 ## Tone Spectrum Integration
 
 The voice_archetype from the business profile maps to these 5 tone dimensions. Use them to calibrate ALL generated content consistently — headings, descriptions, CTAs, and about copy should all feel like they were written by the same person.
@@ -182,6 +184,7 @@ export interface SiteContentOutput {
     phone_display: string
     phone_tel: string
     sticky_cta: { phone: boolean; button_label: string; button_type: string }
+    nav_labels: { services: string; faq: string }
   }
   content_metadata: {
     data_confidence: 'high' | 'medium' | 'low'
@@ -304,7 +307,11 @@ The layout variant "${input.layout_variant}" determines the starting section_ord
   "global": {
     "phone_display": "(303) 555-0123",
     "phone_tel": "+13035550123",
-    "sticky_cta": { "phone": true, "button_label": "...", "button_type": "phone | form" }
+    "sticky_cta": { "phone": true, "button_label": "...", "button_type": "phone | form" },
+    "nav_labels": {
+      "services": "category-appropriate label: 'Services' for trades/professional, 'What We Offer' or 'Our Menu' for food/hospitality, 'Treatments' for health/wellness, 'What We Do' for creative",
+      "faq": "'FAQ' or 'Common Questions'"
+    }
   },
   "content_metadata": {
     "data_confidence": "high | medium | low — from the profile's _confidence.overall",

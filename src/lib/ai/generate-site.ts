@@ -61,7 +61,7 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
     theme_id: themeId,
     layout_variant: layoutVariant,
     theme_config: { ...themeConfig, cssVars: themeConfigToCSSVars(themeConfig) },
-    homepage_content: content.homepage,
+    homepage_content: { ...content.homepage, global: content.global },
     service_pages: content.service_pages,
     about_content: content.about_page,
     contact_content: content.contact_page,

@@ -71,6 +71,7 @@ export default async function SiteLayout({ children, params }: Props) {
   const globalContent = (site.homepage_content as Record<string, unknown>)?.global as {
     phone_display?: string
     phone_tel?: string
+    nav_labels?: { services?: string; faq?: string }
   } | undefined
   const servicePages = (site.service_pages || []) as { slug: string; h1: string }[]
   const navServices = servicePages.map(sp => ({
@@ -98,6 +99,7 @@ export default async function SiteLayout({ children, params }: Props) {
             phoneTel={globalContent?.phone_tel || (business.phone as string)}
             services={navServices}
             siteSlug={slug}
+            navLabels={globalContent?.nav_labels}
           />
           <div className="flex-1">
             {children}

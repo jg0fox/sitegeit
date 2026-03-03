@@ -1,9 +1,12 @@
+import { sanitizeIconName } from '@/lib/utils/sanitize-icon'
+
 interface SiteTrustBarProps {
   items: { icon: string; text: string; source: 'verified' | 'inferred' | 'default' }[]
   iconStyle?: 'bare' | 'circle-bg' | 'square-bg'
 }
 
-function renderTrustIcon(iconName: string, style: string) {
+function renderTrustIcon(rawIconName: string, style: string) {
+  const iconName = sanitizeIconName(rawIconName, 'verified')
   const icon = (
     <span
       className="material-symbols-outlined"

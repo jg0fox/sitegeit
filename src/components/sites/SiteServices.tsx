@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { sanitizeIconName } from '@/lib/utils/sanitize-icon'
 
 interface Service {
   name: string
@@ -55,7 +56,8 @@ function getCardStyle(variant: string): CSSProperties {
   }
 }
 
-function renderIcon(iconName: string, style: string) {
+function renderIcon(rawIconName: string, style: string) {
+  const iconName = sanitizeIconName(rawIconName)
   const icon = (
     <span
       className="material-symbols-outlined"

@@ -12,33 +12,23 @@ and service pages/about/contact/FAQ are generated but never rendered.
 Read `SITE_GENERATION_OVERHAUL.md` for the full plan. It has 4 layers
 and 5 sprints. We are executing one sprint at a time.
 
-### Current Sprint: [UPDATE THIS AS YOU GO]
-
-Sprint 3: Rendering Pipeline — Service Pages, Navigation, Layout Variants
+### Current Sprint: Sprint 5 — SEO, Meta, Bug Fixes, Nav Labels (Final Sprint)
 
 ### Rules for This Phase
 
-1. Do NOT skip ahead to Sprint 4 (design overhaul). Build the structure
-   first, polish it later.
-2. Do NOT break existing sites. Sites generated before Sprint 2 lack
-   section_order — fall back to the current hardcoded section order for
-   those. Test backward compatibility before deploying.
-3. Every new route must use the existing layout.tsx that loads theme CSS
-   vars and fonts. Do not create separate styling for sub-pages.
-4. Service pages, about, contact, and FAQ content already exists in the
-   generated_sites table from previous generation runs. Query it — do not
-   regenerate it.
-5. The contact form is UI-only for now. Render the form, disable the
-   submit button, and add placeholder text ("Coming soon"). Do not build
-   form handling or submission logic.
-6. Navigation must work on both desktop and mobile. Test at 375px and
-   1280px minimum.
-7. Internal links use relative paths within /sites/[slug]/. Do not
-   hardcode the domain.
-8. Every sub-page needs its own meta title following the patterns in the
-   sprint prompt. Do not reuse the homepage meta tags.
-9. Show me the deployed multi-page site (with working nav and at least
-   2 service pages) before marking complete.
+1. Fix the three bugs FIRST (icon rendering, contact dropdown, nav labels)
+   and deploy before starting SEO work. Regenerate La Dulce Gracia Bakery
+   after the icon fix.
+2. The icon sanitizer is a DEFENSE layer, not the primary fix. Fix the
+   generation prompt AND add the sanitizer. Belt and suspenders.
+3. JSON-LD schema must use the most specific schema.org type available
+   (Plumber, Bakery, Dentist) not just LocalBusiness for everything.
+4. Do not add og:image tags yet — that comes in a future image sprint.
+5. Nav label changes must be backward-compatible. Sites generated before
+   this sprint should fall back to "Services" / "FAQ" if nav_labels is
+   missing from their content.
+6. After this sprint, Phase 3.5 is complete. Do not start Phase 5
+   (email integration) without my review.
    
 # CLAUDE.md — Sitegeit Build Instructions
 

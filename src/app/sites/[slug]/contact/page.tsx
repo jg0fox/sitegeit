@@ -219,6 +219,15 @@ export default async function ContactPage({ params }: Props) {
                       field.toLowerCase().includes('message') ||
                       field.toLowerCase().includes('comment') ||
                       field.toLowerCase().includes('details')
+                    const isPreferredContact =
+                      field.toLowerCase().replace(/[\s_-]+/g, '') === 'preferredcontact'
+
+                    const inputStyle = {
+                      borderColor: 'var(--color-border)',
+                      borderRadius: 'var(--radius-button, 6px)',
+                      backgroundColor: 'var(--color-background)',
+                      color: 'var(--color-text-primary)',
+                    }
 
                     return (
                       <div key={field}>
@@ -229,18 +238,26 @@ export default async function ContactPage({ params }: Props) {
                         >
                           {formatFieldLabel(field)}
                         </label>
-                        {isTextarea ? (
+                        {isPreferredContact ? (
+                          <select
+                            id={fieldId}
+                            name={fieldId}
+                            defaultValue=""
+                            className="w-full appearance-none border px-3 py-2 text-sm outline-none transition-colors focus:ring-2"
+                            style={inputStyle}
+                          >
+                            <option value="" disabled>Select one</option>
+                            <option value="phone">Phone</option>
+                            <option value="email">Email</option>
+                            <option value="text">Text Message</option>
+                          </select>
+                        ) : isTextarea ? (
                           <textarea
                             id={fieldId}
                             name={fieldId}
                             rows={4}
                             className="w-full border px-3 py-2 text-sm outline-none transition-colors focus:ring-2"
-                            style={{
-                              borderColor: 'var(--color-border)',
-                              borderRadius: 'var(--radius-button, 6px)',
-                              backgroundColor: 'var(--color-background)',
-                              color: 'var(--color-text-primary)',
-                            }}
+                            style={inputStyle}
                           />
                         ) : (
                           <input
@@ -254,12 +271,7 @@ export default async function ContactPage({ params }: Props) {
                                   : 'text'
                             }
                             className="w-full border px-3 py-2 text-sm outline-none transition-colors focus:ring-2"
-                            style={{
-                              borderColor: 'var(--color-border)',
-                              borderRadius: 'var(--radius-button, 6px)',
-                              backgroundColor: 'var(--color-background)',
-                              color: 'var(--color-text-primary)',
-                            }}
+                            style={inputStyle}
                           />
                         )}
                       </div>
