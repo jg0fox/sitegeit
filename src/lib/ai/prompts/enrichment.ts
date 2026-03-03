@@ -3,9 +3,10 @@ export const ENRICHMENT_SYSTEM_PROMPT = `You are a business analyst specializing
 Rules:
 - Only include information that is supported by the provided data
 - Never fabricate services, credentials, reviews, or statistics
-- If data is insufficient for a field, return null — do not guess
+- When data is insufficient for a field, set its value to null. Do not write explanatory or apologetic text in content fields (e.g., "Due to insufficient data...", "Cannot be determined from available information"). The confidence scoring system handles uncertainty — content fields must contain either usable content or null, never hedging language.
 - Extract voice and tone from actual review language and social media posts
-- Be specific about location (neighborhood names, landmarks) when the data supports it`
+- Be specific about location (neighborhood names, landmarks) when the data supports it
+- Score data confidence honestly: "verified" means directly confirmed by data, "inferred" means reasonably derived from limited signals, "default" means no business-specific signal exists`
 
 export interface EnrichmentInput {
   business_name: string
@@ -22,6 +23,19 @@ export interface EnrichmentInput {
   yelp_url: string | null
   yelp_rating: number | null
   yelp_review_count: number | null
+}
+
+export interface DataConfidence {
+  overall: 'high' | 'medium' | 'low'
+  fields: {
+    brand_voice: 'verified' | 'inferred' | 'default'
+    services: 'verified' | 'inferred' | 'default'
+    value_proposition: 'verified' | 'inferred' | 'default'
+    testimonials: 'verified' | 'unavailable'
+    owner_name: 'verified' | 'unavailable'
+    hours: 'verified' | 'unavailable'
+    certifications: 'verified' | 'unavailable'
+  }
 }
 
 export interface EnrichmentOutput {
@@ -44,6 +58,7 @@ export interface EnrichmentOutput {
   years_in_business: number | null
   certifications_licenses: string[]
   pricing_signals: string | null
+  data_confidence: DataConfidence
 }
 
 export function buildEnrichmentPrompt(input: EnrichmentInput): string {
@@ -86,6 +101,18 @@ ${input.review_excerpts || 'No reviews available'}
   "owner_name": "owner's first name if mentioned in reviews or profile, else null",
   "years_in_business": "number or null if not determinable",
   "certifications_licenses": ["any mentioned in reviews or profile, else empty array"],
-  "pricing_signals": "any pricing information from reviews (e.g., 'affordable', 'premium', specific prices mentioned) or null"
+  "pricing_signals": "any pricing information from reviews (e.g., 'affordable', 'premium', specific prices mentioned) or null",
+  "data_confidence": {
+    "overall": "high | medium | low (high: 20+ reviews AND social presence; medium: 5-19 reviews OR social presence; low: <5 reviews AND no social presence)",
+    "fields": {
+      "brand_voice": "verified (directly derived from reviews/social) | inferred (reasonably derived from category + limited signals) | default (no business-specific signal)",
+      "services": "verified (confirmed by reviews or profile) | inferred (derived from category + limited signals) | default (no specific services found)",
+      "value_proposition": "verified | inferred | default",
+      "testimonials": "verified (real review excerpts available) | unavailable (no usable review text)",
+      "owner_name": "verified (mentioned in reviews or profile) | unavailable",
+      "hours": "verified (from Google profile) | unavailable",
+      "certifications": "verified (mentioned in reviews or profile) | unavailable"
+    }
+  }
 }`
 }

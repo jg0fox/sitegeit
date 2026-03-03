@@ -5,6 +5,7 @@ import {
   buildEnrichmentPrompt,
   type EnrichmentInput,
   type EnrichmentOutput,
+  type DataConfidence,
 } from './prompts/enrichment'
 
 export async function enrichBusiness(businessId: string): Promise<EnrichmentOutput> {
@@ -62,6 +63,7 @@ export async function enrichBusiness(businessId: string): Promise<EnrichmentOutp
       target_audience: result.target_audience,
       review_sentiment: result.review_sentiment_summary,
       owner_name: result.owner_name ?? business.owner_name,
+      enrichment_confidence: result.data_confidence,
       status: 'enriched',
       enriched_at: new Date().toISOString(),
     })
@@ -79,6 +81,7 @@ export async function enrichBusiness(businessId: string): Promise<EnrichmentOutp
       voice_archetype: result.voice_archetype,
       services_count: result.services.length,
       usps_count: result.unique_selling_points.length,
+      data_confidence: result.data_confidence,
     },
   })
 

@@ -6,6 +6,9 @@ import {
   type SiteContentOutput,
 } from './prompts/site-generation'
 import { getThemeForCategory, getThemeId, getLayoutForCategory, themeConfigToCSSVars } from '@/lib/themes'
+import { getCategoryDefaults } from '@/lib/defaults/category-defaults'
+import { mergeEnrichmentWithDefaults } from '@/lib/defaults/merge'
+import type { DataConfidence } from './prompts/enrichment'
 
 export async function generateSite(businessId: string): Promise<{ siteId: string; content: SiteContentOutput }> {
   const supabase = getAdminClient()
@@ -33,33 +36,13 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
   const layoutVariant = getLayoutForCategory(categorySlug)
   const themeConfig = getThemeForCategory(categorySlug)
 
-  // Build enriched profile JSON for the prompt
-  const enrichedProfile = {
-    name: business.name,
-    category: business.category,
-    address: {
-      street: business.address_street,
-      city: business.address_city,
-      state: business.address_state,
-      zip: business.address_zip,
-    },
-    phone: business.phone,
-    email: business.email,
-    google_rating: business.google_rating,
-    google_review_count: business.google_review_count,
-    hours: business.hours,
-    brand_voice: business.brand_voice,
-    brand_colors: business.brand_colors,
-    value_proposition: business.value_proposition,
-    services: business.services,
-    service_area: business.service_area,
-    target_audience: business.target_audience,
-    review_sentiment: business.review_sentiment,
-    owner_name: business.owner_name,
-  }
+  // Merge enrichment data with category defaults
+  const categoryDefaults = getCategoryDefaults(categorySlug)
+  const enrichmentConfidence = (business.enrichment_confidence as DataConfidence) || null
+  const mergedProfile = mergeEnrichmentWithDefaults(business, enrichmentConfidence, categoryDefaults)
 
   const userPrompt = buildSiteGenerationPrompt({
-    enriched_profile_json: JSON.stringify(enrichedProfile, null, 2),
+    enriched_profile_json: JSON.stringify(mergedProfile, null, 2),
     theme_id: themeId,
     layout_variant: layoutVariant,
   })
