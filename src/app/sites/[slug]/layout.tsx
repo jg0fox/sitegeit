@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { SiteNav } from '@/components/sites/SiteNav'
+import { SiteFooter } from '@/components/sites/SiteFooter'
 
 interface Props {
   children: ReactNode
@@ -64,13 +66,52 @@ export default async function SiteLayout({ children, params }: Props) {
     ? `https://fonts.googleapis.com/css2?${fonts.map(f => `family=${encodeURIComponent(f!)}:wght@400;500;600;700;800`).join('&')}&display=swap`
     : null
 
+  // Extract data for SiteNav
+  const business = site.businesses as Record<string, unknown>
+  const globalContent = (site.homepage_content as Record<string, unknown>)?.global as {
+    phone_display?: string
+    phone_tel?: string
+  } | undefined
+  const servicePages = (site.service_pages || []) as { slug: string; h1: string }[]
+  const navServices = servicePages.map(sp => ({
+    name: sp.h1.replace(/\s+in\s+.*$/, '') || sp.h1,
+    slug: sp.slug,
+  }))
+
   return (
     <html lang="en">
       <head>
         {fontsUrl && <link rel="stylesheet" href={fontsUrl} />}
       </head>
       <body style={cssVars as React.CSSProperties}>
-        {children}
+        <div
+          className="min-h-screen flex flex-col"
+          style={{
+            backgroundColor: 'var(--color-background)',
+            color: 'var(--color-text-primary)',
+            fontFamily: 'var(--font-body)',
+          }}
+        >
+          <SiteNav
+            businessName={business.name as string}
+            phone={globalContent?.phone_display || (business.phone as string)}
+            phoneTel={globalContent?.phone_tel || (business.phone as string)}
+            services={navServices}
+            siteSlug={slug}
+          />
+          <div className="flex-1">
+            {children}
+          </div>
+          <SiteFooter
+            businessName={business.name as string}
+            phone={globalContent?.phone_display || (business.phone as string)}
+            address={[business.address_street, business.address_city, business.address_state, business.address_zip]
+              .filter(Boolean)
+              .join(', ') as string}
+            hours={business.hours as Record<string, string> | null}
+            siteSlug={slug}
+          />
+        </div>
       </body>
     </html>
   )

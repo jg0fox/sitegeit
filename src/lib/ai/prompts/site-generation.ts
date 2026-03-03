@@ -199,6 +199,16 @@ ${input.enriched_profile_json}
 - Theme: ${input.theme_id}
 - Layout variant: ${input.layout_variant}
 
+## Layout Variant Section Orders
+Use the section_order that matches the layout variant. Only include sections that pass the inclusion rules above.
+
+- **service-first**: ["hero", "services", "trust_bar", "social_proof", "about", "cta"] — leads with services immediately after hero. Best for trades, auto repair, cleaning.
+- **authority**: ["hero", "trust_bar", "social_proof", "services", "about", "cta"] — leads with credibility before services. Best for lawyers, dentists, accountants.
+- **community**: ["hero", "about", "services", "social_proof", "trust_bar", "cta"] — leads with the story/personality. Best for cafes, bakeries, florists, barbers.
+- **portfolio**: ["hero", "services", "about", "social_proof", "trust_bar", "cta"] — visual services first, then context. Best for photographers, landscapers.
+
+The layout variant "${input.layout_variant}" determines the starting section_order. Remove any sections that don't pass inclusion rules and list them in content_metadata.sections_omitted.
+
 ## Generate this JSON structure:
 
 {

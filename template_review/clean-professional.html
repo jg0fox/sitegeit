@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prescott &amp; Associates | Clean Professional Theme Preview</title>
+  <meta name="description" content="Experienced legal counsel protecting families and businesses across Illinois for over 25 years." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" rel="stylesheet" />
+
+  <style>
+    /* ===== CSS Custom Properties (matches React var() references) ===== */
+    :root {
+      --color-primary: #1e3a5f;
+      --color-primary-hover: #162d4a;
+      --color-primary-light: #f0f4f8;
+      --color-accent: #d4a843;
+      --color-background: #ffffff;
+      --color-surface: #f8f9fa;
+      --color-text-primary: #1a1a2e;
+      --color-text-secondary: #4a5568;
+      --color-border: #e2e8f0;
+
+      --font-heading: 'Playfair Display', Georgia, serif;
+      --font-body: 'Source Sans 3', system-ui, sans-serif;
+      --font-weight-heading: 700;
+      --tracking-heading: -0.01em;
+
+      --radius-button: 6px;
+      --radius-card: 8px;
+
+      --space-section: 5rem;
+      --space-lg: 1.5rem;
+      --card-padding: 1.5rem;
+      --container-max-width: 1100px;
+
+      --duration-normal: 250ms;
+    }
+
+    /* ===== Reset / Base ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--color-text-primary);
+      background-color: var(--color-background);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    /* ===== Template Preview Banner ===== */
+    .template-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background-color: var(--color-accent);
+      color: #1a1a2e;
+      text-align: center;
+      padding: 6px 16px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Push everything below the banner */
+    body {
+      padding-top: 30px;
+    }
+
+    /* ===== SiteHeader ===== */
+    .site-header {
+      position: sticky;
+      top: 30px;
+      z-index: 50;
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .site-header__inner {
+      max-width: var(--container-max-width);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+    }
+
+    .site-header__name {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      font-size: 1.125rem;
+      color: var(--color-text-primary);
+    }
+
+    .site-header__phone {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--color-primary);
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: var(--radius-button);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background-color var(--duration-normal);
+    }
+
+    .site-header__phone:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    .site-header__phone .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    .site-header__phone-text-full {
+      display: inline;
+    }
+
+    .site-header__phone-text-short {
+      display: none;
+    }
+
+    @media (max-width: 639px) {
+      .site-header__phone-text-full {
+        display: none;
+      }
+      .site-header__phone-text-short {
+        display: inline;
+      }
+    }
+
+    /* ===== SiteHero ===== */
+    .site-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 96px 16px;
+      gap: var(--space-lg);
+    }
+
+    .site-hero__h1 {
+      max-width: 48rem;
+      margin: 0 auto;
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      line-height: 1.15;
+      font-size: 2.5rem;
+    }
+
+    .site-hero__sub {
+      max-width: 42rem;
+      margin: 0 auto;
+      font-size: 1.125rem;
+      color: var(--color-text-secondary);
+    }
+
+    .site-hero__ctas {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      background-color: var(--color-primary);
+      border-radius: var(--radius-button);
+      border: none;
+      cursor: pointer;
+      transition: background-color var(--duration-normal);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      background-color: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-button);
+      cursor: pointer;
+      transition: border-color var(--duration-normal), background-color var(--duration-normal);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-light);
+    }
+
+    @media (min-width: 640px) {
+      .site-hero {
+        padding: 128px 16px;
+      }
+      .site-hero__h1 {
+        font-size: 3rem;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .site-hero__h1 {
+        font-size: 3.5rem;
+      }
+    }
+
+    @media (max-width: 639px) {
+      .site-hero__ctas {
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+
+    /* ===== SiteServices ===== */
+    .site-services {
+      padding: var(--space-section) 16px;
+    }
+
+    .site-services__inner {
+      max-width: var(--container-max-width);
+      margin: 0 auto;
+    }
+
+    .site-services__heading {
+      text-align: center;
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      font-size: 1.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .site-services__grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .site-services__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .site-services__heading {
+        font-size: 1.875rem;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .site-services__grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .service-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: var(--card-padding);
+      transition: box-shadow var(--duration-normal);
+    }
+
+    .service-card:hover {
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+    }
+
+    .service-card__icon {
+      font-size: 32px;
+      color: var(--color-primary);
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .service-card__name {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .service-card__desc {
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+    }
+
+    /* ===== SiteTestimonials ===== */
+    .site-testimonials {
+      padding: var(--space-section) 16px;
+      background-color: var(--color-surface);
+    }
+
+    .site-testimonials__inner {
+      max-width: var(--container-max-width);
+      margin: 0 auto;
+    }
+
+    .site-testimonials__rating {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .site-testimonials__stars {
+      display: flex;
+      gap: 4px;
+    }
+
+    .star-filled {
+      font-size: 24px;
+      color: #facc15;
+      font-variation-settings: 'FILL' 1;
+    }
+
+    .star-empty {
+      font-size: 24px;
+      color: var(--color-border);
+      font-variation-settings: 'FILL' 0;
+    }
+
+    .site-testimonials__count {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+
+    .site-testimonials__grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .site-testimonials__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .site-testimonials__grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .testimonial-card {
+      background-color: var(--color-background);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 20px;
+    }
+
+    .testimonial-card__quote {
+      font-size: 0.875rem;
+      font-style: italic;
+      line-height: 1.6;
+      color: var(--color-text-primary);
+      margin-bottom: 12px;
+    }
+
+    .testimonial-card__footer {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* ===== SiteAbout ===== */
+    .site-about {
+      padding: var(--space-section) 16px;
+    }
+
+    .site-about__inner {
+      max-width: 42rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .site-about__heading {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .site-about__heading {
+        font-size: 1.875rem;
+      }
+    }
+
+    .site-about__body {
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .site-about__owner {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-primary);
+    }
+
+    /* ===== SiteCTA ===== */
+    .site-cta {
+      padding: var(--space-section) 16px;
+      background-color: var(--color-primary-light);
+    }
+
+    .site-cta__inner {
+      max-width: 36rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .site-cta__heading {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      font-size: 1.75rem;
+      margin-bottom: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .site-cta__heading {
+        font-size: 1.875rem;
+      }
+    }
+
+    .site-cta__body {
+      color: var(--color-text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ===== SiteFooter ===== */
+    .site-footer {
+      background-color: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      padding: 40px 16px;
+    }
+
+    .site-footer__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      gap: 2rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .site-footer__inner {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .site-footer__inner {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .site-footer__biz-name {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .site-footer__address,
+    .site-footer__phone-link {
+      font-size: 0.875rem;
+    }
+
+    .site-footer__address {
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .site-footer__phone-link {
+      color: var(--color-primary);
+    }
+
+    .site-footer__hours-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .site-footer__hours-list {
+      list-style: none;
+    }
+
+    .site-footer__hours-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 0.875rem;
+      margin-bottom: 4px;
+    }
+
+    .site-footer__hours-day {
+      color: var(--color-text-secondary);
+      text-transform: capitalize;
+    }
+
+    .site-footer__copyright {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .site-footer__powered {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      margin-top: 8px;
+    }
+
+    .site-footer__powered a {
+      color: var(--color-primary);
+    }
+
+    /* Span full width on sm only for copyright column */
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .site-footer__copyright-col {
+        grid-column: span 2;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Template Preview Banner -->
+  <div class="template-banner" role="banner" aria-label="Template preview notice">
+    TEMPLATE PREVIEW: Clean Professional
+  </div>
+
+  <!-- ===== SiteHeader ===== -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <span class="site-header__name">Prescott &amp; Associates</span>
+      <a href="tel:+15555678901" class="site-header__phone">
+        <span class="material-symbols-outlined">phone</span>
+        <span class="site-header__phone-text-full">(555) 567-8901</span>
+        <span class="site-header__phone-text-short">Call</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ===== SiteHero ===== -->
+  <section class="site-hero">
+    <h1 class="site-hero__h1">Experienced Legal Counsel You Can Count On</h1>
+    <p class="site-hero__sub">Protecting families and businesses across Illinois for over 25 years.</p>
+    <div class="site-hero__ctas">
+      <a href="tel:+15555678901" class="btn-primary">Schedule a Free Consultation</a>
+      <a href="#services" class="btn-secondary">Our Practice Areas</a>
+    </div>
+  </section>
+
+  <!-- ===== SiteServices ===== -->
+  <section id="services" class="site-services">
+    <div class="site-services__inner">
+      <h2 class="site-services__heading">Our Practice Areas</h2>
+      <div class="site-services__grid">
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">business_center</span>
+          <h3 class="service-card__name">Business Law</h3>
+          <p class="service-card__desc">From formation to compliance, we guide businesses through every legal challenge. Our team helps you make confident decisions at every stage.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">description</span>
+          <h3 class="service-card__name">Estate Planning</h3>
+          <p class="service-card__desc">Protect your legacy with wills, trusts, and succession plans tailored to your family. We make a complex process feel straightforward.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">home_work</span>
+          <h3 class="service-card__name">Real Estate</h3>
+          <p class="service-card__desc">Residential and commercial transactions handled with precision and care. We review every detail so you can close with confidence.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">family_restroom</span>
+          <h3 class="service-card__name">Family Law</h3>
+          <p class="service-card__desc">Compassionate counsel for divorce, custody, and support matters. We put your well-being and your children's future first.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">gavel</span>
+          <h3 class="service-card__name">Civil Litigation</h3>
+          <p class="service-card__desc">Strategic representation in disputes, from negotiation through trial. We pursue resolutions that serve your best interests.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">badge</span>
+          <h3 class="service-card__name">Employment Law</h3>
+          <p class="service-card__desc">We help employers and employees navigate workplace regulations, contracts, and disputes with clear legal guidance.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SiteTestimonials ===== -->
+  <section class="site-testimonials">
+    <div class="site-testimonials__inner">
+
+      <!-- Rating badge -->
+      <div class="site-testimonials__rating">
+        <div class="site-testimonials__stars">
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+        </div>
+        <p class="site-testimonials__count">4.8 stars from 156 Google reviews</p>
+      </div>
+
+      <!-- Testimonial grid -->
+      <div class="site-testimonials__grid">
+
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__quote">&ldquo;James and his team handled our business acquisition seamlessly. They were thorough, responsive, and kept us informed every step of the way.&rdquo;</p>
+          <footer class="testimonial-card__footer">&mdash; David M., Google</footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__quote">&ldquo;After consulting with two other firms, Prescott &amp; Associates gave us the clearest guidance on our estate plan. Highly recommend their team.&rdquo;</p>
+          <footer class="testimonial-card__footer">&mdash; Sandra K., Google</footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__quote">&ldquo;During a difficult custody matter, they treated me with respect and fought for the best outcome for my children. I felt supported the entire time.&rdquo;</p>
+          <footer class="testimonial-card__footer">&mdash; Rachel T., Google</footer>
+        </blockquote>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SiteAbout ===== -->
+  <section class="site-about">
+    <div class="site-about__inner">
+      <h2 class="site-about__heading">A Legacy of Advocacy</h2>
+      <p class="site-about__body">For over two decades, Prescott &amp; Associates has served the Chicago community with principled legal representation. We believe every client deserves a firm that listens carefully, communicates honestly, and pursues the strongest possible outcome. Our team brings deep expertise across practice areas with a commitment to personal attention that larger firms cannot match.</p>
+      <p class="site-about__owner">&mdash; James Prescott, Esq.</p>
+    </div>
+  </section>
+
+  <!-- ===== SiteCTA ===== -->
+  <section id="contact" class="site-cta">
+    <div class="site-cta__inner">
+      <h2 class="site-cta__heading">Schedule a Free Consultation</h2>
+      <p class="site-cta__body">Take the first step toward resolving your legal matter. Call us today to discuss your situation with an experienced attorney.</p>
+      <a href="tel:+15555678901" class="btn-primary">Call (555) 567-8901</a>
+    </div>
+  </section>
+
+  <!-- ===== SiteFooter ===== -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+
+      <!-- Business info -->
+      <div>
+        <h3 class="site-footer__biz-name">Prescott &amp; Associates</h3>
+        <p class="site-footer__address">900 Commerce Tower, Suite 1400, Chicago, IL 60601</p>
+        <p><a href="tel:+15555678901" class="site-footer__phone-link">(555) 567-8901</a></p>
+      </div>
+
+      <!-- Hours -->
+      <div>
+        <h3 class="site-footer__hours-label">Hours</h3>
+        <ul class="site-footer__hours-list">
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Monday &ndash; Friday</span>
+            <span>9:00 AM &ndash; 5:00 PM</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Saturday</span>
+            <span>By Appointment</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Sunday</span>
+            <span>Closed</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Copyright -->
+      <div class="site-footer__copyright-col">
+        <p class="site-footer__copyright">&copy; 2026 Prescott &amp; Associates. All rights reserved.</p>
+        <p class="site-footer__powered">Website by <a href="https://sitegeit.com">Sitegeit</a></p>
+      </div>
+
+    </div>
+  </footer>
+
+</body>
+</html>

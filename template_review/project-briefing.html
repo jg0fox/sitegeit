@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitegeit — Project Briefing for AI Agent</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-dim: #1d4ed8;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --border: #475569;
+      --code-bg: #0d1117;
+      --mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+      --sans: system-ui, -apple-system, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.7;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #fff; }
+    h2 {
+      font-size: 1.4rem;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
+    }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #e2e8f0; }
+    h4 { font-size: 0.95rem; margin-top: 1rem; margin-bottom: 0.4rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    p { margin-bottom: 0.75rem; }
+    a { color: var(--primary); }
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      color: #e2e8f0;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      margin: 0.75rem 0 1.25rem;
+      color: #c9d1d9;
+    }
+    ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+    li { margin-bottom: 0.35rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1.25rem;
+      font-size: 0.875rem;
+    }
+    th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    td {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin: 0.75rem 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.15em 0.6em;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-blue { background: #1e40af33; color: #60a5fa; }
+    .badge-green { background: #16a34a33; color: #4ade80; }
+    .badge-amber { background: #d9770633; color: #fbbf24; }
+    .badge-red { background: #dc262633; color: #f87171; }
+    .badge-purple { background: #7c3aed33; color: #c084fc; }
+    .flow-arrow { color: var(--text-muted); font-size: 1.25rem; text-align: center; display: block; margin: 0.25rem 0; }
+    .flow-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+    }
+    .flow-box.active { border-color: var(--primary); background: #1e40af22; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+    .toc { list-style: none; padding-left: 0; }
+    .toc li { margin-bottom: 0.3rem; }
+    .toc a { text-decoration: none; color: var(--text-muted); }
+    .toc a:hover { color: var(--primary); }
+    .callout {
+      border-left: 3px solid var(--primary);
+      background: #1e40af15;
+      padding: 0.75rem 1rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1rem 0;
+    }
+    .callout-warn {
+      border-left-color: var(--amber);
+      background: #d9770615;
+    }
+    .callout-success {
+      border-left-color: var(--green);
+      background: #16a34a15;
+    }
+    .tag { display: inline-block; background: var(--surface-2); padding: 0.1em 0.5em; border-radius: 4px; font-size: 0.8rem; margin: 0.1rem; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    .subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+
+<h1>Sitegeit &mdash; Project Briefing</h1>
+<p class="subtitle">A comprehensive technical briefing for AI agents working on this codebase.<br>
+Generated March 2, 2026. Codebase root: <code>/Users/jfox/Documents/seitgeit</code></p>
+
+<div class="card">
+  <h4>Table of Contents</h4>
+  <ol class="toc">
+    <li><a href="#overview">1. What Is Sitegeit</a></li>
+    <li><a href="#stack">2. Tech Stack</a></li>
+    <li><a href="#architecture">3. Architecture &amp; Data Flow</a></li>
+    <li><a href="#pipeline">4. Pipeline Worker Chain (Deep Dive)</a></li>
+    <li><a href="#database">5. Database Schema</a></li>
+    <li><a href="#file-structure">6. File Structure</a></li>
+    <li><a href="#api-routes">7. API Routes</a></li>
+    <li><a href="#themes">8. Theme System</a></li>
+    <li><a href="#generated-sites">9. Generated Client Sites</a></li>
+    <li><a href="#ui-screens">10. UI Screens &amp; Components</a></li>
+    <li><a href="#env-vars">11. Environment Variables</a></li>
+    <li><a href="#gotchas">12. Known Gotchas &amp; Debugging Lessons</a></li>
+    <li><a href="#current-state">13. Current State of the Project</a></li>
+    <li><a href="#conventions">14. Coding Conventions</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="overview">1. What Is Sitegeit</h2>
+
+<p>Sitegeit is a <strong>desktop-primary SaaS pipeline</strong> (with responsive mobile support) that:</p>
+<ol>
+  <li><strong>Discovers</strong> local businesses that don't have websites (via Google Places API)</li>
+  <li><strong>Enriches</strong> business data using Claude AI (brand voice, services, value proposition, etc.)</li>
+  <li><strong>Generates</strong> conversion-optimized preview websites &amp; landing pages (themed, AI-written content)</li>
+  <li><strong>Drafts</strong> personalized outreach emails (3-email sequence per prospect)</li>
+  <li><strong>Manages</strong> the full client lifecycle (review, send, track engagement, convert to paying client)</li>
+</ol>
+
+<p>The product is an internal tool for a one-person agency. The user discovers local businesses without web presence, the pipeline automatically generates everything needed to pitch them, and the user reviews/approves before outreach.</p>
+
+<div class="callout">
+  <strong>Live URL:</strong> <code>https://seitgeit.vercel.app</code><br>
+  <strong>Owner:</strong> Jason Fox (jasongfox@gmail.com)<br>
+  <strong>Auth user ID:</strong> <code>1550492c-344d-4c01-90c8-f9d1544cabf2</code>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="stack">2. Tech Stack</h2>
+
+<table>
+  <tr><th>Layer</th><th>Technology</th><th>Notes</th></tr>
+  <tr><td>Framework</td><td>Next.js 16 (App Router)</td><td>React 19, TypeScript 5.7</td></tr>
+  <tr><td>Styling</td><td>Tailwind CSS 3.4</td><td>+ class-variance-authority, clsx, tailwind-merge</td></tr>
+  <tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>Project ref: <code>adqzldokzhgpjpjiljrr</code></td></tr>
+  <tr><td>Auth</td><td>Supabase Auth</td><td>Server-side session via <code>@supabase/ssr</code></td></tr>
+  <tr><td>AI</td><td>Claude API (Sonnet 4.6)</td><td><code>@anthropic-ai/sdk</code>, JSON generation helper</td></tr>
+  <tr><td>Job Queue</td><td>QStash (Upstash)</td><td>Serverless worker chain, NOT BullMQ</td></tr>
+  <tr><td>Hosting</td><td>Vercel (Pro plan)</td><td>120s function timeout</td></tr>
+  <tr><td>UI Components</td><td>Radix UI primitives + custom</td><td>Dialog, dropdown, tabs, select, switch, etc.</td></tr>
+  <tr><td>Icons</td><td>Material Symbols Outlined</td><td>Loaded via Google CDN (300 weight)</td></tr>
+  <tr><td>Font</td><td>Manrope</td><td>Google Fonts, variable <code>--font-manrope</code></td></tr>
+  <tr><td>Discovery</td><td>Google Places API (Legacy)</td><td>Not the "New" Places API</td></tr>
+  <tr><td>Testing</td><td>Vitest + Playwright</td><td>Unit + E2E</td></tr>
+</table>
+
+<div class="callout callout-warn">
+  <strong>Important:</strong> The <code>CLAUDE.md</code> mentions BullMQ, but the project was refactored to use <strong>QStash</strong> instead.
+  QStash is a serverless HTTP-based message queue from Upstash — it delivers messages by calling worker HTTP endpoints with signature verification.
+  The BullMQ code was fully replaced.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="architecture">3. Architecture &amp; Data Flow</h2>
+
+<p>The high-level flow:</p>
+
+<pre>
+User action (UI)
+    → API route (Next.js)
+        → QStash publish (queue job)
+            → Worker endpoint (serverless function)
+                → Claude AI / Supabase writes
+                    → Supabase Realtime push
+                        → UI auto-updates
+</pre>
+
+<h3>Key Architectural Decisions</h3>
+<ul>
+  <li><strong>All AI processing is async</strong> — never blocks the UI. Pipeline workers run as serverless functions triggered by QStash.</li>
+  <li><strong>Worker chain pattern</strong> — each worker queues the next stage on completion. There's no orchestrator; it's a simple sequential chain.</li>
+  <li><strong>Supabase Realtime</strong> — the pipeline page subscribes to <code>postgres_changes</code> on the <code>businesses</code> table and auto-refreshes when status changes.</li>
+  <li><strong>QStash signature verification</strong> — all worker routes use <code>verifySignatureAppRouter</code> from <code>@upstash/qstash/nextjs</code> in production; skipped in dev.</li>
+  <li><strong>Generated sites are rendered dynamically</strong> — no static generation or separate deployment. Content is stored in Supabase and rendered on-demand via <code>/sites/[slug]</code> routes.</li>
+  <li><strong>Subdomain routing is dormant</strong> — the middleware supports <code>*.sitegeit.com</code> subdomains, but currently everything runs on <code>seitgeit.vercel.app</code> with path-based routing (<code>/sites/{slug}</code>).</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="pipeline">4. Pipeline Worker Chain (Deep Dive)</h2>
+
+<p>This is the core of the product. When a user adds businesses to the pipeline, this chain runs automatically:</p>
+
+<div class="flow-box active">User clicks "Add to pipeline" → POST /api/discover/add-to-pipeline</div>
+<span class="flow-arrow">↓ publishes QStash message</span>
+<div class="flow-box"><strong>Stage 1: Enrich</strong> — /api/workers/enrich<br><small>Calls Claude with business data + Google Place details. Extracts: brand_voice, value_proposition, services[], target_audience, service_area, review_sentiment, brand_colors. Updates businesses table. Status: discovered → enriching → enriched.</small></div>
+<span class="flow-arrow">↓ publishToWorker('generate-site')</span>
+<div class="flow-box"><strong>Stage 2: Generate Site</strong> — /api/workers/generate-site<br><small>Calls Claude with enriched data + theme config + content KB. Generates: homepage_content (hero, services, testimonials, about, CTA), seo_meta (title, description, schema.org). Inserts/updates generated_sites table. Status: enriched → generating.</small></div>
+<span class="flow-arrow">↓ publishToWorker('deploy')</span>
+<div class="flow-box"><strong>Stage 3: Deploy</strong> — /api/workers/deploy<br><small>Marks the generated_sites record as deploy_status = 'live'. (For MVP, sites are rendered dynamically, so "deploy" is just a status update.)</small></div>
+<span class="flow-arrow">↓ publishToWorker('generate-email')</span>
+<div class="flow-box"><strong>Stage 4: Generate Email</strong> — /api/workers/generate-email<br><small>Two-step: (1) Generates a landing page via Claude (headline, strategy, site preview, pricing tiers, CTA) → inserts into landing_pages. (2) Generates a 3-email outreach sequence via Claude (initial + 2 follow-ups) → inserts into outreach_emails. Creates a notification for the user. Status: → review_ready.</small></div>
+<span class="flow-arrow">↓</span>
+<div class="flow-box active">Pipeline complete. User reviews emails in the Email Review screen.</div>
+
+<h3>Worker Route Pattern</h3>
+<p>Every worker follows the same pattern:</p>
+<pre>
+// src/app/api/workers/{stage}/route.ts
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'
+
+async function handler(request: Request) {
+  const data = await request.json()
+  const businessId = data.businessId as string
+
+  // ... do work ...
+
+  // Chain: queue next stage
+  const messageId = await publishToWorker('next-stage', { businessId })
+
+  return NextResponse.json({ success: true })
+}
+
+// Production: QStash signature verification wrapper
+// Development: raw handler (no verification)
+export const POST = process.env.NODE_ENV === 'development'
+  ? handler
+  : verifySignatureAppRouter(handler)
+</pre>
+
+<h3>AI Client Helper</h3>
+<pre>
+// src/lib/ai/client.ts
+export async function generateJSON&lt;T&gt;(
+  systemPrompt: string,
+  userPrompt: string,
+  model: string = 'claude-sonnet-4-6'
+): Promise&lt;T&gt;
+
+// Handles: Anthropic client init, max_tokens, JSON extraction
+// from markdown code blocks, error handling.
+</pre>
+
+<h3>Worker Idempotency</h3>
+<p>Workers are idempotent (QStash retries up to 3x on failure):</p>
+<ul>
+  <li><strong>generate-site:</strong> Checks for existing <code>generated_sites</code> record → updates if exists, inserts if not.</li>
+  <li><strong>generate-landing:</strong> Same upsert pattern for <code>landing_pages</code>.</li>
+  <li><strong>generate-email:</strong> Deletes existing draft emails before inserting new ones.</li>
+</ul>
+
+<h3>Timing</h3>
+<p>Full pipeline: <strong>2-4 minutes</strong> end-to-end. Enrich ~30s, Generate site ~60s, Deploy ~1s, Generate email ~60s. Plus QStash delivery latency (~1-2s between stages).</p>
+
+<!-- ============================================================ -->
+<h2 id="database">5. Database Schema</h2>
+
+<p>Supabase PostgreSQL, project <code>adqzldokzhgpjpjiljrr</code>. All tables have RLS enabled, scoped to <code>auth.uid()</code>.</p>
+
+<h3>Core Tables</h3>
+
+<h4>businesses (prospects + clients)</h4>
+<p>The central table. One row per prospect/client. Tracks the full lifecycle.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td><code>id</code></td><td>uuid PK</td><td></td></tr>
+  <tr><td><code>user_id</code></td><td>uuid FK→users</td><td>Owner</td></tr>
+  <tr><td><code>name</code></td><td>text</td><td>Business name</td></tr>
+  <tr><td><code>category</code></td><td>text</td><td>e.g. "Auto repair"</td></tr>
+  <tr><td><code>category_slug</code></td><td>text</td><td>Normalized: "auto_repair"</td></tr>
+  <tr><td><code>phone, email</code></td><td>text</td><td>Contact info</td></tr>
+  <tr><td><code>address_street, city, state, zip, lat, lng</code></td><td>text/decimal</td><td>Full address + coords</td></tr>
+  <tr><td><code>google_place_id</code></td><td>text UNIQUE</td><td>Dedup key from Google</td></tr>
+  <tr><td><code>google_rating, google_review_count</code></td><td>decimal/int</td><td></td></tr>
+  <tr><td><code>website_url, website_status</code></td><td>text</td><td>Status: none/dead/parked/social_only/outdated/active</td></tr>
+  <tr><td><code>brand_voice</code></td><td>text</td><td>AI-enriched: tone archetype</td></tr>
+  <tr><td><code>brand_colors</code></td><td>jsonb</td><td>AI-enriched: { primary, secondary }</td></tr>
+  <tr><td><code>value_proposition</code></td><td>text</td><td>AI-enriched</td></tr>
+  <tr><td><code>services</code></td><td>jsonb</td><td>AI-enriched: string[]</td></tr>
+  <tr><td><code>service_area, target_audience, review_sentiment</code></td><td>text</td><td>AI-enriched</td></tr>
+  <tr><td><code>status</code></td><td>text CHECK</td><td>See status lifecycle below</td></tr>
+  <tr><td><code>tier</code></td><td>text</td><td>starter/growth/pro/premium (post-conversion)</td></tr>
+  <tr><td><code>monthly_rate</code></td><td>integer</td><td>Cents</td></tr>
+  <tr><td><code>discovered_at, enriched_at, generated_at, sent_at, responded_at, converted_at</code></td><td>timestamptz</td><td>Stage timestamps</td></tr>
+  <tr><td><code>created_at, updated_at</code></td><td>timestamptz</td><td>Auto-managed</td></tr>
+</table>
+
+<h4>Business Status Lifecycle</h4>
+<pre>
+discovered → enriching → enriched → generating → review_ready
+  → sent → opened → clicked → responded → meeting_scheduled
+  → closed_won → active   (or: closed_lost / churned / archived)
+</pre>
+
+<h4>generated_sites (client websites)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td><code>id</code></td><td>uuid PK</td><td></td></tr>
+  <tr><td><code>business_id</code></td><td>uuid FK→businesses CASCADE</td><td></td></tr>
+  <tr><td><code>theme_id</code></td><td>text</td><td>e.g. "bold-trade"</td></tr>
+  <tr><td><code>layout_variant</code></td><td>text</td><td>"service-first", "authority", "community", "portfolio"</td></tr>
+  <tr><td><code>theme_config</code></td><td>jsonb</td><td>Full CSS vars (colors, fonts, spacing, shape)</td></tr>
+  <tr><td><code>homepage_content</code></td><td>jsonb</td><td>Structured: hero, services_section, social_proof, about_snippet, cta_section, global</td></tr>
+  <tr><td><code>seo_meta</code></td><td>jsonb</td><td>title, description, schema_type, schema_data</td></tr>
+  <tr><td><code>deploy_url</code></td><td>text</td><td><strong>Slug only</strong> (e.g. "joes-plumbing"), NOT full domain</td></tr>
+  <tr><td><code>deploy_status</code></td><td>text</td><td>pending / building / live / failed</td></tr>
+</table>
+
+<h4>landing_pages (outreach landing pages)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td><code>id</code></td><td>uuid PK</td><td></td></tr>
+  <tr><td><code>business_id</code></td><td>uuid FK→businesses CASCADE</td><td></td></tr>
+  <tr><td><code>site_id</code></td><td>uuid FK→generated_sites</td><td></td></tr>
+  <tr><td><code>headline, strategy_summary</code></td><td>text</td><td>Personalized pitch content</td></tr>
+  <tr><td><code>site_preview_data</code></td><td>jsonb</td><td>headline, subheadline, strategy points, pricing tiers, CTA</td></tr>
+  <tr><td><code>deploy_url</code></td><td>text</td><td><strong>Slug only</strong> (e.g. "joes-plumbing")</td></tr>
+  <tr><td><code>deploy_status</code></td><td>text</td><td>pending / live / failed</td></tr>
+</table>
+
+<h4>outreach_emails (email drafts &amp; tracking)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td><code>id</code></td><td>uuid PK</td><td></td></tr>
+  <tr><td><code>business_id</code></td><td>uuid FK→businesses CASCADE</td><td></td></tr>
+  <tr><td><code>landing_page_id</code></td><td>uuid FK→landing_pages</td><td></td></tr>
+  <tr><td><code>subject, body</code></td><td>text</td><td>Email content</td></tr>
+  <tr><td><code>edited_body</code></td><td>text</td><td>User-modified version</td></tr>
+  <tr><td><code>review_status</code></td><td>text</td><td>draft / approved / sent / skipped</td></tr>
+  <tr><td><code>sequence_position</code></td><td>integer</td><td>1=initial, 2=follow-up #1, 3=follow-up #2</td></tr>
+  <tr><td><code>sent_at, opened_at, clicked_at, replied_at</code></td><td>timestamptz</td><td>Engagement tracking</td></tr>
+</table>
+
+<h4>Other Tables</h4>
+<table>
+  <tr><th>Table</th><th>Purpose</th></tr>
+  <tr><td><code>users</code></td><td>Pipeline operator profiles (auto-created via auth trigger)</td></tr>
+  <tr><td><code>activity_log</code></td><td>Event audit trail per business (lead_discovered, enrichment_complete, site_generated, etc.)</td></tr>
+  <tr><td><code>notifications</code></td><td>In-app notifications (type, title, body, href, read status)</td></tr>
+  <tr><td><code>notes</code></td><td>Free-text notes on businesses</td></tr>
+  <tr><td><code>search_queries</code></td><td>Saved discovery searches</td></tr>
+  <tr><td><code>sending_domains</code></td><td>Email sending config (Instantly.ai integration, future)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="file-structure">6. File Structure</h2>
+
+<pre>
+src/
+├── app/
+│   ├── (auth)/                       # Login + OAuth callback
+│   │   ├── login/page.tsx
+│   │   ├── auth/callback/route.ts
+│   │   └── layout.tsx
+│   │
+│   ├── (dashboard)/                  # Protected dashboard (sidebar layout)
+│   │   ├── layout.tsx                # AppShell with Sidebar + Header
+│   │   ├── page.tsx                  # Home dashboard
+│   │   ├── discover/page.tsx         # Lead discovery search UI
+│   │   ├── pipeline/
+│   │   │   ├── page.tsx              # Pipeline list with filter pills
+│   │   │   └── [id]/page.tsx         # Prospect detail view
+│   │   ├── email-review/page.tsx     # Split-pane email review
+│   │   ├── clients/
+│   │   │   ├── page.tsx              # Client roster
+│   │   │   └── [id]/page.tsx         # Client detail
+│   │   ├── notifications/page.tsx    # Notification center
+│   │   └── settings/page.tsx         # Settings
+│   │
+│   ├── sites/                        # Generated client sites (public, no auth)
+│   │   ├── [slug]/
+│   │   │   ├── page.tsx              # Client website renderer
+│   │   │   └── layout.tsx            # Theme CSS vars + fonts
+│   │   └── go/[slug]/page.tsx        # Landing page renderer
+│   │
+│   ├── api/
+│   │   ├── discover/route.ts         # POST: Google Places search
+│   │   ├── discover/add-to-pipeline/ # POST: Bulk add to pipeline + queue enrichment
+│   │   ├── discover/saved-searches/  # Saved search CRUD
+│   │   ├── pipeline/enrich/          # POST: Manual enrich trigger
+│   │   ├── pipeline/generate/        # POST: Manual generate trigger
+│   │   ├── pipeline/status/          # GET: Pipeline status
+│   │   ├── workers/enrich/           # QStash worker: enrichment
+│   │   ├── workers/generate-site/    # QStash worker: site generation
+│   │   ├── workers/deploy/           # QStash worker: deployment
+│   │   ├── workers/generate-email/   # QStash worker: landing + email generation
+│   │   ├── businesses/[id]/          # GET/PATCH business
+│   │   ├── emails/[id]/              # PATCH email draft
+│   │   └── notifications/            # PATCH notifications (mark read)
+│   │
+│   └── layout.tsx                    # Root layout (Manrope font + Material Symbols CDN)
+│
+├── components/
+│   ├── ui/                           # Button, Card, Badge (shadcn-style)
+│   ├── layout/                       # Sidebar, Header, NotificationBell, SidebarContext
+│   ├── discover/                     # SearchForm, ResultCard, ResultsList, SavedSearches
+│   ├── pipeline/                     # PipelineList, PipelineProgress, RealtimeRefresh
+│   ├── email/                        # EmailReviewList
+│   ├── dashboard/                    # PipelineSummary, RecentActivity, QuickActions, MRRSnapshot
+│   ├── sites/                        # SiteHeader/Hero/Services/Testimonials/About/CTA/Footer
+│   │                                 # LandingHero, LandingSitePreview, LandingCTA
+│   └── shared/                       # StatusBadge, EmptyState
+│
+├── lib/
+│   ├── supabase/                     # client.ts, server.ts, admin.ts, middleware.ts
+│   ├── ai/                           # client.ts, enrich.ts, generate-site.ts,
+│   │                                 # generate-landing.ts, generate-email.ts, prompts/
+│   ├── qstash/client.ts              # publishToWorker(), verifyRequest()
+│   ├── services/                     # google-places.ts, web-detection.ts, vercel-deploy.ts
+│   ├── themes/                       # 8 theme configs + index.ts (registry, mappings, CSS var converter)
+│   └── utils/                        # cn.ts, constants.ts, schemas.ts, types.ts
+│
+├── middleware.ts                     # Root: subdomain routing + auth delegation
+└── test/setup.ts
+</pre>
+
+<!-- ============================================================ -->
+<h2 id="api-routes">7. API Routes</h2>
+
+<table>
+  <tr><th>Route</th><th>Method</th><th>Auth</th><th>Purpose</th></tr>
+  <tr><td><code>/api/discover</code></td><td>POST</td><td>Supabase</td><td>Search Google Places + detect web presence</td></tr>
+  <tr><td><code>/api/discover/add-to-pipeline</code></td><td>POST</td><td>Supabase</td><td>Insert businesses, queue enrichment via QStash</td></tr>
+  <tr><td><code>/api/discover/saved-searches</code></td><td>POST</td><td>Supabase</td><td>CRUD saved searches</td></tr>
+  <tr><td><code>/api/pipeline/enrich</code></td><td>POST</td><td>Supabase</td><td>Manually trigger enrichment</td></tr>
+  <tr><td><code>/api/pipeline/generate</code></td><td>POST</td><td>Supabase</td><td>Manually trigger site generation</td></tr>
+  <tr><td><code>/api/pipeline/status</code></td><td>GET</td><td>Supabase</td><td>Get full pipeline status for a business</td></tr>
+  <tr><td><code>/api/businesses/[id]</code></td><td>GET/PATCH</td><td>Supabase</td><td>Business CRUD</td></tr>
+  <tr><td><code>/api/emails/[id]</code></td><td>PATCH</td><td>Supabase</td><td>Edit email subject/body, approve/skip</td></tr>
+  <tr><td><code>/api/notifications</code></td><td>PATCH</td><td>Supabase</td><td>Mark notifications read</td></tr>
+  <tr><td colspan="4" style="background: var(--surface-2); text-align: center;"><strong>Worker Routes (QStash-authenticated, not user-authenticated)</strong></td></tr>
+  <tr><td><code>/api/workers/enrich</code></td><td>POST</td><td>QStash sig</td><td>Business enrichment via Claude</td></tr>
+  <tr><td><code>/api/workers/generate-site</code></td><td>POST</td><td>QStash sig</td><td>Website content generation via Claude</td></tr>
+  <tr><td><code>/api/workers/deploy</code></td><td>POST</td><td>QStash sig</td><td>Mark site as live</td></tr>
+  <tr><td><code>/api/workers/generate-email</code></td><td>POST</td><td>QStash sig</td><td>Landing page + email draft generation</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="themes">8. Theme System</h2>
+
+<p>8 visual themes, auto-selected based on business category. Each theme defines: colors, fonts, border radii, spacing, and motion preferences.</p>
+
+<table>
+  <tr><th>Theme ID</th><th>Vibe</th><th>Categories</th><th>Background</th><th>Primary</th></tr>
+  <tr><td><code>bold-trade</code></td><td>Dark, industrial</td><td>Plumber, electrician, HVAC, auto repair, towing</td><td>#0f172a</td><td style="color: #1e40af">#1e40af</td></tr>
+  <tr><td><code>soft-care</code></td><td>Light, calming</td><td>Dentist, chiropractor, vet, spa, yoga, cleaning</td><td>#ffffff</td><td style="color: #0ea5e9">#0ea5e9</td></tr>
+  <tr><td><code>warm-craft</code></td><td>Warm, artisanal</td><td>Bakery, restaurant, cafe, bar, florist</td><td>#fffbeb</td><td style="color: #c2410c">#c2410c</td></tr>
+  <tr><td><code>urban-edge</code></td><td>Dark, bold</td><td>Barber</td><td>#09090b</td><td style="color: #e11d48">#e11d48</td></tr>
+  <tr><td><code>clean-professional</code></td><td>Classic, refined</td><td>Lawyer, accounting, real estate, insurance</td><td>#ffffff</td><td style="color: #1e3a5f">#1e3a5f</td></tr>
+  <tr><td><code>fresh-active</code></td><td>Dark, energetic</td><td>Gym</td><td>#09090b</td><td style="color: #22c55e">#22c55e</td></tr>
+  <tr><td><code>natural-earth</code></td><td>Warm, organic</td><td>Landscaper</td><td>#fefce8</td><td style="color: #15803d">#15803d</td></tr>
+  <tr><td><code>modern-minimal</code></td><td>Clean, minimal</td><td>Hair salon, nail salon, photography</td><td>#ffffff</td><td style="color: #171717">#171717</td></tr>
+</table>
+
+<h3>How Themes Work</h3>
+<pre>
+1. Category slug → theme ID mapping (src/lib/themes/index.ts)
+2. ThemeConfig object → themeConfigToCSSVars() → CSS custom properties
+3. Layout stores theme_config in DB → layout.tsx applies as inline styles on &lt;body&gt;
+4. All site components reference var(--color-primary), var(--font-heading), etc.
+
+Key CSS vars: --color-primary, --color-background, --color-surface,
+--color-text-primary, --color-text-secondary, --color-border,
+--font-heading, --font-body, --font-weight-heading, --tracking-heading,
+--radius-button, --radius-card, --space-section, --container-max-width
+</pre>
+
+<!-- ============================================================ -->
+<h2 id="generated-sites">9. Generated Client Sites</h2>
+
+<h3>Website Route: <code>/sites/[slug]</code></h3>
+<p>Renders a full business website from DB content. Uses <code>SUPABASE_SERVICE_ROLE_KEY</code> (no auth required). The layout loads theme CSS vars + Google Fonts for the theme. The page renders 7 sections:</p>
+<ol>
+  <li><strong>SiteHeader</strong> — sticky nav with business name + phone CTA</li>
+  <li><strong>SiteHero</strong> — headline, subheadline, 2 CTA buttons</li>
+  <li><strong>SiteServices</strong> — 3-column grid of service cards with Material Symbols icons</li>
+  <li><strong>SiteTestimonials</strong> — star rating + 3-column testimonial cards</li>
+  <li><strong>SiteAbout</strong> — centered about section with owner attribution</li>
+  <li><strong>SiteCTA</strong> — call-to-action section</li>
+  <li><strong>SiteFooter</strong> — 3-column footer with address, hours, copyright</li>
+</ol>
+
+<h3>Landing Page Route: <code>/sites/go/[slug]</code></h3>
+<p>Outreach landing page shown to prospects. Fixed blue/white design (not themed). Sections: hero, site preview iframe, strategy points, pricing tiers, CTA, footer.</p>
+
+<h3>URL Format</h3>
+<div class="callout callout-warn">
+  <strong>Important:</strong> <code>deploy_url</code> stores <strong>slugs only</strong> (e.g. <code>joes-plumbing</code>), NOT full domains.
+  <br>Website URL: <code>https://seitgeit.vercel.app/sites/{slug}</code>
+  <br>Landing page URL: <code>https://seitgeit.vercel.app/sites/go/{slug}</code>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ui-screens">10. UI Screens &amp; Components</h2>
+
+<h3>Dashboard Layout</h3>
+<p>Desktop: left sidebar (collapsible) + top header bar with notification bell. Mobile: hamburger menu. Sidebar sections: Dashboard, Discover, Pipeline, Clients, Settings. Pipeline item shows live badge count of <code>review_ready</code> businesses.</p>
+
+<h3>Key Screens</h3>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>Discover</h4>
+    <p>Search form (region, category, radius, filters). Results as cards showing name, rating, phone, address, website status. Checkbox selection + "Add to pipeline" bulk action.</p>
+  </div>
+  <div class="card">
+    <h4>Pipeline</h4>
+    <p>Filter pills (All, In progress, Needs review, Outreach, Engaged) with counts. Rich cards per business showing PipelineProgress stepper, metadata, quick action links (View site, Landing page, Review emails, Details).</p>
+  </div>
+  <div class="card">
+    <h4>Prospect Detail (/pipeline/[id])</h4>
+    <p>Full business view. Back link, status badge, PipelineProgress, 3-column grid (Generated site, Landing page, Email drafts), enrichment data display, activity timeline.</p>
+  </div>
+  <div class="card">
+    <h4>Email Review</h4>
+    <p>Split-pane: business list (left) + email preview/editor (right). Edit subject/body, approve individual emails or all for a business.</p>
+  </div>
+</div>
+
+<h3>Key Components</h3>
+<table>
+  <tr><th>Component</th><th>Type</th><th>Notes</th></tr>
+  <tr><td><code>PipelineProgress</code></td><td>Server</td><td>6-step visual stepper. Completed=check, current=highlighted, active=pulsing.</td></tr>
+  <tr><td><code>PipelineList</code></td><td>Server</td><td>Rich cards with progress stepper + action links.</td></tr>
+  <tr><td><code>RealtimeRefresh</code></td><td>Client</td><td>Subscribes to businesses table, calls router.refresh() on changes.</td></tr>
+  <tr><td><code>NotificationBell</code></td><td>Client</td><td>Supabase queries + Realtime subscription for new notifications.</td></tr>
+  <tr><td><code>EmailReviewList</code></td><td>Client</td><td>Split-pane editor with PATCH to /api/emails/[id].</td></tr>
+  <tr><td><code>StatusBadge</code></td><td>Server</td><td>Color-coded badge per business status.</td></tr>
+  <tr><td><code>SearchForm</code></td><td>Client</td><td>Discovery search with category dropdown, radius slider, advanced filters.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="env-vars">11. Environment Variables</h2>
+
+<table>
+  <tr><th>Variable</th><th>Where</th><th>Purpose</th></tr>
+  <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Client + Server</td><td>Supabase project URL</td></tr>
+  <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Client + Server</td><td>Supabase anon/public key</td></tr>
+  <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Server only</td><td>Admin access (workers, site rendering)</td></tr>
+  <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Server only</td><td>Claude API</td></tr>
+  <tr><td><code>GOOGLE_PLACES_API_KEY</code></td><td>Server only</td><td>Google Places (Legacy) API</td></tr>
+  <tr><td><code>QSTASH_TOKEN</code></td><td>Server only</td><td>QStash publish auth</td></tr>
+  <tr><td><code>QSTASH_CURRENT_SIGNING_KEY</code></td><td>Server only</td><td>QStash signature verification</td></tr>
+  <tr><td><code>QSTASH_NEXT_SIGNING_KEY</code></td><td>Server only</td><td>QStash key rotation</td></tr>
+  <tr><td><code>NEXT_PUBLIC_APP_URL</code></td><td>Server + Client</td><td><code>https://seitgeit.vercel.app</code> (prod)</td></tr>
+  <tr><td><code>NEXT_PUBLIC_SITE_DOMAIN</code></td><td>Server</td><td><code>sitegeit.com</code> (for subdomain routing, dormant)</td></tr>
+  <tr><td><code>VERCEL_TOKEN</code></td><td>Server only</td><td>Vercel API (future real deploys)</td></tr>
+</table>
+
+<div class="callout callout-warn">
+  <strong>Beware trailing newlines:</strong> Vercel env vars sometimes get pasted with trailing <code>\n</code>. This causes <code>%0A</code> in URLs and silent auth failures.
+  Use <code>printf '%s' "value" | npx vercel env add</code> to avoid this.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="gotchas">12. Known Gotchas &amp; Debugging Lessons</h2>
+
+<div class="card">
+  <h4>QStash Signature Verification</h4>
+  <p>Use <code>verifySignatureAppRouter</code> from <code>@upstash/qstash/nextjs</code> — it wraps the handler. Don't try to manually verify. In dev mode, workers skip verification entirely.</p>
+</div>
+
+<div class="card">
+  <h4>Vercel Env Var Trailing Newlines</h4>
+  <p>Both <code>ANTHROPIC_API_KEY</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> had trailing <code>\n</code> that caused silent failures. The Supabase one showed as <code>%0A</code> in WebSocket URLs. Always use <code>printf '%s'</code> when piping values to Vercel CLI.</p>
+</div>
+
+<div class="card">
+  <h4>DOMException Not Available in Node.js</h4>
+  <p>The web-detection service originally caught <code>DOMException</code>, which doesn't exist in Node's server runtime. Use generic <code>catch</code> blocks instead.</p>
+</div>
+
+<div class="card">
+  <h4>Google Places API: "Legacy" Not "New"</h4>
+  <p>The project uses the legacy Google Places API. The Cloud project needs both "Geocoding API" and "Places API" (not "Places API New") enabled. The legacy API uses <code>type</code> (singular) in details requests, not <code>types</code>.</p>
+</div>
+
+<div class="card">
+  <h4>Supabase Auth Trigger</h4>
+  <p>The <code>handle_new_user()</code> trigger auto-creates a <code>public.users</code> row when someone signs up via Supabase Auth. If a user signed up before this trigger existed, their profile row must be manually inserted.</p>
+</div>
+
+<div class="card">
+  <h4>deploy_url Format</h4>
+  <p>The <code>deploy_url</code> column in <code>generated_sites</code> and <code>landing_pages</code> stores <strong>slugs only</strong> (e.g. <code>1-mile-auto-repair</code>), not full domains. Both the page.tsx and layout.tsx must query by slug, not by full domain. A mismatch between these caused a 404-with-content bug.</p>
+</div>
+
+<div class="card">
+  <h4>CSS Variable Name Collision</h4>
+  <p><code>--space-section</code> was used for both max-width AND section padding. When the theme set it to <code>4rem</code> (for padding), containers collapsed to 64px wide. Fixed by adding <code>--container-max-width</code> as a separate variable.</p>
+</div>
+
+<div class="card">
+  <h4>Worker Routes Skip Supabase Auth</h4>
+  <p>Routes under <code>/api/workers/*</code> are called by QStash, not by users. The auth middleware in <code>src/lib/supabase/middleware.ts</code> excludes <code>/api/workers</code> and <code>/sites</code> paths from auth redirects. Workers use <code>getAdminClient()</code> (service role key) instead.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="current-state">13. Current State of the Project</h2>
+
+<h3>What's Working (end-to-end)</h3>
+<ul>
+  <li>User auth (Supabase, email + password)</li>
+  <li>Lead discovery via Google Places search with web presence detection</li>
+  <li>Add to pipeline → auto-enrichment → site generation → deploy → landing page + email generation</li>
+  <li>Generated client websites render at <code>/sites/{slug}</code> with themed designs</li>
+  <li>Landing pages render at <code>/sites/go/{slug}</code></li>
+  <li>Email review UI with split-pane editor (edit subject/body, approve)</li>
+  <li>Pipeline page with filter pills, progress stepper, quick action links</li>
+  <li>Prospect detail page with generated material grid + activity timeline</li>
+  <li>Notification system (bell icon + notification center page + Realtime)</li>
+  <li>Dashboard with pipeline summary, recent activity, quick actions</li>
+</ul>
+
+<h3>What's Partially Built / Placeholder</h3>
+<ul>
+  <li><strong>Clients page</strong> — exists but mostly placeholder. Conversion from prospect → client needs work.</li>
+  <li><strong>Settings page</strong> — basic placeholder.</li>
+  <li><strong>Email sending</strong> — Instantly.ai integration not wired up yet. Emails can be approved but not sent.</li>
+  <li><strong>Custom domains</strong> — subdomain routing code exists in middleware but DNS isn't configured.</li>
+  <li><strong>Vercel deployment</strong> — "deploy" worker just marks status as "live"; doesn't actually deploy to Vercel.</li>
+  <li><strong>Analytics / Plausible</strong> — not integrated yet.</li>
+  <li><strong>Stripe billing</strong> — not started.</li>
+</ul>
+
+<h3>Recent Git History</h3>
+<pre>
+42dd98e Fix generated site layout: separate maxWidth from section spacing
+9a5f431 Fix site 404: update layout.tsx to use slug-only deploy_url query
+322391f Fix end-to-end pipeline integrity and redesign pipeline UX
+49de148 Clean up debug logging from enrich worker
+61deba8 Use SDK's verifySignatureAppRouter for QStash signature verification
+586ef0a Refactor: Replace BullMQ with QStash for serverless pipeline
+05dc67a Phase 3: Enrichment + Generation Engine
+c46dc71 Phase 2: Lead Discovery
+</pre>
+
+<h3>Test Businesses in Database</h3>
+<table>
+  <tr><th>Name</th><th>ID</th><th>Status</th></tr>
+  <tr><td>Power Pro Electricians</td><td><code>898bcd0b-6ef7-493d-853f-06ae8426f098</code></td><td>review_ready</td></tr>
+  <tr><td>1 Mile Auto Repair</td><td><code>654a7d2b-6eac-48f9-a3b2-acd4ce8c1e35</code></td><td>review_ready</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="conventions">14. Coding Conventions</h2>
+
+<h3>General</h3>
+<ul>
+  <li><strong>Framework:</strong> Next.js App Router. Server Components by default, <code>'use client'</code> only when needed (interactivity, hooks, browser APIs).</li>
+  <li><strong>Styling:</strong> Tailwind utility classes. Custom CSS only in generated site components (inline styles with CSS variables).</li>
+  <li><strong>Icons:</strong> Material Symbols Outlined, always with <code>className="material-symbols-outlined"</code> and explicit font-size via inline style.</li>
+  <li><strong>Components:</strong> Functional components only. Props interfaces defined inline or as separate <code>interface</code> above the component.</li>
+  <li><strong>Imports:</strong> <code>@/</code> path alias for <code>src/</code>. Supabase server client via <code>createClient</code> from <code>@/lib/supabase/server</code>.</li>
+  <li><strong>Data fetching:</strong> Server Components fetch data directly (no API calls from server components). Client Components use <code>createBrowserClient</code> or fetch API routes.</li>
+</ul>
+
+<h3>Supabase Patterns</h3>
+<pre>
+// Server Component (authenticated user context)
+import { createClient } from '@/lib/supabase/server'
+const supabase = await createClient()
+const { data: { user } } = await supabase.auth.getUser()
+
+// Worker / Admin (service role, bypasses RLS)
+import { getAdminClient } from '@/lib/supabase/admin'
+const supabase = getAdminClient()
+
+// Client Component (browser)
+import { createBrowserClient } from '@supabase/ssr'
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+// Generated site pages (server, no auth, service role)
+import { createClient } from '@supabase/supabase-js'
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+)
+</pre>
+
+<h3>UX Copy Rules</h3>
+<ul>
+  <li><strong>Buttons:</strong> Active imperative verbs, sentence case. "Add to pipeline", "Approve and send"</li>
+  <li><strong>Errors:</strong> [What failed]. [Why]. [What to do].</li>
+  <li><strong>Empty states:</strong> Explanation + CTA.</li>
+  <li><strong>Loading:</strong> Present tense. "Enriching business data...", "Generating website..."</li>
+  <li><strong>Success:</strong> Past tense, specific. "3 leads added to pipeline"</li>
+</ul>
+
+<hr>
+
+<div class="callout callout-success">
+  <strong>Key Reference Files</strong>
+  <br><code>CLAUDE.md</code> — Build instructions and architecture rules
+  <br><code>TECH_SPEC.md</code> — Full technical specification
+  <br><code>CONTENT_SEO_KB.md</code> — Content generation rules (reading level, SEO, accessibility)
+  <br><code>DESIGN_SYSTEM.md</code> — Theme specifications
+  <br><code>PIPELINE_AUDIT.md</code> — Audit trail and debugging lessons
+  <br><code>src/lib/themes/index.ts</code> — Theme registry and category mappings
+  <br><code>src/lib/qstash/client.ts</code> — Job queue client
+  <br><code>src/lib/ai/client.ts</code> — Claude API client
+</div>
+
+</body>
+</html>

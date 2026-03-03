@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Golden Crust Bakery — Warm Craft Theme Preview</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" rel="stylesheet" />
+
+  <style>
+    /* ===== CSS RESET ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ===== THEME TOKENS (Warm Craft) ===== */
+    :root {
+      --color-primary: #c2410c;
+      --color-primary-hover: #9a3412;
+      --color-primary-light: #fff7ed;
+      --color-accent: #fbbf24;
+      --color-background: #fffbeb;
+      --color-surface: #fef3c7;
+      --color-text-primary: #451a03;
+      --color-text-secondary: #78350f;
+      --color-border: #fcd34d;
+
+      --font-heading: 'Fraunces', Georgia, serif;
+      --font-body: 'Source Sans 3', system-ui, sans-serif;
+      --font-weight-heading: 700;
+      --tracking-heading: -0.01em;
+
+      --radius-button: 10px;
+      --radius-card: 14px;
+
+      --space-section: 5rem;
+      --space-lg: 1.5rem;
+      --container-max-width: 1100px;
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--color-text-primary);
+      background-color: var(--color-background);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    /* ===== TEMPLATE PREVIEW BANNER ===== */
+    .preview-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background-color: #451a03;
+      color: #fef3c7;
+      text-align: center;
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 16px;
+    }
+
+    /* ===== SITE HEADER ===== */
+    .site-header {
+      position: sticky;
+      top: 29px; /* offset for preview banner */
+      z-index: 50;
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .site-header__inner {
+      max-width: var(--container-max-width);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+    }
+
+    .site-header__name {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      font-size: 1.125rem;
+      color: var(--color-text-primary);
+    }
+
+    .site-header__phone {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--color-primary);
+      color: #ffffff;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--radius-button);
+      transition: background-color 250ms ease;
+    }
+
+    .site-header__phone:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    .site-header__phone .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    .site-header__phone-label-full {
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .site-header__phone-label-full {
+        display: inline;
+      }
+      .site-header__phone-label-short {
+        display: none;
+      }
+    }
+
+    /* ===== SITE HERO ===== */
+    .site-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 64px 16px;
+      gap: var(--space-lg);
+    }
+
+    @media (min-width: 640px) {
+      .site-hero {
+        padding: 96px 16px;
+      }
+    }
+
+    .site-hero__headline {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      line-height: 1.15;
+      font-size: 1.875rem;
+      max-width: 48rem;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 640px) {
+      .site-hero__headline {
+        font-size: 2.25rem;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .site-hero__headline {
+        font-size: 3rem;
+      }
+    }
+
+    .site-hero__sub {
+      font-size: 1.125rem;
+      color: var(--color-text-secondary);
+      max-width: 42rem;
+      margin: 0 auto;
+    }
+
+    .site-hero__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .site-hero__actions {
+        flex-direction: row;
+        gap: 16px;
+      }
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: background-color 250ms ease, border-color 250ms ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: var(--radius-button);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--color-text-primary);
+      font-weight: 500;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-button);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    /* ===== SITE SERVICES ===== */
+    .site-services {
+      padding: var(--space-section) 16px;
+    }
+
+    .site-services__inner {
+      max-width: var(--container-max-width);
+      margin: 0 auto;
+    }
+
+    .site-services__heading {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 640px) {
+      .site-services__heading {
+        font-size: 1.875rem;
+      }
+    }
+
+    .site-services__grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .site-services__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .site-services__grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .service-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 24px;
+      transition: box-shadow 250ms ease;
+    }
+
+    .service-card:hover {
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+    }
+
+    .service-card__icon {
+      font-size: 32px;
+      color: var(--color-primary);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .service-card__name {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .service-card__desc {
+      font-size: 0.875rem;
+      line-height: 1.625;
+      color: var(--color-text-secondary);
+    }
+
+    /* ===== SITE TESTIMONIALS ===== */
+    .site-testimonials {
+      padding: var(--space-section) 16px;
+      background-color: var(--color-surface);
+    }
+
+    .site-testimonials__inner {
+      max-width: var(--container-max-width);
+      margin: 0 auto;
+    }
+
+    .site-testimonials__badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .site-testimonials__stars {
+      display: flex;
+      gap: 4px;
+    }
+
+    .site-testimonials__stars .material-symbols-outlined {
+      font-size: 24px;
+    }
+
+    .star-filled {
+      color: #facc15;
+      font-variation-settings: 'FILL' 1;
+    }
+
+    .star-empty {
+      color: var(--color-border);
+      font-variation-settings: 'FILL' 0;
+    }
+
+    .site-testimonials__badge-text {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+
+    .site-testimonials__grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .site-testimonials__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .site-testimonials__grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .testimonial-card {
+      background-color: var(--color-background);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 20px;
+    }
+
+    .testimonial-card__quote {
+      font-size: 0.875rem;
+      font-style: italic;
+      line-height: 1.625;
+      color: var(--color-text-primary);
+      margin-bottom: 12px;
+    }
+
+    .testimonial-card__footer {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* ===== SITE ABOUT ===== */
+    .site-about {
+      padding: var(--space-section) 16px;
+    }
+
+    .site-about__inner {
+      max-width: 42rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .site-about__heading {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .site-about__heading {
+        font-size: 1.875rem;
+      }
+    }
+
+    .site-about__body {
+      color: var(--color-text-secondary);
+      line-height: 1.625;
+      margin-bottom: 16px;
+    }
+
+    .site-about__owner {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-primary);
+    }
+
+    /* ===== SITE CTA ===== */
+    .site-cta {
+      padding: var(--space-section) 16px;
+      background-color: var(--color-primary-light);
+    }
+
+    .site-cta__inner {
+      max-width: 36rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .site-cta__heading {
+      font-family: var(--font-heading);
+      font-weight: var(--font-weight-heading);
+      letter-spacing: var(--tracking-heading);
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .site-cta__heading {
+        font-size: 1.875rem;
+      }
+    }
+
+    .site-cta__body {
+      color: var(--color-text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .site-cta .btn-primary {
+      padding: 12px 32px;
+    }
+
+    /* ===== SITE FOOTER ===== */
+    .site-footer {
+      border-top: 1px solid var(--color-border);
+      background-color: var(--color-surface);
+      padding: 40px 16px;
+    }
+
+    .site-footer__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      gap: 32px;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .site-footer__inner {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .site-footer__inner {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .site-footer__biz-name {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .site-footer__address,
+    .site-footer__phone-link {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .site-footer__phone-link a {
+      color: var(--color-primary);
+    }
+
+    .site-footer__hours-heading {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .site-footer__hours-list {
+      list-style: none;
+    }
+
+    .site-footer__hours-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 0.875rem;
+      margin-bottom: 4px;
+    }
+
+    .site-footer__hours-day {
+      color: var(--color-text-secondary);
+    }
+
+    .site-footer__hours-time {
+      color: var(--color-text-primary);
+    }
+
+    .site-footer__legal {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .site-footer__legal {
+        grid-column: span 2;
+      }
+    }
+
+    .site-footer__legal p {
+      margin-bottom: 8px;
+    }
+
+    .site-footer__legal a {
+      color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TEMPLATE PREVIEW BANNER -->
+  <div class="preview-banner">Template Preview: Warm Craft</div>
+
+  <!-- SITE HEADER -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <span class="site-header__name">Golden Crust Bakery</span>
+      <a href="tel:+15553456789" class="site-header__phone">
+        <span class="material-symbols-outlined">phone</span>
+        <span class="site-header__phone-label-full">(555) 345-6789</span>
+        <span class="site-header__phone-label-short">Call</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- SITE HERO -->
+  <section class="site-hero">
+    <h1 class="site-hero__headline">Handcrafted Breads &amp; Pastries Made Daily</h1>
+    <p class="site-hero__sub">From sourdough to sweet rolls, every recipe honors the craft of slow baking.</p>
+    <div class="site-hero__actions">
+      <a href="tel:+15553456789" class="btn-primary">Call to Order</a>
+      <a href="#services" class="btn-secondary">View Our Menu</a>
+    </div>
+  </section>
+
+  <!-- SITE SERVICES -->
+  <section id="services" class="site-services">
+    <div class="site-services__inner">
+      <h2 class="site-services__heading">What We Bake</h2>
+      <div class="site-services__grid">
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">bakery_dining</span>
+          <h3 class="service-card__name">Artisan Breads</h3>
+          <p class="service-card__desc">Sourdough, rye, ciabatta, and more. Each loaf is shaped by hand and slow-fermented for deep flavor and a perfect crust.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">cake</span>
+          <h3 class="service-card__name">Custom Cakes</h3>
+          <p class="service-card__desc">Birthdays, anniversaries, or just because. We design and bake cakes to fit your celebration, from classic to creative.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">breakfast_dining</span>
+          <h3 class="service-card__name">Pastries &amp; Croissants</h3>
+          <p class="service-card__desc">Buttery croissants, fruit danishes, and flaky turnovers. Baked fresh every morning before the doors open.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">featured_seasonal_and_gifts</span>
+          <h3 class="service-card__name">Wedding Cakes</h3>
+          <p class="service-card__desc">Elegant tiered designs for your big day. Schedule a tasting and let us bring your wedding vision to life.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">restaurant</span>
+          <h3 class="service-card__name">Catering Platters</h3>
+          <p class="service-card__desc">Assorted bread baskets, pastry trays, and dessert platters. Perfect for office events, brunches, and gatherings.</p>
+        </div>
+
+        <div class="service-card">
+          <span class="material-symbols-outlined service-card__icon">eco</span>
+          <h3 class="service-card__name">Gluten-Free Options</h3>
+          <p class="service-card__desc">Delicious baked goods without the gluten. Our dedicated prep area keeps things safe for sensitive diets.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SITE TESTIMONIALS -->
+  <section class="site-testimonials">
+    <div class="site-testimonials__inner">
+
+      <!-- Rating badge -->
+      <div class="site-testimonials__badge">
+        <div class="site-testimonials__stars">
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+          <span class="material-symbols-outlined star-filled">star</span>
+        </div>
+        <p class="site-testimonials__badge-text">4.7 stars from 198 Google reviews</p>
+      </div>
+
+      <!-- Testimonials grid -->
+      <div class="site-testimonials__grid">
+
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__quote">&ldquo;The sourdough here is the best I have ever had. Crusty outside, soft inside, and that tang is perfect. We drive twenty minutes just for a loaf.&rdquo;</p>
+          <footer class="testimonial-card__footer">&mdash; Maria C., Google</footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__quote">&ldquo;Rosa made the most beautiful cake for our daughter's first birthday. It tasted even better than it looked. Everyone asked where we got it.&rdquo;</p>
+          <footer class="testimonial-card__footer">&mdash; James &amp; Priya T., Google</footer>
+        </blockquote>
+
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__quote">&ldquo;Their croissants are dangerously good. Flaky, buttery, and warm first thing in the morning. This place is a Savannah treasure.&rdquo;</p>
+          <footer class="testimonial-card__footer">&mdash; David L., Google</footer>
+        </blockquote>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SITE ABOUT -->
+  <section class="site-about">
+    <div class="site-about__inner">
+      <h2 class="site-about__heading">Baked With Love Since 2012</h2>
+      <p class="site-about__body">Golden Crust Bakery started with a single brick oven and a family recipe for sourdough. Over the years we have grown, but the approach stays the same: real ingredients, patient hands, and no shortcuts. Every morning our team arrives before dawn to shape, proof, and bake so that everything you take home is as fresh as it gets. We are proud to be part of the Savannah community and grateful for every customer who walks through our door.</p>
+      <p class="site-about__owner">&mdash; Rosa Medina</p>
+    </div>
+  </section>
+
+  <!-- SITE CTA -->
+  <section id="contact" class="site-cta">
+    <div class="site-cta__inner">
+      <h2 class="site-cta__heading">Order for Pickup or Delivery</h2>
+      <p class="site-cta__body">Call ahead to reserve your favorites or place a catering order. We are happy to help plan for any occasion.</p>
+      <a href="tel:+15553456789" class="btn-primary">Call (555) 345-6789</a>
+    </div>
+  </section>
+
+  <!-- SITE FOOTER -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+
+      <!-- Business info -->
+      <div>
+        <h3 class="site-footer__biz-name">Golden Crust Bakery</h3>
+        <p class="site-footer__address">78 Main Street, Savannah, GA 31401</p>
+        <p class="site-footer__phone-link"><a href="tel:+15553456789">(555) 345-6789</a></p>
+      </div>
+
+      <!-- Hours -->
+      <div>
+        <h3 class="site-footer__hours-heading">Hours</h3>
+        <ul class="site-footer__hours-list">
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Monday</span>
+            <span class="site-footer__hours-time">Closed</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Tuesday</span>
+            <span class="site-footer__hours-time">6:00 AM &ndash; 4:00 PM</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Wednesday</span>
+            <span class="site-footer__hours-time">6:00 AM &ndash; 4:00 PM</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Thursday</span>
+            <span class="site-footer__hours-time">6:00 AM &ndash; 4:00 PM</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Friday</span>
+            <span class="site-footer__hours-time">6:00 AM &ndash; 4:00 PM</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Saturday</span>
+            <span class="site-footer__hours-time">6:00 AM &ndash; 4:00 PM</span>
+          </li>
+          <li class="site-footer__hours-item">
+            <span class="site-footer__hours-day">Sunday</span>
+            <span class="site-footer__hours-time">7:00 AM &ndash; 1:00 PM</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Copyright -->
+      <div class="site-footer__legal">
+        <p>&copy; 2026 Golden Crust Bakery. All rights reserved.</p>
+        <p>Website by <a href="https://sitegeit.com">Sitegeit</a></p>
+      </div>
+
+    </div>
+  </footer>
+
+</body>
+</html>

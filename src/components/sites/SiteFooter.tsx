@@ -3,10 +3,12 @@ interface SiteFooterProps {
   phone: string | null
   address: string
   hours: Record<string, string> | null
+  siteSlug?: string
 }
 
-export function SiteFooter({ businessName, phone, address, hours }: SiteFooterProps) {
+export function SiteFooter({ businessName, phone, address, hours, siteSlug }: SiteFooterProps) {
   const currentYear = new Date().getFullYear()
+  const basePath = siteSlug ? `/sites/${siteSlug}` : null
 
   return (
     <footer
@@ -16,7 +18,7 @@ export function SiteFooter({ businessName, phone, address, hours }: SiteFooterPr
         borderColor: 'var(--color-border)',
       }}
     >
-      <div className="mx-auto grid gap-8 sm:grid-cols-2 lg:grid-cols-3" style={{ maxWidth: '1200px' }}>
+      <div className="mx-auto grid gap-8 sm:grid-cols-2 lg:grid-cols-4" style={{ maxWidth: '1200px' }}>
         {/* Business info */}
         <div>
           <h3
@@ -38,6 +40,40 @@ export function SiteFooter({ businessName, phone, address, hours }: SiteFooterPr
             </p>
           )}
         </div>
+
+        {/* Page links */}
+        {basePath && (
+          <div>
+            <h3
+              className="mb-3 text-sm font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Pages
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href={basePath} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  Home
+                </a>
+              </li>
+              <li>
+                <a href={`${basePath}/about`} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  About
+                </a>
+              </li>
+              <li>
+                <a href={`${basePath}/contact`} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  Contact
+                </a>
+              </li>
+              <li>
+                <a href={`${basePath}/faq`} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  FAQ
+                </a>
+              </li>
+            </ul>
+          </div>
+        )}
 
         {/* Hours */}
         {hours && Object.keys(hours).length > 0 && (

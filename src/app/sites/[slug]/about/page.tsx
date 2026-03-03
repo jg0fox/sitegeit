@@ -1,0 +1,167 @@
+import { createClient } from '@supabase/supabase-js'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import { SiteBreadcrumb } from '@/components/sites/SiteBreadcrumb'
+
+interface AboutContent {
+  h1: string
+  story: string
+  team: string | null
+  values: string[]
+}
+
+interface Props {
+  params: Promise<{ slug: string }>
+}
+
+async function getSiteData(slug: string) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  )
+
+  const { data: sites } = await supabase
+    .from('generated_sites')
+    .select('*, businesses(*)')
+    .eq('deploy_url', slug)
+    .eq('deploy_status', 'live')
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  return sites?.[0] ?? null
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const site = await getSiteData(slug)
+  if (!site) return {}
+
+  const business = site.businesses as Record<string, unknown>
+  const businessName = business.name as string
+  const city = (business.address_city as string) || ''
+  const category = (business.category as string) || ''
+
+  return {
+    title: `About ${businessName} | ${city} ${category}`.trim(),
+  }
+}
+
+export default async function AboutPage({ params }: Props) {
+  const { slug } = await params
+  const site = await getSiteData(slug)
+
+  if (!site) {
+    notFound()
+  }
+
+  const about = site.about_content as AboutContent | null
+
+  if (!about) {
+    notFound()
+  }
+
+  return (
+    <main>
+      <section
+          className="px-4"
+          style={{
+            paddingTop: 'var(--space-section, 5rem)',
+            paddingBottom: 'var(--space-section, 5rem)',
+          }}
+        >
+          <div
+            className="mx-auto"
+            style={{ maxWidth: 'var(--container-max-width, 1200px)' }}
+          >
+            <div className="mb-8">
+              <SiteBreadcrumb
+                items={[{ label: 'About' }]}
+                siteSlug={slug}
+              />
+            </div>
+
+            <h1
+              className="mb-8 text-3xl sm:text-4xl"
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontWeight: 'var(--font-weight-heading, 700)',
+                letterSpacing: 'var(--tracking-heading, -0.02em)',
+              }}
+            >
+              {about.h1}
+            </h1>
+
+            <div className="mx-auto max-w-3xl">
+              <p
+                className="mb-10 text-base leading-relaxed sm:text-lg"
+                style={{
+                  color: 'var(--color-text-secondary)',
+                  whiteSpace: 'pre-line',
+                }}
+              >
+                {about.story}
+              </p>
+
+              {about.team && (
+                <div className="mb-10">
+                  <h2
+                    className="mb-4 text-xl sm:text-2xl"
+                    style={{
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 'var(--font-weight-heading, 700)',
+                      letterSpacing: 'var(--tracking-heading, -0.01em)',
+                    }}
+                  >
+                    Meet the Team
+                  </h2>
+                  <p
+                    className="leading-relaxed"
+                    style={{
+                      color: 'var(--color-text-secondary)',
+                      whiteSpace: 'pre-line',
+                    }}
+                  >
+                    {about.team}
+                  </p>
+                </div>
+              )}
+
+              {about.values.length > 0 && (
+                <div>
+                  <h2
+                    className="mb-4 text-xl sm:text-2xl"
+                    style={{
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 'var(--font-weight-heading, 700)',
+                      letterSpacing: 'var(--tracking-heading, -0.01em)',
+                    }}
+                  >
+                    Our Values
+                  </h2>
+                  <ul className="space-y-3">
+                    {about.values.map((value, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <span
+                          className="material-symbols-outlined mt-0.5 shrink-0"
+                          style={{ fontSize: '20px', color: 'var(--color-primary)' }}
+                        >
+                          check_circle
+                        </span>
+                        <span
+                          className="leading-relaxed"
+                          style={{ color: 'var(--color-text-secondary)' }}
+                        >
+                          {value}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+    </main>
+  )
+}
