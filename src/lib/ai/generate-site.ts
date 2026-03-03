@@ -67,6 +67,8 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
     contact_content: content.contact_page,
     faq_content: content.faq_page,
     seo_meta: content.seo,
+    trust_bar: content.homepage.trust_bar,
+    content_metadata: content.content_metadata,
     deploy_url: slug,
     deploy_status: 'pending',
   }
@@ -122,6 +124,7 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
       layout_variant: layoutVariant,
       service_pages_count: content.service_pages.length,
       faq_count: content.faq_page.questions.length,
+      content_metadata: content.content_metadata,
     },
   })
 
