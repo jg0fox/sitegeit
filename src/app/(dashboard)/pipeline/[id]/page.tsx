@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { PipelineProgress } from '@/components/pipeline/PipelineProgress'
+import { RegenerateSiteButton } from '@/components/pipeline/RegenerateSiteButton'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -166,6 +167,7 @@ export default async function ProspectDetailPage({
                     View site
                   </Link>
                 </Button>
+                <RegenerateSiteButton businessId={id} />
               </div>
             ) : (
               <p className="text-sm text-gray-400">
