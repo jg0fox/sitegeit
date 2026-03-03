@@ -20,6 +20,7 @@ export function SiteCTA({ heading, body, cta, phoneTel }: SiteCTAProps) {
         paddingTop: 'var(--space-section, 5rem)',
         paddingBottom: 'var(--space-section, 5rem)',
         backgroundColor: 'var(--color-primary-light)',
+        color: '#1e293b',
       }}
     >
       <div className="mx-auto max-w-xl text-center">
@@ -29,13 +30,14 @@ export function SiteCTA({ heading, body, cta, phoneTel }: SiteCTAProps) {
             fontFamily: 'var(--font-heading)',
             fontWeight: 'var(--font-weight-heading, 700)',
             letterSpacing: 'var(--tracking-heading, -0.01em)',
+            color: '#0f172a',
           }}
         >
           {heading}
         </h2>
         <p
           className="mb-6"
-          style={{ color: 'var(--color-text-secondary)' }}
+          style={{ color: '#475569' }}
         >
           {body}
         </p>
