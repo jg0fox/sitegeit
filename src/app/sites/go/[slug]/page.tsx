@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { LandingHero } from '@/components/sites/LandingHero'
 import { LandingSitePreview } from '@/components/sites/LandingSitePreview'
+import { LandingCostComparison } from '@/components/sites/LandingCostComparison'
 import { LandingPricingTable } from '@/components/sites/LandingPricingTable'
 import { LandingCTA } from '@/components/sites/LandingCTA'
 
@@ -107,6 +108,9 @@ export default async function LandingPage({ params }: Props) {
           ))}
         </div>
       </section>
+
+      {/* Cost comparison */}
+      <LandingCostComparison />
 
       {/* Pricing comparison */}
       <LandingPricingTable slug={slug} />
