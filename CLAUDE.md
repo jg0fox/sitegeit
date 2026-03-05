@@ -12,23 +12,24 @@ and service pages/about/contact/FAQ are generated but never rendered.
 Read `SITE_GENERATION_OVERHAUL.md` for the full plan. It has 4 layers
 and 5 sprints. We are executing one sprint at a time.
 
-### Current Sprint: Sprint 5 — SEO, Meta, Bug Fixes, Nav Labels (Final Sprint)
+### Current Sprint: Sprint 6 — Images & Social Proof
 
 ### Rules for This Phase
 
-1. Fix the three bugs FIRST (icon rendering, contact dropdown, nav labels)
-   and deploy before starting SEO work. Regenerate La Dulce Gracia Bakery
-   after the icon fix.
-2. The icon sanitizer is a DEFENSE layer, not the primary fix. Fix the
-   generation prompt AND add the sanitizer. Belt and suspenders.
-3. JSON-LD schema must use the most specific schema.org type available
-   (Plumber, Bakery, Dentist) not just LocalBusiness for everything.
-4. Do not add og:image tags yet — that comes in a future image sprint.
-5. Nav label changes must be backward-compatible. Sites generated before
-   this sprint should fall back to "Services" / "FAQ" if nav_labels is
-   missing from their content.
-6. After this sprint, Phase 3.5 is complete. Do not start Phase 5
-   (email integration) without my review.
+1. Fix the star rendering bug FIRST. Deploy and verify filled stars
+   before touching anything else.
+2. The review pipeline audit is diagnostic — trace the data, document
+   where it breaks, THEN fix. Do not guess at the fix.
+3. Image infrastructure must work with zero images. Every component
+   that uses images must have a graceful null/fallback path that
+   renders the current no-image layout.
+4. Hero image overlays must maintain text readability. Test with both
+   dark themes (bold-trade) and light themes (warm-craft). If text
+   becomes unreadable over any image, the overlay opacity is wrong.
+5. Do not source or download images — just build the infrastructure.
+   Image sourcing is a manual step I'll do separately.
+6. Do not add per-service-card images. Hero + about only for now.
+7. Test star fill rendering at 5.0, 4.7, 4.4, 4.0, and 3.5 ratings.
    
 # CLAUDE.md — Sitegeit Build Instructions
 

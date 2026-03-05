@@ -143,8 +143,8 @@ export function SiteServices({
         </h2>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => {
-            const serviceSlug = servicePageSlugs?.[service.name] ?? toSlug(service.name)
-            const href = siteSlug ? `/sites/${siteSlug}/${serviceSlug}` : undefined
+            const matchedSlug = servicePageSlugs?.[service.name]
+            const href = matchedSlug && siteSlug ? `/sites/${siteSlug}/${matchedSlug}` : undefined
             const cardContent = (
               <>
                 {renderIcon(service.icon_suggestion, iconStyle)}
