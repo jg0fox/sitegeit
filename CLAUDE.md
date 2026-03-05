@@ -12,24 +12,40 @@ and service pages/about/contact/FAQ are generated but never rendered.
 Read `SITE_GENERATION_OVERHAUL.md` for the full plan. It has 4 layers
 and 5 sprints. We are executing one sprint at a time.
 
-### Current Sprint: Sprint 6 — Images & Social Proof
+### Current Phase: Phase 5 — Email Integration (Instantly.ai)
+
+Phase 4 (Pipeline Management UI) is complete. All 5 sprints shipped:
+notes/stage override, email review enhancements, pipeline queue
+sorting/signals, reusable activity timeline, notification triggers.
+
+Phase 3.5 Sprint 6 (images + social proof) is still queued — it does
+not block Phase 5.
 
 ### Rules for This Phase
 
-1. Fix the star rendering bug FIRST. Deploy and verify filled stars
-   before touching anything else.
-2. The review pipeline audit is diagnostic — trace the data, document
-   where it breaks, THEN fix. Do not guess at the fix.
-3. Image infrastructure must work with zero images. Every component
-   that uses images must have a graceful null/fallback path that
-   renders the current no-image layout.
-4. Hero image overlays must maintain text readability. Test with both
-   dark themes (bold-trade) and light themes (warm-craft). If text
-   becomes unreadable over any image, the overlay opacity is wrong.
-5. Do not source or download images — just build the infrastructure.
-   Image sourcing is a manual step I'll do separately.
-6. Do not add per-service-card images. Hero + about only for now.
-7. Test star fill rendering at 5.0, 4.7, 4.4, 4.0, and 3.5 ratings.
+1. Check the current Instantly.ai API docs before writing the client.
+   Their API has changed multiple times. Use v2 endpoints if available.
+   Do not guess at payload shapes from the TECH_SPEC alone.
+2. Never silently swallow send failures. If the Instantly API call
+   fails, the email status stays `approved` (not `sent`), an error
+   notification is created, and the error is logged. The operator
+   must be able to see what failed and retry.
+3. Do not send to businesses with no email address. Validate before
+   the send attempt, not after. Show the validation error in the
+   email review UI.
+4. The webhook receiver must be idempotent. Same event arriving twice
+   must not create duplicate activity log entries or incorrect counts.
+   Use a 1-minute dedup window.
+5. Follow-up emails are generated and stored but sent by Instantly's
+   sequence engine, not by our scheduler. We push the sequence config
+   to Instantly; they handle timing and stop-on-reply.
+6. Domain rotation is round-robin across domains where warmup_status
+   is 'ready' and emails_sent_today < daily_send_limit. Do not send
+   from warming or flagged domains.
+7. Do NOT build Stripe, client management, or analytics features.
+   Those are Phase 6.
+8. Extend the existing webhook stub from Phase 4 Sprint 5 rather
+   than creating a new route. Check for it before scaffolding.
    
 # CLAUDE.md — Sitegeit Build Instructions
 

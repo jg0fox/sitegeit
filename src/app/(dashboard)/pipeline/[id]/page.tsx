@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { PipelineProgress } from '@/components/pipeline/PipelineProgress'
 import { RegenerateSiteButton } from '@/components/pipeline/RegenerateSiteButton'
 import Link from 'next/link'
+import { NotesSection } from '@/components/pipeline/NotesSection'
+import { ActivityTimeline } from '@/components/shared/ActivityTimeline'
 import { formatDistanceToNow } from 'date-fns'
 
 interface GoogleReview {
@@ -97,7 +99,7 @@ export default async function ProspectDetailPage({
   }
 
   // Fetch related data in parallel
-  const [sitesResult, landingsResult, emailsResult, activityResult] = await Promise.all([
+  const [sitesResult, landingsResult, emailsResult, activityResult, notesResult, engagementResult] = await Promise.all([
     supabase
       .from('generated_sites')
       .select('id, deploy_url, deploy_status, theme_id, layout_variant, created_at')
@@ -121,26 +123,35 @@ export default async function ProspectDetailPage({
       .eq('business_id', id)
       .order('created_at', { ascending: false })
       .limit(15),
+    supabase
+      .from('notes')
+      .select('id, content, created_at')
+      .eq('business_id', id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('outreach_emails')
+      .select('open_count, click_count, replied_at, bounced')
+      .eq('business_id', id),
   ])
 
   const site = sitesResult.data?.[0]
   const landing = landingsResult.data?.[0]
   const emails = emailsResult.data ?? []
   const activities = activityResult.data ?? []
+  const notes = notesResult.data ?? []
+
+  // Aggregate engagement signals
+  const engagementEmails = engagementResult.data ?? []
+  const totalOpens = engagementEmails.reduce((sum, e) => sum + ((e.open_count as number) ?? 0), 0)
+  const totalClicks = engagementEmails.reduce((sum, e) => sum + ((e.click_count as number) ?? 0), 0)
+  const hasReply = engagementEmails.some((e) => e.replied_at)
+  const hasBounce = engagementEmails.some((e) => e.bounced)
+  const hasEngagement = totalOpens > 0 || totalClicks > 0 || hasReply || hasBounce
 
   const SEQUENCE_LABELS: Record<number, string> = {
     1: 'Primary outreach',
     2: 'Follow-up 1',
     3: 'Follow-up 2',
-  }
-
-  const EVENT_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-    lead_discovered: { label: 'Lead discovered', icon: 'person_add', color: 'text-gray-500' },
-    enrichment_complete: { label: 'Enrichment complete', icon: 'auto_awesome', color: 'text-blue-500' },
-    site_generated: { label: 'Site generated', icon: 'web', color: 'text-purple-500' },
-    landing_page_generated: { label: 'Landing page generated', icon: 'campaign', color: 'text-indigo-500' },
-    email_drafted: { label: 'Emails drafted', icon: 'edit_note', color: 'text-amber-500' },
-    status_changed: { label: 'Status changed', icon: 'swap_horiz', color: 'text-gray-500' },
   }
 
   // Enrichment data
@@ -338,6 +349,58 @@ export default async function ProspectDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Engagement signals */}
+      {hasEngagement && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px] text-blue-500">monitoring</span>
+              <CardTitle>Engagement</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-6">
+              {totalOpens > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-blue-500">visibility</span>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900">{totalOpens}</p>
+                    <p className="text-xs text-gray-500">Email opens</p>
+                  </div>
+                </div>
+              )}
+              {totalClicks > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-cyan-500">ads_click</span>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900">{totalClicks}</p>
+                    <p className="text-xs text-gray-500">Link clicks</p>
+                  </div>
+                </div>
+              )}
+              {hasReply && (
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-emerald-500">reply</span>
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-700">Replied</p>
+                    <p className="text-xs text-gray-500">Prospect responded</p>
+                  </div>
+                </div>
+              )}
+              {hasBounce && (
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-red-500">error</span>
+                  <div>
+                    <p className="text-sm font-semibold text-red-700">Bounced</p>
+                    <p className="text-xs text-gray-500">Delivery failed</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Reviews & Ratings */}
       {hasReviews && (
@@ -563,31 +626,13 @@ export default async function ProspectDetailPage({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {activities.map((activity) => {
-                const config = EVENT_LABELS[activity.event_type] ?? {
-                  label: activity.event_type,
-                  icon: 'circle',
-                  color: 'text-gray-400',
-                }
-                return (
-                  <div key={activity.id} className="flex items-start gap-3">
-                    <span className={`material-symbols-outlined mt-0.5 text-[16px] ${config.color}`}>
-                      {config.icon}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-700">{config.label}</p>
-                      <p className="text-xs text-gray-400">
-                        {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <ActivityTimeline activities={activities} />
           </CardContent>
         </Card>
       )}
+
+      {/* Notes */}
+      <NotesSection businessId={id} initialNotes={notes} />
     </div>
   )
 }

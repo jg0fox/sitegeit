@@ -22,6 +22,9 @@ interface OutreachEmail {
   id: string
   review_status: string
   sequence_position: number
+  open_count?: number
+  click_count?: number
+  replied_at?: string | null
 }
 
 interface Business {
@@ -53,6 +56,14 @@ export function PipelineList({ businesses }: { businesses: Business[] }) {
         const liveLanding = biz.landing_pages?.find((lp) => lp.deploy_status === 'live')
         const draftEmails = biz.outreach_emails?.filter((e) => e.review_status === 'draft') ?? []
         const hasGeneratedMaterial = liveSite || liveLanding || draftEmails.length > 0
+
+        // Engagement signals
+        const emails = biz.outreach_emails ?? []
+        const totalOpens = emails.reduce((sum, e) => sum + (e.open_count ?? 0), 0)
+        const totalClicks = emails.reduce((sum, e) => sum + (e.click_count ?? 0), 0)
+        const hasReply = emails.some((e) => e.replied_at)
+        const isHighIntent = totalOpens >= 3 || totalClicks >= 1
+        const showEngagement = totalOpens > 0 || totalClicks > 0 || hasReply
 
         return (
           <Card key={biz.id} className="overflow-hidden">
@@ -105,6 +116,36 @@ export function PipelineList({ businesses }: { businesses: Business[] }) {
                   <PipelineActions businessId={biz.id} businessName={biz.name} status={biz.status} />
                 </div>
               </div>
+
+              {/* Engagement signals */}
+              {showEngagement && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {isHighIntent && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      <span className="material-symbols-outlined text-[12px]">local_fire_department</span>
+                      High intent
+                    </span>
+                  )}
+                  {totalOpens > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                      <span className="material-symbols-outlined text-[14px] text-blue-500">visibility</span>
+                      Opened {totalOpens}x
+                    </span>
+                  )}
+                  {totalClicks > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                      <span className="material-symbols-outlined text-[14px] text-cyan-500">ads_click</span>
+                      Clicked
+                    </span>
+                  )}
+                  {hasReply && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600">
+                      <span className="material-symbols-outlined text-[14px]">reply</span>
+                      Replied
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Progress stepper */}
               <div className="mt-3">

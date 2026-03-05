@@ -17,7 +17,7 @@ const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim()
 
 export interface CategoryImageSet {
   hero: string
-  about: string
+  about?: string
 }
 
 /**
@@ -35,7 +35,7 @@ const CATEGORY_IMAGE_REGISTRY: Record<string, CategoryImageSet> = {
   auto_repair: { hero: 'auto_repair/hero.webp', about: 'auto_repair/about.webp' },
   towing: { hero: 'towing/hero.webp', about: 'towing/about.webp' },
   // Food & Hospitality
-  bakery: { hero: 'bakery/hero.webp', about: 'bakery/about.webp' },
+  bakery: { hero: 'bakery/hero.webp' },
   restaurant: { hero: 'restaurant/hero.webp', about: 'restaurant/about.webp' },
   cafe: { hero: 'cafe/hero.webp', about: 'cafe/about.webp' },
   bar: { hero: 'bar/hero.webp', about: 'bar/about.webp' },
@@ -83,11 +83,11 @@ export function getCategoryImageUrl(imagePath: string): string {
  * Get resolved image URLs for a category.
  * Returns null if no images are registered.
  */
-export function getCategoryImageUrls(categorySlug: string): { heroUrl: string; aboutUrl: string } | null {
+export function getCategoryImageUrls(categorySlug: string): { heroUrl: string; aboutUrl: string | null } | null {
   const images = getCategoryImages(categorySlug)
   if (!images) return null
   return {
     heroUrl: getCategoryImageUrl(images.hero),
-    aboutUrl: getCategoryImageUrl(images.about),
+    aboutUrl: images.about ? getCategoryImageUrl(images.about) : null,
   }
 }

@@ -5,6 +5,20 @@ import { useRouter } from 'next/navigation'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as AlertDialog from '@radix-ui/react-dialog'
 
+const MANUAL_STATUSES = [
+  { value: 'discovered', label: 'Discovered', icon: 'search' },
+  { value: 'enriched', label: 'Enriched', icon: 'auto_awesome' },
+  { value: 'review_ready', label: 'Ready for Review', icon: 'rate_review' },
+  { value: 'sent', label: 'Sent', icon: 'send' },
+  { value: 'opened', label: 'Opened', icon: 'visibility' },
+  { value: 'clicked', label: 'Clicked', icon: 'ads_click' },
+  { value: 'responded', label: 'Responded', icon: 'forum' },
+  { value: 'meeting_scheduled', label: 'Meeting Scheduled', icon: 'event' },
+  { value: 'closed_won', label: 'Closed Won', icon: 'emoji_events' },
+  { value: 'active', label: 'Active Client', icon: 'verified' },
+  { value: 'archived', label: 'Archived', icon: 'archive' },
+] as const
+
 interface PipelineActionsProps {
   businessId: string
   businessName: string
@@ -17,6 +31,22 @@ export function PipelineActions({ businessId, businessName, status }: PipelineAc
   const [loading, setLoading] = useState(false)
 
   const isArchived = status === 'archived'
+
+  async function handleStatusChange(newStatus: string) {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/businesses/${businessId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) {
+        router.refresh()
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleArchive() {
     setLoading(true)
@@ -65,8 +95,36 @@ export function PipelineActions({ businessId, businessName, status }: PipelineAc
           <DropdownMenu.Content
             align="end"
             sideOffset={4}
-            className="z-50 min-w-[160px] rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+            className="z-50 min-w-[180px] rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
           >
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm text-gray-700 outline-none hover:bg-gray-50 data-[state=open]:bg-gray-50">
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px]">swap_horiz</span>
+                  Change status
+                </span>
+                <span className="material-symbols-outlined text-[14px] text-gray-400">chevron_right</span>
+              </DropdownMenu.SubTrigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.SubContent
+                  sideOffset={4}
+                  className="z-50 min-w-[180px] rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+                >
+                  {MANUAL_STATUSES.filter((s) => s.value !== status).map((s) => (
+                    <DropdownMenu.Item
+                      key={s.value}
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm text-gray-700 outline-none hover:bg-gray-50"
+                      onSelect={() => handleStatusChange(s.value)}
+                      disabled={loading}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">{s.icon}</span>
+                      {s.label}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
+            <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
             <DropdownMenu.Item
               className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm text-gray-700 outline-none hover:bg-gray-50"
               onSelect={handleArchive}

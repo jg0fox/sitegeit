@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'
 import { publishToWorker } from '@/lib/qstash/client'
 import { generateSite } from '@/lib/ai/generate-site'
+import { getAdminClient } from '@/lib/supabase/admin'
 
 async function handler(request: Request) {
   try {
@@ -14,6 +15,25 @@ async function handler(request: Request) {
 
     console.log(`[worker/generate-site] Processing business ${businessId}`)
     const { siteId, content } = await generateSite(businessId)
+
+    // Create notification
+    const supabase = getAdminClient()
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('user_id, name')
+      .eq('id', businessId)
+      .single()
+
+    if (business?.user_id) {
+      await supabase.from('notifications').insert({
+        user_id: business.user_id,
+        type: 'pipeline',
+        title: 'Website generated',
+        body: `${business.name}'s website is ready.`,
+        business_id: businessId,
+        href: `/pipeline/${businessId}`,
+      })
+    }
 
     // Chain: queue deployment
     const messageId = await publishToWorker('deploy', { businessId, siteId })

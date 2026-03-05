@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils/cn'
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 
 const STAGE_CONFIG = [
   { status: 'discovered', label: 'Discovered', icon: 'search', color: 'text-gray-500', bg: 'bg-gray-50' },
@@ -39,32 +40,31 @@ export async function PipelineSummary() {
       <h2 className="mb-3 text-sm font-semibold text-gray-900">Pipeline overview</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         {stages.map((stage) => (
-          <Card
-            key={stage.label}
-            className="flex cursor-pointer flex-col items-center px-3 py-4 transition-shadow hover:shadow-md"
-          >
-            <div
-              className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-lg',
-                stage.bg
-              )}
-            >
-              <span
+          <Link key={stage.label} href={`/pipeline?status=${stage.status}`}>
+            <Card className="flex cursor-pointer flex-col items-center px-3 py-4 transition-shadow hover:shadow-md">
+              <div
                 className={cn(
-                  'material-symbols-outlined text-[20px]',
-                  stage.color
+                  'flex h-10 w-10 items-center justify-center rounded-lg',
+                  stage.bg
                 )}
               >
-                {stage.icon}
+                <span
+                  className={cn(
+                    'material-symbols-outlined text-[20px]',
+                    stage.color
+                  )}
+                >
+                  {stage.icon}
+                </span>
+              </div>
+              <span className="mt-2 text-2xl font-bold text-gray-900">
+                {stage.count}
               </span>
-            </div>
-            <span className="mt-2 text-2xl font-bold text-gray-900">
-              {stage.count}
-            </span>
-            <span className="mt-0.5 text-center text-xs text-gray-500">
-              {stage.label}
-            </span>
-          </Card>
+              <span className="mt-0.5 text-center text-xs text-gray-500">
+                {stage.label}
+              </span>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

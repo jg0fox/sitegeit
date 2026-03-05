@@ -179,11 +179,12 @@ export function themeConfigToCSSVars(config: ThemeConfig): Record<string, string
   const starEmpty = config.colors.starEmpty ||
     (isDark ? '#475569' : '#d1d5db')
 
-  // Derive hero image overlay
+  // Derive hero image overlay — must be dark enough for white text readability
+  // Dark themes: darken with background color. Light themes: use black overlay.
   const heroOverlay = config.colors.heroOverlay ||
     (isDark
       ? `rgba(${hexToRgb(config.colors.background)}, 0.70)`
-      : `rgba(${hexToRgb(config.colors.background)}, 0.85)`)
+      : 'rgba(0, 0, 0, 0.55)')
 
   return {
     '--color-primary': config.colors.primary,

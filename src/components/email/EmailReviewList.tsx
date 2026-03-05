@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
@@ -46,6 +46,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
   const [editBody, setEditBody] = useState('')
   const [saving, setSaving] = useState(false)
   const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set())
+  const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set())
 
   function startEditing(email: EmailData) {
     setEditingId(email.id)
@@ -129,26 +130,124 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
   }
 
-  const currentEmail = groups
-    .flatMap((g) => g.emails)
-    .find((e) => e.id === activeEmail)
+  async function skipEmail(emailId: string) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/emails/${emailId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review_status: 'skipped' }),
+      })
+      if (!res.ok) throw new Error('Failed to skip')
+      setSkippedIds((prev) => new Set(prev).add(emailId))
+      toast.success('Email skipped')
+    } catch {
+      toast.error('Failed to skip email')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const allEmails = groups.flatMap((g) => g.emails)
+  const currentEmail = allEmails.find((e) => e.id === activeEmail)
+  const reviewedCount = allEmails.filter(
+    (e) => approvedIds.has(e.id) || skippedIds.has(e.id)
+  ).length
+  const totalCount = allEmails.length
+
+  // Navigate to next unreviewed email
+  const moveToNext = useCallback(() => {
+    const idx = allEmails.findIndex((e) => e.id === activeEmail)
+    if (idx === -1) return
+    for (let i = 1; i <= allEmails.length; i++) {
+      const next = allEmails[(idx + i) % allEmails.length]
+      if (!approvedIds.has(next.id) && !skippedIds.has(next.id)) {
+        setActiveEmail(next.id)
+        // expand the business group containing this email
+        const group = groups.find((g) => g.emails.some((e) => e.id === next.id))
+        if (group) setExpandedBusiness(group.business.id)
+        return
+      }
+    }
+  }, [activeEmail, allEmails, approvedIds, skippedIds, groups])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Don't fire when editing
+      if (editingId || !currentEmail) return
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+
+      switch (e.key.toLowerCase()) {
+        case 'a':
+          if (!approvedIds.has(currentEmail.id) && !skippedIds.has(currentEmail.id)) {
+            approveEmail(currentEmail.id)
+          }
+          break
+        case 's':
+          if (!approvedIds.has(currentEmail.id) && !skippedIds.has(currentEmail.id)) {
+            skipEmail(currentEmail.id)
+          }
+          break
+        case 'e':
+          if (!approvedIds.has(currentEmail.id) && !skippedIds.has(currentEmail.id)) {
+            startEditing(currentEmail)
+          }
+          break
+        case 'arrowdown': {
+          e.preventDefault()
+          const idx = allEmails.findIndex((em) => em.id === activeEmail)
+          if (idx < allEmails.length - 1) {
+            const next = allEmails[idx + 1]
+            setActiveEmail(next.id)
+            const group = groups.find((g) => g.emails.some((em) => em.id === next.id))
+            if (group) setExpandedBusiness(group.business.id)
+          }
+          break
+        }
+        case 'arrowup': {
+          e.preventDefault()
+          const idx = allEmails.findIndex((em) => em.id === activeEmail)
+          if (idx > 0) {
+            const prev = allEmails[idx - 1]
+            setActiveEmail(prev.id)
+            const group = groups.find((g) => g.emails.some((em) => em.id === prev.id))
+            if (group) setExpandedBusiness(group.business.id)
+          }
+          break
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [editingId, currentEmail, activeEmail, allEmails, approvedIds, skippedIds, groups])
 
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
       {/* Left panel: business groups */}
       <div className="space-y-3">
-        <p className="text-xs text-gray-400">
-          {groups.reduce((sum, g) => sum + g.emails.length, 0)} draft
-          {groups.reduce((sum, g) => sum + g.emails.length, 0) !== 1
-            ? 's'
-            : ''}{' '}
-          across {groups.length} business
-          {groups.length !== 1 ? 'es' : ''}
-        </p>
+        {/* Progress bar */}
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-gray-600">
+              {reviewedCount} of {totalCount} reviewed
+            </p>
+            <p className="text-xs text-gray-400">
+              {groups.length} business{groups.length !== 1 ? 'es' : ''}
+            </p>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: totalCount > 0 ? `${(reviewedCount / totalCount) * 100}%` : '0%' }}
+            />
+          </div>
+        </div>
         {groups.map((group) => {
           const isExpanded = expandedBusiness === group.business.id
-          const allApproved = group.emails.every((e) =>
-            approvedIds.has(e.id)
+          const allApproved = group.emails.every(
+            (e) => approvedIds.has(e.id) || skippedIds.has(e.id)
           )
           return (
             <Card
@@ -185,8 +284,9 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                     </span>
                   ) : (
                     <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-warning px-1.5 text-[10px] font-semibold text-white">
-                      {group.emails.filter((e) => !approvedIds.has(e.id))
-                        .length}
+                      {group.emails.filter(
+                        (e) => !approvedIds.has(e.id) && !skippedIds.has(e.id)
+                      ).length}
                     </span>
                   )}
                   <span
@@ -219,6 +319,10 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                         <span className="material-symbols-outlined text-[16px] text-success">
                           check_circle
                         </span>
+                      ) : skippedIds.has(email.id) ? (
+                        <span className="material-symbols-outlined text-[16px] text-gray-400">
+                          skip_next
+                        </span>
                       ) : (
                         <span className="material-symbols-outlined text-[16px]">
                           mail
@@ -234,10 +338,10 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                     <Button
                       size="sm"
                       className="mt-2 w-full"
-                      onClick={() => approveAll(group.emails)}
+                      onClick={() => approveAll(group.emails.filter((e) => !skippedIds.has(e.id)))}
                       disabled={saving}
                     >
-                      Approve all {group.emails.length} emails
+                      Approve remaining
                     </Button>
                   )}
                 </div>
@@ -250,6 +354,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
       {/* Right panel: email preview/editor */}
       <div>
         {currentEmail ? (
+          <>
           <Card>
             <CardHeader className="flex-row items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -290,7 +395,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                   </>
                 ) : (
                   <>
-                    {!approvedIds.has(currentEmail.id) && (
+                    {!approvedIds.has(currentEmail.id) && !skippedIds.has(currentEmail.id) && (
                       <>
                         <Button
                           variant="outline"
@@ -301,6 +406,17 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                             edit
                           </span>
                           Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => skipEmail(currentEmail.id)}
+                          disabled={saving}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            skip_next
+                          </span>
+                          Skip
                         </Button>
                         <Button
                           size="sm"
@@ -320,6 +436,14 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                           check_circle
                         </span>
                         Approved
+                      </span>
+                    )}
+                    {skippedIds.has(currentEmail.id) && !approvedIds.has(currentEmail.id) && (
+                      <span className="flex items-center gap-1 text-sm font-medium text-gray-400">
+                        <span className="material-symbols-outlined text-[18px]">
+                          skip_next
+                        </span>
+                        Skipped
                       </span>
                     )}
                   </>
@@ -342,6 +466,16 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
               )}
             </CardContent>
           </Card>
+          {/* Keyboard shortcut hints */}
+          {!editingId && (
+            <div className="mt-3 flex items-center justify-center gap-4 text-[11px] text-gray-400">
+              <span><kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px]">A</kbd> approve</span>
+              <span><kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px]">S</kbd> skip</span>
+              <span><kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px]">E</kbd> edit</span>
+              <span><kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px]">&uarr;&darr;</kbd> navigate</span>
+            </div>
+          )}
+          </>
         ) : (
           <Card className="flex items-center justify-center px-6 py-20">
             <p className="text-sm text-gray-400">
