@@ -49,7 +49,6 @@ export default function DiscoverPage() {
   const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null)
 
   // Opt-in save state
-  const [currentSearchId, setCurrentSearchId] = useState<string | null>(null)
   const [showSaveBanner, setShowSaveBanner] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -89,7 +88,6 @@ export default function DiscoverPage() {
     setSelectedIds(new Set())
     setLastSearchParams(params)
     setShowSaveBanner(false)
-    setCurrentSearchId(null)
 
     try {
       const res = await fetch('/api/discover', {
@@ -107,24 +105,9 @@ export default function DiscoverPage() {
       setResults(data.results)
       saveCachedState(data.results, params)
 
-      // Save the search record (unsaved by default) for analytics
-      const saveRes = await fetch('/api/discover/saved-searches', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...params,
-          result_count: data.results.length,
-          results: data.results,
-          saved: false,
-        }),
-      })
-
-      if (saveRes.ok) {
-        const saveData = await saveRes.json()
-        setCurrentSearchId(saveData.search?.id || null)
-        if (data.results.length > 0) {
-          setShowSaveBanner(true)
-        }
+      // Show save banner if we got results
+      if (data.results.length > 0) {
+        setShowSaveBanner(true)
       }
 
       if (data.results.length === 0) {
@@ -143,14 +126,16 @@ export default function DiscoverPage() {
   }
 
   const handleSaveSearch = async () => {
-    if (!currentSearchId) return
+    if (!lastSearchParams || results.length === 0) return
     setIsSaving(true)
     try {
       const res = await fetch('/api/discover/saved-searches', {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: currentSearchId,
+          ...lastSearchParams,
+          result_count: results.length,
+          results,
           saved: true,
         }),
       })
@@ -158,6 +143,8 @@ export default function DiscoverPage() {
         toast.success('Search saved')
         setShowSaveBanner(false)
         loadSavedSearches()
+      } else {
+        toast.error('Failed to save search')
       }
     } catch {
       toast.error('Failed to save search')
@@ -168,7 +155,6 @@ export default function DiscoverPage() {
 
   const handleDismissSave = () => {
     setShowSaveBanner(false)
-    setCurrentSearchId(null)
   }
 
   const handleToggleSelect = (placeId: string) => {
@@ -264,7 +250,6 @@ export default function DiscoverPage() {
     setLastSearchParams(params)
     setHasSearched(true)
     setShowSaveBanner(false)
-    setCurrentSearchId(null)
     saveCachedState(storedResults, params)
   }
 
