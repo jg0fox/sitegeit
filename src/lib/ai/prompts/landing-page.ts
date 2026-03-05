@@ -91,8 +91,8 @@ ${input.calendly_url}
   },
   "cta_section": {
     "heading": "...",
-    "body": "1 sentence, no pressure",
-    "button_label": "Schedule a quick call",
+    "body": "1 sentence, no pressure. Always say '15-minute call' (not 20 or 30).",
+    "button_label": "Book a free 15-minute call",
     "button_url": "${input.calendly_url}"
   }
 }`

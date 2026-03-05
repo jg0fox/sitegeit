@@ -64,6 +64,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       { name: 'Mobile responsive + SSL + fast hosting', tiers: [true, true, true, true] },
       { name: 'Basic contact form', tiers: [true, true, true, true] },
       { name: 'Monthly uptime monitoring', tiers: [true, true, true, true] },
+      { name: 'One round of site edits', tiers: [true, true, true, true] },
       { name: 'Custom domain setup', tiers: [false, true, true, true] },
       { name: 'Multi-page site (services, about, FAQ)', tiers: [true, true, true, true] },
     ],

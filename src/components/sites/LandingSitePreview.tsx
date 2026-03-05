@@ -47,6 +47,16 @@ export function LandingSitePreview({ intro, siteUrl, screenshotAlt, landingSlug 
         </a>
       </div>
 
+      {/* Edits included reassurance */}
+      <p className="mx-auto mt-6 max-w-xl text-center text-sm text-gray-500">
+        <span className="material-symbols-outlined mr-1 align-middle text-gray-400" style={{ fontSize: '16px' }}>
+          edit_note
+        </span>
+        Want to change something? Every plan — even Starter at $25/mo —
+        includes one round of edits. Sign up, tell us what you&apos;d tweak,
+        and we&apos;ll update it for you.
+      </p>
+
       {/* Go live CTA */}
       {landingSlug && (
         <div className="mt-8 rounded-xl bg-blue-50 px-6 py-8 text-center">

@@ -36,6 +36,8 @@ export async function generateEmail(
     .single()
 
   const senderName = user?.full_name || 'The Sitegeit Team'
+  // TODO: A real Calendly booking URL must be configured in the user's profile
+  // (public.users.calendly_link) before outreach goes live.
   const calendlyUrl = user?.calendly_link || 'https://calendly.com'
 
   // Get a unique detail for personalization

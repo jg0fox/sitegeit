@@ -35,6 +35,9 @@ export async function generateLandingPage(
     .eq('id', business.user_id)
     .single()
 
+  // TODO: A real Calendly booking URL must be configured in the user's profile
+  // (public.users.calendly_link) before outreach goes live. The generic
+  // https://calendly.com homepage is a placeholder that won't work for booking.
   const calendlyUrl = user?.calendly_link || 'https://calendly.com'
 
   const servicePages = (site.service_pages as { slug: string }[]) || []
