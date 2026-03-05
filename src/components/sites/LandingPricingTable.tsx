@@ -65,7 +65,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       { name: 'Basic contact form', tiers: [true, true, true, true] },
       { name: 'Monthly uptime monitoring', tiers: [true, true, true, true] },
       { name: 'Custom domain setup', tiers: [false, true, true, true] },
-      { name: 'Multi-page site (services, about, FAQ)', tiers: [false, false, false, true] },
+      { name: 'Multi-page site (services, about, FAQ)', tiers: [true, true, true, true] },
     ],
   },
   {
