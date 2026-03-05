@@ -134,13 +134,6 @@ export default async function PipelinePage({
         </form>
         {/* Sort dropdown */}
         <div className="relative">
-          <select
-            defaultValue={sortKey}
-            onChange={(e) => {
-              // Not interactive in RSC — using form for now
-            }}
-            className="hidden"
-          />
           <div className="flex gap-1">
             {SORT_OPTIONS.map((opt) => {
               const p = new URLSearchParams()

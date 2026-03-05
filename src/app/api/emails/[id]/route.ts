@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { publishToWorker } from '@/lib/qstash/client'
 
 export async function PATCH(
   request: Request,
@@ -54,6 +55,16 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // When approved, queue the email for sending via Instantly
+  if (review_status === 'approved') {
+    try {
+      await publishToWorker('send-email', { emailId: id })
+    } catch (queueErr) {
+      console.error(`[emails/${id}] Failed to queue send:`, queueErr)
+      // Don't fail the approval — the email is approved even if queueing fails
+    }
   }
 
   return NextResponse.json(updated)

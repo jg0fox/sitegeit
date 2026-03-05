@@ -34,6 +34,11 @@ const SEQUENCE_LABELS: Record<number, string> = {
   3: 'Follow-up 2',
 }
 
+const SEQUENCE_DELAY_HINTS: Record<number, string> = {
+  2: 'Sends 3 days after primary',
+  3: 'Sends 5 days after follow-up 1',
+}
+
 export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
   const [expandedBusiness, setExpandedBusiness] = useState<string | null>(
     groups[0]?.business.id ?? null
@@ -328,9 +333,16 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                           mail
                         </span>
                       )}
-                      <span className="truncate">
-                        {SEQUENCE_LABELS[email.sequence_position] ??
-                          `Email ${email.sequence_position}`}
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate">
+                          {SEQUENCE_LABELS[email.sequence_position] ??
+                            `Email ${email.sequence_position}`}
+                        </span>
+                        {SEQUENCE_DELAY_HINTS[email.sequence_position] && (
+                          <span className="truncate text-[10px] text-gray-400">
+                            {SEQUENCE_DELAY_HINTS[email.sequence_position]}
+                          </span>
+                        )}
                       </span>
                     </button>
                   ))}
@@ -358,10 +370,18 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
           <Card>
             <CardHeader className="flex-row items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                  {SEQUENCE_LABELS[currentEmail.sequence_position] ??
-                    `Email ${currentEmail.sequence_position}`}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    {SEQUENCE_LABELS[currentEmail.sequence_position] ??
+                      `Email ${currentEmail.sequence_position}`}
+                  </p>
+                  {SEQUENCE_DELAY_HINTS[currentEmail.sequence_position] && (
+                    <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600">
+                      <span className="material-symbols-outlined text-[12px]">schedule</span>
+                      {SEQUENCE_DELAY_HINTS[currentEmail.sequence_position]}
+                    </span>
+                  )}
+                </div>
                 {editingId === currentEmail.id ? (
                   <input
                     className="mt-1 w-full rounded-md border border-gray-200 px-3 py-1.5 text-base font-semibold text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
