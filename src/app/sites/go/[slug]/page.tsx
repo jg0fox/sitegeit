@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { LandingHero } from '@/components/sites/LandingHero'
 import { LandingSitePreview } from '@/components/sites/LandingSitePreview'
+import { LandingPricingTable } from '@/components/sites/LandingPricingTable'
 import { LandingCTA } from '@/components/sites/LandingCTA'
 
 interface Props {
@@ -86,6 +87,7 @@ export default async function LandingPage({ params }: Props) {
         intro={content.site_preview_section.intro}
         siteUrl={content.site_preview_section.site_url}
         screenshotAlt={content.site_preview_section.screenshot_alt}
+        landingSlug={slug}
       />
 
       {/* Strategy section */}
@@ -106,21 +108,8 @@ export default async function LandingPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Pricing preview */}
-      <section className="bg-gray-50 px-4 py-16">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-8 text-center text-2xl font-bold">{content.what_you_get.heading}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {content.what_you_get.tiers_preview.map((tier) => (
-              <div key={tier.name} className="rounded-lg border border-gray-200 bg-white p-5 text-center">
-                <h3 className="font-semibold">{tier.name}</h3>
-                <p className="my-2 text-2xl font-bold text-blue-600">{tier.price}</p>
-                <p className="text-sm text-gray-600">{tier.highlight}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Pricing comparison */}
+      <LandingPricingTable slug={slug} />
 
       <LandingCTA
         heading={content.cta_section.heading}

@@ -34,11 +34,20 @@ const WEB_STATUS_FILTER_OPTIONS: { label: string; value: WebsiteStatus }[] = [
   { label: 'Outdated site', value: 'outdated' },
 ]
 
+function kmToMiles(km: number) {
+  return Math.round(km / 1.60934)
+}
+
+function milesToKm(miles: number) {
+  return Math.round(miles * 1.60934)
+}
+
 export function SearchForm({ onSearch, isLoading, initialValues }: SearchFormProps) {
   const [region, setRegion] = useState(initialValues?.region || '')
   const [category, setCategory] = useState(initialValues?.category || '')
-  const [radiusKm, setRadiusKm] = useState(initialValues?.radius_km || 10)
-  const [showFilters, setShowFilters] = useState(false)
+  const [radiusMiles, setRadiusMiles] = useState(
+    initialValues?.radius_km ? kmToMiles(initialValues.radius_km) : 6
+  )
   const [filters, setFilters] = useState<SearchFilters>(
     initialValues?.filters || {}
   )
@@ -50,7 +59,7 @@ export function SearchForm({ onSearch, isLoading, initialValues }: SearchFormPro
     onSearch({
       region: region.trim(),
       category,
-      radius_km: radiusKm,
+      radius_km: milesToKm(radiusMiles),
       filters: Object.keys(filters).length > 0 ? filters : undefined,
     })
   }
@@ -130,122 +139,108 @@ export function SearchForm({ onSearch, isLoading, initialValues }: SearchFormPro
         <input
           type="range"
           min={1}
-          max={50}
-          value={radiusKm}
-          onChange={(e) => setRadiusKm(Number(e.target.value))}
+          max={30}
+          value={radiusMiles}
+          onChange={(e) => setRadiusMiles(Number(e.target.value))}
           className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-gray-200 accent-primary"
         />
         <span className="w-14 text-right text-sm font-medium text-gray-700">
-          {radiusKm} km
+          {radiusMiles} mi
         </span>
       </div>
 
-      {/* Filter toggle */}
-      <button
-        type="button"
-        onClick={() => setShowFilters(!showFilters)}
-        className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
-      >
-        <span className="material-symbols-outlined text-[18px]">
-          {showFilters ? 'expand_less' : 'tune'}
-        </span>
-        {showFilters ? 'Hide filters' : 'Filters'}
-      </button>
+      {/* Filters — always visible */}
+      <div className="grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Min rating */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-gray-600">
+            Minimum rating
+          </label>
+          <select
+            value={filters.min_rating || 0}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                min_rating: Number(e.target.value) || undefined,
+              }))
+            }
+            className="h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"
+          >
+            {RATING_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* Collapsible filters */}
-      {showFilters && (
-        <div className="grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Min rating */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">
-              Minimum rating
-            </label>
-            <select
-              value={filters.min_rating || 0}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  min_rating: Number(e.target.value) || undefined,
-                }))
-              }
-              className="h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"
-            >
-              {RATING_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Min reviews */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-gray-600">
+            Minimum reviews
+          </label>
+          <select
+            value={filters.min_reviews || 0}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                min_reviews: Number(e.target.value) || undefined,
+              }))
+            }
+            className="h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"
+          >
+            {REVIEW_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {/* Min reviews */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">
-              Minimum reviews
-            </label>
-            <select
-              value={filters.min_reviews || 0}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  min_reviews: Number(e.target.value) || undefined,
-                }))
-              }
-              className="h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"
-            >
-              {REVIEW_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Website status checkboxes */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">
-              Website status
-            </label>
-            <div className="space-y-1.5">
-              {WEB_STATUS_FILTER_OPTIONS.map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex items-center gap-2 text-sm text-gray-700"
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters.website_status?.includes(opt.value) || false}
-                    onChange={() => handleWebStatusToggle(opt.value)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary accent-primary"
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Has phone */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">
-              Contact info
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={filters.has_phone || false}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    has_phone: e.target.checked || undefined,
-                  }))
-                }
-                className="h-4 w-4 rounded border-gray-300 text-primary accent-primary"
-              />
-              Has phone number
-            </label>
+        {/* Website status checkboxes */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-gray-600">
+            Website status
+          </label>
+          <div className="space-y-1.5">
+            {WEB_STATUS_FILTER_OPTIONS.map((opt) => (
+              <label
+                key={opt.value}
+                className="flex items-center gap-2 text-sm text-gray-700"
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.website_status?.includes(opt.value) || false}
+                  onChange={() => handleWebStatusToggle(opt.value)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary accent-primary"
+                />
+                {opt.label}
+              </label>
+            ))}
           </div>
         </div>
-      )}
+
+        {/* Has phone */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-gray-600">
+            Contact info
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={filters.has_phone || false}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  has_phone: e.target.checked || undefined,
+                }))
+              }
+              className="h-4 w-4 rounded border-gray-300 text-primary accent-primary"
+            />
+            Has phone number
+          </label>
+        </div>
+      </div>
     </form>
   )
 }

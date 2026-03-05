@@ -2,9 +2,10 @@ interface LandingSitePreviewProps {
   intro: string
   siteUrl: string
   screenshotAlt: string
+  landingSlug?: string
 }
 
-export function LandingSitePreview({ intro, siteUrl, screenshotAlt }: LandingSitePreviewProps) {
+export function LandingSitePreview({ intro, siteUrl, screenshotAlt, landingSlug }: LandingSitePreviewProps) {
   return (
     <section className="mx-auto max-w-4xl px-4 py-16">
       <p className="mb-6 text-center text-lg text-gray-600">{intro}</p>
@@ -45,6 +46,23 @@ export function LandingSitePreview({ intro, siteUrl, screenshotAlt }: LandingSit
           </span>
         </a>
       </div>
+
+      {/* Go live CTA */}
+      {landingSlug && (
+        <div className="mt-8 rounded-xl bg-blue-50 px-6 py-8 text-center">
+          <h3 className="text-xl font-bold text-gray-900">Ready to go live?</h3>
+          <p className="mt-2 text-sm text-gray-600">
+            Choose a plan and launch your website today.
+          </p>
+          <a
+            href={`/sites/go/${landingSlug}/checkout`}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+          >
+            <span className="material-symbols-outlined text-[18px]">rocket_launch</span>
+            Go live now
+          </a>
+        </div>
+      )}
     </section>
   )
 }

@@ -100,6 +100,8 @@ export interface SavedSearch {
   radius_km: number | null
   filters: SearchFilters | null
   result_count: number | null
+  results: DiscoveryResult[] | null
+  saved: boolean
   last_run_at: string | null
   created_at: string
 }

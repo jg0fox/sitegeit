@@ -19,7 +19,6 @@ function loadCachedState(): { results: DiscoveryResult[]; params: SearchParams |
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    // Check TTL
     if (parsed.cachedAt && Date.now() - parsed.cachedAt > CACHE_TTL_MS) {
       localStorage.removeItem(STORAGE_KEY)
       return null
@@ -48,6 +47,11 @@ export default function DiscoverPage() {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([])
   const [isSavedLoading, setIsSavedLoading] = useState(false)
   const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null)
+
+  // Opt-in save state
+  const [currentSearchId, setCurrentSearchId] = useState<string | null>(null)
+  const [showSaveBanner, setShowSaveBanner] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Restore cached results on mount
   useEffect(() => {
@@ -84,6 +88,8 @@ export default function DiscoverPage() {
     setResults([])
     setSelectedIds(new Set())
     setLastSearchParams(params)
+    setShowSaveBanner(false)
+    setCurrentSearchId(null)
 
     try {
       const res = await fetch('/api/discover', {
@@ -101,18 +107,25 @@ export default function DiscoverPage() {
       setResults(data.results)
       saveCachedState(data.results, params)
 
-      // Auto-save the search
-      await fetch('/api/discover/saved-searches', {
+      // Save the search record (unsaved by default) for analytics
+      const saveRes = await fetch('/api/discover/saved-searches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...params,
           result_count: data.results.length,
+          results: data.results,
+          saved: false,
         }),
       })
 
-      // Refresh saved searches
-      loadSavedSearches()
+      if (saveRes.ok) {
+        const saveData = await saveRes.json()
+        setCurrentSearchId(saveData.search?.id || null)
+        if (data.results.length > 0) {
+          setShowSaveBanner(true)
+        }
+      }
 
       if (data.results.length === 0) {
         toast.info('No businesses found matching your criteria.')
@@ -127,6 +140,35 @@ export default function DiscoverPage() {
     } finally {
       setIsSearching(false)
     }
+  }
+
+  const handleSaveSearch = async () => {
+    if (!currentSearchId) return
+    setIsSaving(true)
+    try {
+      const res = await fetch('/api/discover/saved-searches', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: currentSearchId,
+          saved: true,
+        }),
+      })
+      if (res.ok) {
+        toast.success('Search saved')
+        setShowSaveBanner(false)
+        loadSavedSearches()
+      }
+    } catch {
+      toast.error('Failed to save search')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDismissSave = () => {
+    setShowSaveBanner(false)
+    setCurrentSearchId(null)
   }
 
   const handleToggleSelect = (placeId: string) => {
@@ -216,6 +258,32 @@ export default function DiscoverPage() {
     handleSearch(params)
   }
 
+  const handleViewResults = (storedResults: DiscoveryResult[], params: SearchParams) => {
+    setActiveTab('search')
+    setResults(storedResults)
+    setLastSearchParams(params)
+    setHasSearched(true)
+    setShowSaveBanner(false)
+    setCurrentSearchId(null)
+    saveCachedState(storedResults, params)
+  }
+
+  const handleDeleteSearch = async (id: string) => {
+    try {
+      const res = await fetch(`/api/discover/saved-searches?id=${id}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        toast.success('Search deleted')
+        loadSavedSearches()
+      } else {
+        toast.error('Failed to delete search')
+      }
+    } catch {
+      toast.error('Failed to delete search')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -253,7 +321,7 @@ export default function DiscoverPage() {
         >
           <span className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[18px]">
-              history
+              bookmark
             </span>
             Saved searches
             {savedSearches.length > 0 && (
@@ -273,6 +341,50 @@ export default function DiscoverPage() {
             isLoading={isSearching}
             initialValues={lastSearchParams || undefined}
           />
+
+          {/* Save search banner */}
+          {showSaveBanner && !isSearching && results.length > 0 && (
+            <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-blue-600">
+                  bookmark_add
+                </span>
+                <span className="text-sm font-medium text-blue-900">
+                  Save this search to revisit results later?
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDismissSave}
+                >
+                  Dismiss
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveSearch}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[16px]">
+                        progress_activity
+                      </span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">
+                        bookmark
+                      </span>
+                      Save search
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {hasSearched ? (
             <ResultsList
@@ -296,6 +408,8 @@ export default function DiscoverPage() {
         <SavedSearches
           searches={savedSearches}
           onRerun={handleRerunSearch}
+          onViewResults={handleViewResults}
+          onDelete={handleDeleteSearch}
           isLoading={isSavedLoading}
         />
       )}
