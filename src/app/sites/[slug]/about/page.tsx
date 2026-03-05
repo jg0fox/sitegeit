@@ -92,8 +92,7 @@ export default async function AboutPage({ params }: Props) {
           }}
         >
           <div
-            className="mx-auto"
-            style={{ maxWidth: 'var(--container-max-width, 1200px)' }}
+            className="mx-auto max-w-3xl"
           >
             <div className="mb-8">
               <SiteBreadcrumb
@@ -113,7 +112,7 @@ export default async function AboutPage({ params }: Props) {
               {about.h1}
             </h1>
 
-            <div className="mx-auto max-w-3xl">
+            <div>
               {/* Float image right on desktop, stack on mobile */}
               {aboutImageUrl && (
                 <div className="mb-6 sm:float-right sm:mb-4 sm:ml-8 sm:w-[280px] md:w-[320px]">
