@@ -10,6 +10,9 @@ interface ResultsListProps {
   onToggleSelect: (placeId: string) => void
   onSelectAll: () => void
   isLoading: boolean
+  onSaveSearch?: () => void
+  isSaving?: boolean
+  isSaved?: boolean
 }
 
 function ResultSkeleton() {
@@ -36,6 +39,9 @@ export function ResultsList({
   onToggleSelect,
   onSelectAll,
   isLoading,
+  onSaveSearch,
+  isSaving,
+  isSaved,
 }: ResultsListProps) {
   if (isLoading) {
     return (
@@ -67,9 +73,30 @@ export function ResultsList({
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
-          {results.length} business{results.length !== 1 ? 'es' : ''} found
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-gray-500">
+            {results.length} business{results.length !== 1 ? 'es' : ''} found
+          </p>
+          {onSaveSearch && !isSaved && (
+            <button
+              type="button"
+              onClick={onSaveSearch}
+              disabled={isSaving}
+              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-[14px]">
+                {isSaving ? 'progress_activity' : 'bookmark_add'}
+              </span>
+              {isSaving ? 'Saving...' : 'Save search'}
+            </button>
+          )}
+          {isSaved && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+              <span className="material-symbols-outlined text-[14px]">check_circle</span>
+              Saved
+            </span>
+          )}
+        </div>
         {selectableCount > 0 && (
           <button
             type="button"

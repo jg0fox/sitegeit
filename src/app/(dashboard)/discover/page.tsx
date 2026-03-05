@@ -49,8 +49,8 @@ export default function DiscoverPage() {
   const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null)
 
   // Opt-in save state
-  const [showSaveBanner, setShowSaveBanner] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
 
   // Restore cached results on mount
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function DiscoverPage() {
     setResults([])
     setSelectedIds(new Set())
     setLastSearchParams(params)
-    setShowSaveBanner(false)
+    setIsSaved(false)
 
     try {
       const res = await fetch('/api/discover', {
@@ -104,11 +104,6 @@ export default function DiscoverPage() {
       const data = await res.json()
       setResults(data.results)
       saveCachedState(data.results, params)
-
-      // Show save banner if we got results
-      if (data.results.length > 0) {
-        setShowSaveBanner(true)
-      }
 
       if (data.results.length === 0) {
         toast.info('No businesses found matching your criteria.')
@@ -141,7 +136,7 @@ export default function DiscoverPage() {
       })
       if (res.ok) {
         toast.success('Search saved')
-        setShowSaveBanner(false)
+        setIsSaved(true)
         loadSavedSearches()
       } else {
         toast.error('Failed to save search')
@@ -151,10 +146,6 @@ export default function DiscoverPage() {
     } finally {
       setIsSaving(false)
     }
-  }
-
-  const handleDismissSave = () => {
-    setShowSaveBanner(false)
   }
 
   const handleToggleSelect = (placeId: string) => {
@@ -249,7 +240,7 @@ export default function DiscoverPage() {
     setResults(storedResults)
     setLastSearchParams(params)
     setHasSearched(true)
-    setShowSaveBanner(false)
+    setIsSaved(false)
     saveCachedState(storedResults, params)
   }
 
@@ -327,50 +318,6 @@ export default function DiscoverPage() {
             initialValues={lastSearchParams || undefined}
           />
 
-          {/* Save search banner */}
-          {showSaveBanner && !isSearching && results.length > 0 && (
-            <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[20px] text-blue-600">
-                  bookmark_add
-                </span>
-                <span className="text-sm font-medium text-blue-900">
-                  Save this search to revisit results later?
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDismissSave}
-                >
-                  Dismiss
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSaveSearch}
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-[16px]">
-                        progress_activity
-                      </span>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[16px]">
-                        bookmark
-                      </span>
-                      Save search
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-
           {hasSearched ? (
             <ResultsList
               results={results}
@@ -378,6 +325,9 @@ export default function DiscoverPage() {
               onToggleSelect={handleToggleSelect}
               onSelectAll={handleSelectAll}
               isLoading={isSearching}
+              onSaveSearch={lastSearchParams ? handleSaveSearch : undefined}
+              isSaving={isSaving}
+              isSaved={isSaved}
             />
           ) : (
             <EmptyState
