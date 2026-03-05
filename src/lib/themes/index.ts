@@ -172,8 +172,8 @@ export function themeConfigToCSSVars(config: ThemeConfig): Record<string, string
   // Derive icon background: explicit value, or accent-tinted translucent bg
   const iconBg = config.colors.iconBg ||
     (isDark
-      ? `rgba(${hexToRgb(config.colors.accent)}, 0.20)`
-      : `rgba(${hexToRgb(config.colors.primary)}, 0.10)`)
+      ? `rgba(${hexToRgb(config.colors.accent)}, 0.40)`
+      : `rgba(${hexToRgb(config.colors.primary)}, 0.12)`)
 
   // Derive empty star fill color
   const starEmpty = config.colors.starEmpty ||

@@ -7,14 +7,9 @@ interface SiteTrustBarProps {
 
 function renderTrustIcon(rawIconName: string, style: string) {
   const iconName = sanitizeIconName(rawIconName, 'verified')
-  const icon = (
-    <span
-      className="material-symbols-outlined"
-      style={{ fontSize: '24px', color: 'var(--color-primary)' }}
-    >
-      {iconName}
-    </span>
-  )
+  // Icons in colored containers use accent for better contrast on dark themes
+  const bgIconColor = 'var(--color-accent, var(--color-primary))'
+  const iconFallbackBg = 'var(--color-icon-bg, rgba(var(--color-accent-rgb, 163,163,163), 0.35))'
 
   if (style === 'circle-bg') {
     return (
@@ -24,10 +19,15 @@ function renderTrustIcon(rawIconName: string, style: string) {
           width: '44px',
           height: '44px',
           borderRadius: '50%',
-          backgroundColor: 'var(--color-icon-bg)',
+          backgroundColor: iconFallbackBg,
         }}
       >
-        {icon}
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: '24px', color: bgIconColor }}
+        >
+          {iconName}
+        </span>
       </span>
     )
   }
@@ -40,14 +40,20 @@ function renderTrustIcon(rawIconName: string, style: string) {
           width: '44px',
           height: '44px',
           borderRadius: 'var(--radius-sm, 4px)',
-          backgroundColor: 'var(--color-icon-bg)',
+          backgroundColor: iconFallbackBg,
         }}
       >
-        {icon}
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: '24px', color: bgIconColor }}
+        >
+          {iconName}
+        </span>
       </span>
     )
   }
 
+  // bare — no background, use accent with primary fallback
   return (
     <span
       className="material-symbols-outlined"

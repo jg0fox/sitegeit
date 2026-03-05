@@ -14,7 +14,7 @@ export const urbanEdge: ThemeConfig = {
     textPrimary: '#fafafa',
     textSecondary: '#a1a1aa',
     border: '#3f3f46',
-    iconBg: 'rgba(251, 191, 36, 0.20)',
+    iconBg: 'rgba(251, 191, 36, 0.35)',
     starEmpty: '#52525b',
     heroOverlay: 'rgba(9, 9, 11, 0.65)',
   },

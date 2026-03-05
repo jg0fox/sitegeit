@@ -39,14 +39,9 @@ function getCardStyle(variant: string): CSSProperties {
 }
 
 function renderCheckIcon(style: string) {
-  const icon = (
-    <span
-      className="material-symbols-outlined shrink-0"
-      style={{ fontSize: '20px', color: 'var(--color-primary)' }}
-    >
-      check_circle
-    </span>
-  )
+  // Icons in colored containers use accent for better contrast on dark themes
+  const bgIconColor = 'var(--color-accent, var(--color-primary))'
+  const iconFallbackBg = 'var(--color-icon-bg, rgba(var(--color-accent-rgb, 163,163,163), 0.35))'
 
   if (style === 'circle-bg') {
     return (
@@ -56,10 +51,15 @@ function renderCheckIcon(style: string) {
           width: '36px',
           height: '36px',
           borderRadius: '50%',
-          backgroundColor: 'var(--color-icon-bg)',
+          backgroundColor: iconFallbackBg,
         }}
       >
-        {icon}
+        <span
+          className="material-symbols-outlined shrink-0"
+          style={{ fontSize: '20px', color: bgIconColor }}
+        >
+          check_circle
+        </span>
       </span>
     )
   }
@@ -72,14 +72,20 @@ function renderCheckIcon(style: string) {
           width: '36px',
           height: '36px',
           borderRadius: 'var(--radius-sm, 4px)',
-          backgroundColor: 'var(--color-icon-bg)',
+          backgroundColor: iconFallbackBg,
         }}
       >
-        {icon}
+        <span
+          className="material-symbols-outlined shrink-0"
+          style={{ fontSize: '20px', color: bgIconColor }}
+        >
+          check_circle
+        </span>
       </span>
     )
   }
 
+  // bare — no background, use accent with primary fallback
   return (
     <span
       className="material-symbols-outlined mt-0.5 shrink-0"

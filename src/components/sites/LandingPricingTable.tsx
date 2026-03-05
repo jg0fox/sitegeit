@@ -117,6 +117,9 @@ const FEATURE_GROUPS: FeatureGroup[] = [
   },
 ]
 
+// Show first 2 groups expanded by default
+const INITIALLY_EXPANDED = 2
+
 function CheckIcon() {
   return (
     <span className="material-symbols-outlined text-[20px] text-blue-600" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -131,6 +134,7 @@ function DashIcon() {
 
 export function LandingPricingTable({ slug }: LandingPricingTableProps) {
   const [activeTier, setActiveTier] = useState(1) // Default to Growth
+  const [expanded, setExpanded] = useState(false)
 
   const tiers = TIERS.map((tier) => ({
     ...tier,
@@ -140,9 +144,19 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
         : `/sites/go/${slug}/checkout?tier=${tier.name.toLowerCase()}`,
   }))
 
+  const visibleGroups = expanded
+    ? FEATURE_GROUPS
+    : FEATURE_GROUPS.slice(0, INITIALLY_EXPANDED)
+  const hiddenCount = FEATURE_GROUPS.length - INITIALLY_EXPANDED
+  const hiddenFeatureCount = FEATURE_GROUPS.slice(INITIALLY_EXPANDED).reduce(
+    (sum, g) => sum + g.features.length, 0
+  )
+
+  const colClass = 'grid grid-cols-[minmax(180px,2fr)_repeat(4,minmax(100px,1fr))]'
+
   return (
     <section className="bg-gray-50 px-4 py-16" id="pricing">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-5xl">
         <h2 className="mb-2 text-center text-2xl font-bold text-gray-900">
           Choose the right plan for your business
         </h2>
@@ -154,7 +168,7 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
         <div className="hidden lg:block">
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             {/* Tier headers */}
-            <div className="grid grid-cols-[1fr_repeat(4,160px)] border-b border-gray-200">
+            <div className={`${colClass} border-b border-gray-200`}>
               <div className="p-4" />
               {tiers.map((tier, i) => (
                 <div
@@ -188,10 +202,10 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
             </div>
 
             {/* Feature groups */}
-            {FEATURE_GROUPS.map((group) => (
+            {visibleGroups.map((group) => (
               <div key={group.name}>
                 {/* Group header */}
-                <div className="grid grid-cols-[1fr_repeat(4,160px)] border-b border-gray-200 bg-gray-50">
+                <div className={`${colClass} border-b border-gray-200 bg-gray-50`}>
                   <div className="px-4 py-2.5">
                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                       {group.name}
@@ -208,7 +222,7 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
                 {group.features.map((feature) => (
                   <div
                     key={feature.name}
-                    className="grid grid-cols-[1fr_repeat(4,160px)] border-b border-gray-100 last:border-gray-200"
+                    className={`${colClass} border-b border-gray-100 last:border-gray-200`}
                   >
                     <div className="px-4 py-3 text-sm text-gray-700">{feature.name}</div>
                     {feature.tiers.map((included, i) => (
@@ -226,8 +240,33 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
               </div>
             ))}
 
+            {/* Expand/collapse toggle */}
+            {hiddenCount > 0 && (
+              <div className={`${colClass} border-b border-gray-200`}>
+                <div className="px-4 py-3">
+                  <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {expanded ? 'expand_less' : 'expand_more'}
+                    </span>
+                    {expanded
+                      ? 'Show less'
+                      : `Show ${hiddenFeatureCount} more features`}
+                  </button>
+                </div>
+                {tiers.map((tier) => (
+                  <div
+                    key={tier.name}
+                    className={tier.highlighted ? 'border-x-2 border-blue-600' : ''}
+                  />
+                ))}
+              </div>
+            )}
+
             {/* CTA row */}
-            <div className="grid grid-cols-[1fr_repeat(4,160px)]">
+            <div className={colClass}>
               <div className="p-4" />
               {tiers.map((tier) => (
                 <div
@@ -274,6 +313,9 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
           {/* Active tier card */}
           {(() => {
             const tier = tiers[activeTier]
+            const mobileGroups = expanded
+              ? FEATURE_GROUPS
+              : FEATURE_GROUPS.slice(0, INITIALLY_EXPANDED)
             return (
               <div
                 className={`overflow-hidden rounded-xl border-2 bg-white ${
@@ -302,7 +344,7 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
 
                 {/* Features list */}
                 <div className="divide-y divide-gray-100 px-6">
-                  {FEATURE_GROUPS.map((group) => {
+                  {mobileGroups.map((group) => {
                     const includedFeatures = group.features.filter(
                       (f) => f.tiers[activeTier]
                     )
@@ -327,6 +369,23 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
                       </div>
                     )
                   })}
+
+                  {/* Expand/collapse toggle */}
+                  {hiddenCount > 0 && (
+                    <div className="py-4">
+                      <button
+                        onClick={() => setExpanded(!expanded)}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          {expanded ? 'expand_less' : 'expand_more'}
+                        </span>
+                        {expanded
+                          ? 'Show less'
+                          : `Show ${hiddenFeatureCount} more features`}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* CTA */}

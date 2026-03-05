@@ -59,14 +59,9 @@ function getCardStyle(variant: string): CSSProperties {
 
 function renderIcon(rawIconName: string, style: string) {
   const iconName = sanitizeIconName(rawIconName)
-  const icon = (
-    <span
-      className="material-symbols-outlined"
-      style={{ fontSize: '28px', color: 'var(--color-primary)' }}
-    >
-      {iconName}
-    </span>
-  )
+  // Icons in colored containers use accent for better contrast on dark themes
+  const bgIconColor = 'var(--color-accent, var(--color-primary))'
+  const iconFallbackBg = 'var(--color-icon-bg, rgba(var(--color-accent-rgb, 163,163,163), 0.35))'
 
   if (style === 'circle-bg') {
     return (
@@ -76,10 +71,15 @@ function renderIcon(rawIconName: string, style: string) {
           width: '48px',
           height: '48px',
           borderRadius: '50%',
-          backgroundColor: 'var(--color-icon-bg)',
+          backgroundColor: iconFallbackBg,
         }}
       >
-        {icon}
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: '28px', color: bgIconColor }}
+        >
+          {iconName}
+        </span>
       </span>
     )
   }
@@ -92,15 +92,20 @@ function renderIcon(rawIconName: string, style: string) {
           width: '48px',
           height: '48px',
           borderRadius: 'var(--radius-sm, 4px)',
-          backgroundColor: 'var(--color-icon-bg)',
+          backgroundColor: iconFallbackBg,
         }}
       >
-        {icon}
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: '28px', color: bgIconColor }}
+        >
+          {iconName}
+        </span>
       </span>
     )
   }
 
-  // bare
+  // bare — no background, use primary color
   return (
     <span
       className="material-symbols-outlined mb-3 block"

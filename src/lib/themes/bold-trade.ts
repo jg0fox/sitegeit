@@ -14,7 +14,7 @@ export const boldTrade: ThemeConfig = {
     textPrimary: '#f8fafc',
     textSecondary: '#cbd5e1',
     border: '#4a5e78',
-    iconBg: 'rgba(249, 115, 22, 0.25)',
+    iconBg: 'rgba(249, 115, 22, 0.45)',
     starEmpty: '#475569',
     heroOverlay: 'rgba(15, 23, 42, 0.65)',
   },
