@@ -50,7 +50,7 @@ function StarRow({ rating, size = '22px' }: { rating: number; size?: string }) {
               className="material-symbols-outlined"
               style={{
                 fontSize: size,
-                color: 'var(--color-border)',
+                color: 'var(--color-star-empty, var(--color-border))',
                 fontVariationSettings: "'FILL' 0",
               }}
             >
@@ -67,7 +67,7 @@ function StarRow({ rating, size = '22px' }: { rating: number; size?: string }) {
             style={{
               fontSize: size,
               fontVariationSettings: "'FILL' 1",
-              background: `linear-gradient(90deg, var(--color-accent, #facc15) ${pct}%, var(--color-border) ${pct}%)`,
+              background: `linear-gradient(90deg, var(--color-accent, #facc15) ${pct}%, var(--color-star-empty, var(--color-border)) ${pct}%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',

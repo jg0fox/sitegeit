@@ -128,7 +128,7 @@ export function SiteNav({
       >
         {/* Mobile: Hamburger button */}
         <button
-          className="flex items-center justify-center rounded p-1 md:hidden"
+          className="flex items-center justify-center rounded p-2 md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-nav-menu"
@@ -218,7 +218,7 @@ export function SiteNav({
                     <Link
                       key={service.slug}
                       href={`${basePath}/${service.slug}`}
-                      className="block px-4 py-2 text-sm transition-colors duration-150"
+                      className="block px-4 py-2.5 text-sm transition-colors duration-150"
                       style={{
                         color: isActive(service.slug)
                           ? 'var(--color-link, var(--color-primary))'

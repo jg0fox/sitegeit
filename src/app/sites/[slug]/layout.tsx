@@ -113,6 +113,32 @@ export default async function SiteLayout({ children, params }: Props) {
         {fontsUrl && <link rel="stylesheet" href={fontsUrl} />}
       </head>
       <body style={cssVars as React.CSSProperties}>
+        {/* Skip-nav for keyboard/screen reader users */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[100] focus:rounded focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+          style={{ backgroundColor: 'var(--color-primary)' }}
+        >
+          Skip to main content
+        </a>
+        <style dangerouslySetInnerHTML={{ __html: [
+          '@media (prefers-reduced-motion: reduce) {',
+          '  *, *::before, *::after {',
+          '    animation-duration: 0.01ms !important;',
+          '    animation-iteration-count: 1 !important;',
+          '    transition-duration: 0.01ms !important;',
+          '    scroll-behavior: auto !important;',
+          '  }',
+          '}',
+          ':focus-visible {',
+          '  outline: 2px solid var(--color-primary);',
+          '  outline-offset: 2px;',
+          '}',
+          'a:focus:not(:focus-visible),',
+          'button:focus:not(:focus-visible) {',
+          '  outline: none;',
+          '}',
+        ].join('\n') }} />
         <div
           className="min-h-screen flex flex-col"
           style={{
@@ -129,7 +155,7 @@ export default async function SiteLayout({ children, params }: Props) {
             siteSlug={slug}
             navLabels={globalContent?.nav_labels}
           />
-          <div className="flex-1">
+          <div id="main-content" className="flex-1">
             {children}
           </div>
           <SiteFooter

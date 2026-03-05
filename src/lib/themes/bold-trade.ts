@@ -13,7 +13,10 @@ export const boldTrade: ThemeConfig = {
     surface: '#1e293b',
     textPrimary: '#f8fafc',
     textSecondary: '#cbd5e1',
-    border: '#334155',
+    border: '#4a5e78',
+    iconBg: 'rgba(249, 115, 22, 0.25)',
+    starEmpty: '#475569',
+    heroOverlay: 'rgba(15, 23, 42, 0.65)',
   },
   typography: {
     headingFont: "'Oswald', system-ui, sans-serif",

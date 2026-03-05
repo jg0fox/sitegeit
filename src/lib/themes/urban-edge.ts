@@ -13,7 +13,10 @@ export const urbanEdge: ThemeConfig = {
     surface: '#18181b',
     textPrimary: '#fafafa',
     textSecondary: '#a1a1aa',
-    border: '#27272a',
+    border: '#3f3f46',
+    iconBg: 'rgba(251, 191, 36, 0.20)',
+    starEmpty: '#52525b',
+    heroOverlay: 'rgba(9, 9, 11, 0.65)',
   },
   typography: {
     headingFont: "'Bebas Neue', system-ui, sans-serif",

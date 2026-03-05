@@ -56,7 +56,7 @@ function renderCheckIcon(style: string) {
           width: '36px',
           height: '36px',
           borderRadius: '50%',
-          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+          backgroundColor: 'var(--color-icon-bg)',
         }}
       >
         {icon}
@@ -72,7 +72,7 @@ function renderCheckIcon(style: string) {
           width: '36px',
           height: '36px',
           borderRadius: 'var(--radius-sm, 4px)',
-          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+          backgroundColor: 'var(--color-icon-bg)',
         }}
       >
         {icon}

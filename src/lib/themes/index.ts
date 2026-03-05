@@ -21,6 +21,9 @@ export interface ThemeConfig {
     textPrimary: string
     textSecondary: string
     border: string
+    iconBg?: string
+    starEmpty?: string
+    heroOverlay?: string
   }
   typography: {
     headingFont: string
@@ -154,7 +157,34 @@ function hexToRgb(hex: string): string {
   return `${r}, ${g}, ${b}`
 }
 
+/** Returns true if the hex color has relative luminance > 0.5 (i.e. is visually light). */
+export function isLightColor(hex: string): boolean {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.substring(0, 2), 16)
+  const g = parseInt(h.substring(2, 4), 16)
+  const b = parseInt(h.substring(4, 6), 16)
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5
+}
+
 export function themeConfigToCSSVars(config: ThemeConfig): Record<string, string> {
+  const isDark = !isLightColor(config.colors.background)
+
+  // Derive icon background: explicit value, or accent-tinted translucent bg
+  const iconBg = config.colors.iconBg ||
+    (isDark
+      ? `rgba(${hexToRgb(config.colors.accent)}, 0.20)`
+      : `rgba(${hexToRgb(config.colors.primary)}, 0.10)`)
+
+  // Derive empty star fill color
+  const starEmpty = config.colors.starEmpty ||
+    (isDark ? '#475569' : '#d1d5db')
+
+  // Derive hero image overlay
+  const heroOverlay = config.colors.heroOverlay ||
+    (isDark
+      ? `rgba(${hexToRgb(config.colors.background)}, 0.70)`
+      : `rgba(${hexToRgb(config.colors.background)}, 0.85)`)
+
   return {
     '--color-primary': config.colors.primary,
     '--color-primary-hover': config.colors.primaryHover,
@@ -168,6 +198,12 @@ export function themeConfigToCSSVars(config: ThemeConfig): Record<string, string
     '--color-text-primary': config.colors.textPrimary,
     '--color-text-secondary': config.colors.textSecondary,
     '--color-border': config.colors.border,
+    '--color-icon-bg': iconBg,
+    '--color-star-empty': starEmpty,
+    '--color-hero-overlay': heroOverlay,
+    // Text colors for sections using primaryLight as background (always light)
+    '--color-text-on-primary-light': config.colors.primary,
+    '--color-text-secondary-on-primary-light': config.colors.primaryHover,
     '--color-section-primary': config.sectionBackgrounds.primary,
     '--color-section-default': config.sectionBackgrounds.default,
     '--color-section-alternate': config.sectionBackgrounds.alternate,

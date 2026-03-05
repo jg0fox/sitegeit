@@ -60,24 +60,24 @@ export function SiteFooter({ businessName, phone, address, hours, siteSlug }: Si
             >
               Pages
             </h3>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-0 text-sm">
               <li>
-                <a href={basePath} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                <a href={basePath} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
                   Home
                 </a>
               </li>
               <li>
-                <a href={`${basePath}/about`} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                <a href={`${basePath}/about`} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
                   About
                 </a>
               </li>
               <li>
-                <a href={`${basePath}/contact`} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                <a href={`${basePath}/contact`} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
                   Contact
                 </a>
               </li>
               <li>
-                <a href={`${basePath}/faq`} className="transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                <a href={`${basePath}/faq`} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
                   FAQ
                 </a>
               </li>

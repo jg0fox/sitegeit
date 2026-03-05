@@ -76,7 +76,7 @@ function renderIcon(rawIconName: string, style: string) {
           width: '48px',
           height: '48px',
           borderRadius: '50%',
-          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+          backgroundColor: 'var(--color-icon-bg)',
         }}
       >
         {icon}
@@ -92,7 +92,7 @@ function renderIcon(rawIconName: string, style: string) {
           width: '48px',
           height: '48px',
           borderRadius: 'var(--radius-sm, 4px)',
-          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+          backgroundColor: 'var(--color-icon-bg)',
         }}
       >
         {icon}

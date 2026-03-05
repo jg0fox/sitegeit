@@ -24,7 +24,7 @@ function renderTrustIcon(rawIconName: string, style: string) {
           width: '44px',
           height: '44px',
           borderRadius: '50%',
-          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+          backgroundColor: 'var(--color-icon-bg)',
         }}
       >
         {icon}
@@ -40,7 +40,7 @@ function renderTrustIcon(rawIconName: string, style: string) {
           width: '44px',
           height: '44px',
           borderRadius: 'var(--radius-sm, 4px)',
-          backgroundColor: 'rgba(var(--color-accent-rgb, 163,163,163), 0.15)',
+          backgroundColor: 'var(--color-icon-bg)',
         }}
       >
         {icon}
