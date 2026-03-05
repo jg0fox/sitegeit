@@ -92,3 +92,33 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await context.params
+
+    // RLS ensures user can only delete their own businesses.
+    // Cascade deletes handle generated_sites, landing_pages, outreach_emails, activity_log, notes.
+    const { error } = await supabase
+      .from('businesses')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to delete business' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('[api/businesses/[id]] DELETE error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

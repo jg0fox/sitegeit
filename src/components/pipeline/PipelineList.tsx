@@ -1,5 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { CopyableId } from '@/components/shared/CopyableId'
+import { PipelineActions } from './PipelineActions'
 import { PipelineProgress } from './PipelineProgress'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
@@ -66,6 +68,7 @@ export function PipelineList({ businesses }: { businesses: Business[] }) {
                       {biz.name}
                     </Link>
                     <StatusBadge status={biz.status} />
+                    <CopyableId id={biz.id} />
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                     {biz.category && (
@@ -95,9 +98,12 @@ export function PipelineList({ businesses }: { businesses: Business[] }) {
                     )}
                   </div>
                 </div>
-                <p className="flex-shrink-0 text-xs text-gray-400">
-                  {formatDistanceToNow(new Date(biz.created_at), { addSuffix: true })}
-                </p>
+                <div className="flex flex-shrink-0 items-center gap-1">
+                  <p className="text-xs text-gray-400">
+                    {formatDistanceToNow(new Date(biz.created_at), { addSuffix: true })}
+                  </p>
+                  <PipelineActions businessId={biz.id} businessName={biz.name} status={biz.status} />
+                </div>
               </div>
 
               {/* Progress stepper */}

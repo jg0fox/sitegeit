@@ -16,10 +16,11 @@ const FILTER_STAGES = [
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ filter?: string; search?: string }>
 }) {
   const params = await searchParams
   const activeFilter = params.filter || 'all'
+  const searchQuery = params.search?.trim() || ''
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -41,7 +42,12 @@ export default async function PipelinePage({
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  // Apply filter
+  // Apply search filter
+  if (searchQuery) {
+    query = query.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,address_city.ilike.%${searchQuery}%`)
+  }
+
+  // Apply status filter
   const filterConfig = FILTER_STAGES.find((f) => f.key === activeFilter)
   if (filterConfig && 'statuses' in filterConfig) {
     query = query.in('status', [...filterConfig.statuses])
@@ -49,11 +55,17 @@ export default async function PipelinePage({
 
   const { data: businesses } = await query
 
-  // Count per filter group for the pills
-  const { data: allBusinesses } = await supabase
+  // Count per filter group for the pills (also filtered by search)
+  let countQuery = supabase
     .from('businesses')
     .select('status')
     .eq('user_id', user.id)
+
+  if (searchQuery) {
+    countQuery = countQuery.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,address_city.ilike.%${searchQuery}%`)
+  }
+
+  const { data: allBusinesses } = await countQuery
 
   const statusList = allBusinesses ?? []
   const counts: Record<string, number> = { all: statusList.length }
@@ -74,6 +86,31 @@ export default async function PipelinePage({
         </p>
       </div>
 
+      {/* Search bar */}
+      <form action="/pipeline" method="GET" className="flex gap-2">
+        {activeFilter !== 'all' && <input type="hidden" name="filter" value={activeFilter} />}
+        <div className="relative flex-1">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-gray-400">
+            search
+          </span>
+          <input
+            type="text"
+            name="search"
+            defaultValue={searchQuery}
+            placeholder="Search by name, category, or city..."
+            className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        {searchQuery && (
+          <Link
+            href={activeFilter !== 'all' ? `/pipeline?filter=${activeFilter}` : '/pipeline'}
+            className="inline-flex h-9 items-center gap-1 rounded-lg px-3 text-sm text-gray-500 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
+          >
+            Clear
+          </Link>
+        )}
+      </form>
+
       {/* Filter pills */}
       <div className="flex flex-wrap gap-2">
         {FILTER_STAGES.map((filter) => {
@@ -82,7 +119,13 @@ export default async function PipelinePage({
           return (
             <Link
               key={filter.key}
-              href={filter.key === 'all' ? '/pipeline' : `/pipeline?filter=${filter.key}`}
+              href={(() => {
+                const p = new URLSearchParams()
+                if (filter.key !== 'all') p.set('filter', filter.key)
+                if (searchQuery) p.set('search', searchQuery)
+                const qs = p.toString()
+                return qs ? `/pipeline?${qs}` : '/pipeline'
+              })()}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-primary text-white shadow-sm'

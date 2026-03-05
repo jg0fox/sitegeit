@@ -2,11 +2,75 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { CopyableId } from '@/components/shared/CopyableId'
+import { PipelineActions } from '@/components/pipeline/PipelineActions'
 import { Button } from '@/components/ui/button'
 import { PipelineProgress } from '@/components/pipeline/PipelineProgress'
 import { RegenerateSiteButton } from '@/components/pipeline/RegenerateSiteButton'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+
+interface GoogleReview {
+  author_name: string
+  rating: number
+  text: string
+  time: number
+}
+
+function StarRow({ rating, size = '18px' }: { rating: number; size?: string }) {
+  const fills = Array.from({ length: 5 }, (_, i) => {
+    const diff = rating - i
+    if (diff >= 1) return 1
+    if (diff <= 0) return 0
+    return Math.round(diff * 10) / 10
+  })
+
+  return (
+    <span className="inline-flex gap-0.5">
+      {fills.map((fill, i) => {
+        if (fill >= 1) {
+          return (
+            <span
+              key={i}
+              className="material-symbols-outlined"
+              style={{ fontSize: size, color: '#facc15', fontVariationSettings: "'FILL' 1" }}
+            >
+              star
+            </span>
+          )
+        }
+        if (fill <= 0) {
+          return (
+            <span
+              key={i}
+              className="material-symbols-outlined"
+              style={{ fontSize: size, color: '#d1d5db', fontVariationSettings: "'FILL' 0" }}
+            >
+              star
+            </span>
+          )
+        }
+        const pct = Math.round(fill * 100)
+        return (
+          <span
+            key={i}
+            className="material-symbols-outlined"
+            style={{
+              fontSize: size,
+              fontVariationSettings: "'FILL' 1",
+              background: `linear-gradient(90deg, #facc15 ${pct}%, #d1d5db ${pct}%)`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            star
+          </span>
+        )
+      })}
+    </span>
+  )
+}
 
 export default async function ProspectDetailPage({
   params,
@@ -76,7 +140,20 @@ export default async function ProspectDetailPage({
     site_generated: { label: 'Site generated', icon: 'web', color: 'text-purple-500' },
     landing_page_generated: { label: 'Landing page generated', icon: 'campaign', color: 'text-indigo-500' },
     email_drafted: { label: 'Emails drafted', icon: 'edit_note', color: 'text-amber-500' },
+    status_changed: { label: 'Status changed', icon: 'swap_horiz', color: 'text-gray-500' },
   }
+
+  // Enrichment data
+  const enrichmentConfidence = business.enrichment_confidence as {
+    overall?: string
+    fields?: Record<string, string>
+  } | null
+  const brandColors = business.brand_colors as { primary?: string; secondary?: string; source?: string } | null
+  const googleReviews = (business.google_reviews ?? []) as GoogleReview[]
+  const topExcerpts = (business.top_review_excerpts ?? []) as string[]
+  const hasEnrichment = business.brand_voice || business.value_proposition || business.services ||
+    business.service_area || business.target_audience || business.owner_name || brandColors
+  const hasReviews = business.google_rating != null || googleReviews.length > 0 || topExcerpts.length > 0 || business.review_sentiment
 
   return (
     <div className="space-y-6">
@@ -94,6 +171,7 @@ export default async function ProspectDetailPage({
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-gray-900">{business.name}</h1>
               <StatusBadge status={business.status} />
+              <CopyableId id={business.id} />
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
               {business.category && (
@@ -116,15 +194,15 @@ export default async function ProspectDetailPage({
                   {business.phone}
                 </span>
               )}
-              {business.google_rating != null && (
+              {business.owner_name && (
                 <span className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[16px] text-amber-400">star</span>
-                  {business.google_rating}
-                  {business.google_review_count ? ` (${business.google_review_count} reviews)` : ''}
+                  <span className="material-symbols-outlined text-[16px]">person</span>
+                  {business.owner_name}
                 </span>
               )}
             </div>
           </div>
+          <PipelineActions businessId={id} businessName={business.name} status={business.status} />
         </div>
       </div>
 
@@ -261,13 +339,121 @@ export default async function ProspectDetailPage({
         </Card>
       </div>
 
-      {/* Enriched data (if available) */}
-      {business.brand_voice && (
+      {/* Reviews & Ratings */}
+      {hasReviews && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-blue-500">auto_awesome</span>
-              <CardTitle>Enrichment data</CardTitle>
+              <span className="material-symbols-outlined text-[20px] text-amber-500">reviews</span>
+              <CardTitle>Reviews & ratings</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Rating summary */}
+              {business.google_rating != null && (
+                <div className="flex items-center gap-4">
+                  <div className="text-4xl font-bold text-gray-900">{business.google_rating}</div>
+                  <div>
+                    <StarRow rating={business.google_rating} size="24px" />
+                    <p className="mt-0.5 text-sm text-gray-500">
+                      {business.google_review_count
+                        ? `${business.google_review_count} Google reviews`
+                        : 'Google rating'}
+                    </p>
+                  </div>
+                  {business.google_place_id && (
+                    <a
+                      href={`https://search.google.com/local/reviews?placeid=${business.google_place_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                      View on Google
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Review sentiment summary */}
+              {business.review_sentiment && (
+                <div className="rounded-lg bg-blue-50 p-4">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-blue-600">AI sentiment analysis</p>
+                  <p className="text-sm leading-relaxed text-blue-900">{business.review_sentiment}</p>
+                </div>
+              )}
+
+              {/* Top review excerpts */}
+              {topExcerpts.length > 0 && (
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Top review excerpts</p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {topExcerpts.map((excerpt, i) => (
+                      <blockquote
+                        key={i}
+                        className="relative rounded-lg border border-gray-100 bg-gray-50 p-4"
+                      >
+                        <span
+                          className="absolute -top-2 left-3 text-2xl font-bold leading-none text-amber-300"
+                          aria-hidden="true"
+                        >
+                          &ldquo;
+                        </span>
+                        <p className="text-sm italic leading-relaxed text-gray-700">{excerpt}</p>
+                      </blockquote>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Raw Google reviews */}
+              {googleReviews.length > 0 && (
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Google reviews ({googleReviews.length})
+                  </p>
+                  <div className="space-y-3">
+                    {googleReviews.map((review, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg border border-gray-100 p-4"
+                      >
+                        <div className="mb-2 flex items-center gap-2">
+                          <StarRow rating={review.rating} size="14px" />
+                          <span className="text-xs font-medium text-gray-700">{review.author_name}</span>
+                        </div>
+                        <p className="text-sm leading-relaxed text-gray-600">{review.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enrichment data */}
+      {hasEnrichment && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-blue-500">auto_awesome</span>
+                <CardTitle>Enrichment data</CardTitle>
+              </div>
+              {enrichmentConfidence?.overall && (
+                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase ${
+                  enrichmentConfidence.overall === 'high'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : enrichmentConfidence.overall === 'medium'
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {enrichmentConfidence.overall} confidence
+                </span>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -275,7 +461,9 @@ export default async function ProspectDetailPage({
               {business.brand_voice && (
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Brand voice</p>
-                  <p className="mt-1 text-sm text-gray-700">{typeof business.brand_voice === 'object' ? JSON.stringify(business.brand_voice) : business.brand_voice}</p>
+                  <p className="mt-1 text-sm text-gray-700">
+                    {typeof business.brand_voice === 'object' ? JSON.stringify(business.brand_voice) : business.brand_voice}
+                  </p>
                 </div>
               )}
               {business.value_proposition && (
@@ -290,6 +478,40 @@ export default async function ProspectDetailPage({
                   <p className="mt-1 text-sm text-gray-700">{business.target_audience}</p>
                 </div>
               )}
+              {business.service_area && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Service area</p>
+                  <p className="mt-1 text-sm text-gray-700">{business.service_area}</p>
+                </div>
+              )}
+              {brandColors && (brandColors.primary || brandColors.secondary) && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Brand colors</p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    {brandColors.primary && (
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="inline-block h-5 w-5 rounded-full ring-1 ring-inset ring-gray-200"
+                          style={{ backgroundColor: brandColors.primary }}
+                        />
+                        <span className="font-mono text-xs text-gray-500">{brandColors.primary}</span>
+                      </div>
+                    )}
+                    {brandColors.secondary && (
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="inline-block h-5 w-5 rounded-full ring-1 ring-inset ring-gray-200"
+                          style={{ backgroundColor: brandColors.secondary }}
+                        />
+                        <span className="font-mono text-xs text-gray-500">{brandColors.secondary}</span>
+                      </div>
+                    )}
+                    {brandColors.source && (
+                      <span className="text-[10px] text-gray-400">({brandColors.source})</span>
+                    )}
+                  </div>
+                </div>
+              )}
               {business.services && Array.isArray(business.services) && (
                 <div className="sm:col-span-2 lg:col-span-3">
                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Services</p>
@@ -302,16 +524,28 @@ export default async function ProspectDetailPage({
                   </div>
                 </div>
               )}
-              {business.service_area && (
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Service area</p>
-                  <p className="mt-1 text-sm text-gray-700">{business.service_area}</p>
-                </div>
-              )}
-              {business.review_sentiment && (
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Review sentiment</p>
-                  <p className="mt-1 text-sm text-gray-700">{business.review_sentiment}</p>
+              {/* Per-field confidence indicators */}
+              {enrichmentConfidence?.fields && (
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Data sources</p>
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    {Object.entries(enrichmentConfidence.fields).map(([field, source]) => (
+                      <span
+                        key={field}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          source === 'verified'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : source === 'inferred'
+                              ? 'bg-blue-50 text-blue-700'
+                              : source === 'unavailable'
+                                ? 'bg-gray-100 text-gray-400'
+                                : 'bg-amber-50 text-amber-700'
+                        }`}
+                      >
+                        {field.replace(/_/g, ' ')}: {source}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
