@@ -8,6 +8,7 @@ import { SiteCTA } from '@/components/sites/SiteCTA'
 import { SiteTrustBar } from '@/components/sites/SiteTrustBar'
 import { SiteSectionDivider } from '@/components/sites/SiteSectionDivider'
 import { buildLocalBusinessSchema } from '@/lib/utils/schema-org'
+import { getCategoryImageUrls } from '@/lib/images/category-images'
 import type { ReactNode } from 'react'
 
 interface Props {
@@ -171,7 +172,7 @@ export default async function SitePage({ params }: Props) {
         secondaryCta={homepage.hero.secondary_cta}
         phoneTel={phoneTel}
         heroBackground={heroBackground}
-        heroImageUrl={site.hero_image_url as string | null}
+        heroImageUrl={(site.hero_image_url as string | null) || getCategoryImageUrls(categorySlug)?.heroUrl || null}
       />
     ),
     trust_bar: homepage.trust_bar ? (
@@ -209,7 +210,7 @@ export default async function SitePage({ params }: Props) {
         heading={homepage.about_snippet.heading}
         body={homepage.about_snippet.body}
         ownerName={homepage.about_snippet.owner_name}
-        imageUrl={site.about_image_url as string | null}
+        imageUrl={(site.about_image_url as string | null) || getCategoryImageUrls(categorySlug)?.aboutUrl || null}
       />
     ) : null,
     cta: (

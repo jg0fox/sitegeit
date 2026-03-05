@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { LandingHero } from '@/components/sites/LandingHero'
 import { LandingSitePreview } from '@/components/sites/LandingSitePreview'
+import { LandingScheduleCall } from '@/components/sites/LandingScheduleCall'
 import { LandingCostComparison } from '@/components/sites/LandingCostComparison'
 import { LandingPricingTable } from '@/components/sites/LandingPricingTable'
 import { LandingCTA } from '@/components/sites/LandingCTA'
@@ -89,6 +90,12 @@ export default async function LandingPage({ params }: Props) {
         siteUrl={content.site_preview_section.site_url}
         screenshotAlt={content.site_preview_section.screenshot_alt}
         landingSlug={slug}
+      />
+
+      {/* Schedule a call — high placement for engagement */}
+      <LandingScheduleCall
+        businessName={business?.name || slug}
+        buttonUrl={content.cta_section.button_url}
       />
 
       {/* Strategy section */}

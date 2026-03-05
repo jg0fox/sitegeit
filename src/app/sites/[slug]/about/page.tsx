@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { SiteBreadcrumb } from '@/components/sites/SiteBreadcrumb'
+import { getCategoryImageUrls } from '@/lib/images/category-images'
 
 interface AboutContent {
   h1: string
@@ -73,7 +74,9 @@ export default async function AboutPage({ params }: Props) {
   }
 
   const about = site.about_content as AboutContent | null
-  const aboutImageUrl = site.about_image_url as string | null
+  const business = site.businesses as Record<string, unknown>
+  const categorySlug = (business?.category_slug as string) || (business?.category as string || '').toLowerCase().replace(/\s+/g, '_')
+  const aboutImageUrl = (site.about_image_url as string | null) || getCategoryImageUrls(categorySlug)?.aboutUrl || null
 
   if (!about) {
     notFound()
