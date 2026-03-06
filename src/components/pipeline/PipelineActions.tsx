@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as AlertDialog from '@radix-ui/react-dialog'
+import { ConvertToClientDialog } from '@/components/clients/ConvertToClientDialog'
+import { MarkLostDialog } from '@/components/clients/MarkLostDialog'
 
 const MANUAL_STATUSES = [
   { value: 'discovered', label: 'Discovered', icon: 'search' },
@@ -19,6 +21,9 @@ const MANUAL_STATUSES = [
   { value: 'archived', label: 'Archived', icon: 'archive' },
 ] as const
 
+const CONVERTIBLE_STATUSES = ['responded', 'meeting_scheduled', 'closed_won']
+const LOST_EXCLUDED_STATUSES = ['active', 'closed_won', 'churned', 'closed_lost', 'archived']
+
 interface PipelineActionsProps {
   businessId: string
   businessName: string
@@ -28,9 +33,13 @@ interface PipelineActionsProps {
 export function PipelineActions({ businessId, businessName, status }: PipelineActionsProps) {
   const router = useRouter()
   const [showDelete, setShowDelete] = useState(false)
+  const [showConvert, setShowConvert] = useState(false)
+  const [showMarkLost, setShowMarkLost] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const isArchived = status === 'archived'
+  const canConvert = CONVERTIBLE_STATUSES.includes(status)
+  const canMarkLost = !LOST_EXCLUDED_STATUSES.includes(status)
 
   async function handleStatusChange(newStatus: string) {
     setLoading(true)
@@ -124,6 +133,29 @@ export function PipelineActions({ businessId, businessName, status }: PipelineAc
                 </DropdownMenu.SubContent>
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>
+            {canConvert && (
+              <>
+                <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
+                <DropdownMenu.Item
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm text-green-700 outline-none hover:bg-green-50"
+                  onSelect={() => setShowConvert(true)}
+                  disabled={loading}
+                >
+                  <span className="material-symbols-outlined text-[16px]">verified</span>
+                  Convert to client
+                </DropdownMenu.Item>
+              </>
+            )}
+            {canMarkLost && (
+              <DropdownMenu.Item
+                className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm text-orange-600 outline-none hover:bg-orange-50"
+                onSelect={() => setShowMarkLost(true)}
+                disabled={loading}
+              >
+                <span className="material-symbols-outlined text-[16px]">block</span>
+                Mark lost
+              </DropdownMenu.Item>
+            )}
             <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
             <DropdownMenu.Item
               className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm text-gray-700 outline-none hover:bg-gray-50"
@@ -175,6 +207,20 @@ export function PipelineActions({ businessId, businessName, status }: PipelineAc
           </AlertDialog.Content>
         </AlertDialog.Portal>
       </AlertDialog.Root>
+
+      <ConvertToClientDialog
+        businessId={businessId}
+        businessName={businessName}
+        open={showConvert}
+        onOpenChange={setShowConvert}
+      />
+
+      <MarkLostDialog
+        businessId={businessId}
+        businessName={businessName}
+        open={showMarkLost}
+        onOpenChange={setShowMarkLost}
+      />
     </>
   )
 }

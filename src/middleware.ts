@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { createServerClient } from '@supabase/ssr'
 
 const SITE_DOMAIN = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'sitegeit.com'
 
@@ -28,6 +29,39 @@ export async function middleware(request: NextRequest) {
     if (slug) {
       const url = request.nextUrl.clone()
       url.pathname = `/sites/go/${slug}`
+      return NextResponse.rewrite(url)
+    }
+  }
+
+  // Check for custom domain routing (non-sitegeit.com hostnames)
+  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1')
+  const isVercelPreview = hostname.endsWith('.vercel.app')
+  const isSiteDomain = hostname === SITE_DOMAIN || hostname.endsWith(`.${SITE_DOMAIN}`)
+
+  if (!isLocalhost && !isVercelPreview && !isSiteDomain) {
+    // Look up custom domain in generated_sites
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => [],
+          setAll: () => {},
+        },
+      }
+    )
+
+    const { data: site } = await supabase
+      .from('generated_sites')
+      .select('deploy_url')
+      .eq('custom_domain', hostname.replace(/^www\./, ''))
+      .eq('deploy_status', 'live')
+      .limit(1)
+      .single()
+
+    if (site?.deploy_url) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/sites/${site.deploy_url}${pathname === '/' ? '' : pathname}`
       return NextResponse.rewrite(url)
     }
   }

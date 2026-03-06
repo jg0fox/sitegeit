@@ -35,6 +35,7 @@ export const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', href: '/', icon: 'dashboard' },
   { key: 'discover', label: 'Discover', href: '/discover', icon: 'travel_explore' },
   { key: 'pipeline', label: 'Pipeline', href: '/pipeline', icon: 'conversion_path' },
+  { key: 'email-review', label: 'Email Review', href: '/email-review', icon: 'rate_review' },
   { key: 'clients', label: 'Clients', href: '/clients', icon: 'group' },
   { key: 'settings', label: 'Settings', href: '/settings', icon: 'settings' },
 ] as const

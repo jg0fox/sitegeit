@@ -49,7 +49,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     // Only allow updating specific fields
     const allowedFields = [
       'name', 'phone', 'email', 'owner_name',
-      'status', 'tier', 'monthly_rate',
+      'status', 'tier', 'monthly_rate', 'converted_at',
     ]
     const updates: Record<string, unknown> = {}
     for (const key of allowedFields) {
@@ -83,6 +83,16 @@ export async function PATCH(request: Request, context: RouteContext) {
         user_id: user.id,
         event_type: 'status_changed',
         event_data: { new_status: updates.status },
+      })
+    }
+
+    // Log tier changes
+    if ('tier' in updates) {
+      await supabase.from('activity_log').insert({
+        business_id: id,
+        user_id: user.id,
+        event_type: 'tier_changed',
+        event_data: { tier: updates.tier, monthly_rate: updates.monthly_rate },
       })
     }
 

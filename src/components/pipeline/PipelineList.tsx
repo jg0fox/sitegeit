@@ -184,6 +184,15 @@ export function PipelineList({ businesses }: { businesses: Business[] }) {
                       Review {draftEmails.length} email{draftEmails.length !== 1 ? 's' : ''}
                     </Link>
                   )}
+                  {biz.status === 'active' && (
+                    <Link
+                      href={`/clients/${biz.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 transition-colors hover:bg-emerald-100"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">verified</span>
+                      View client
+                    </Link>
+                  )}
                   <Link
                     href={`/pipeline/${biz.id}`}
                     className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-gray-500 transition-colors hover:text-primary"

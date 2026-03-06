@@ -12,23 +12,34 @@ export function Sidebar() {
   const pathname = usePathname()
   const { collapsed, mobileOpen, closeMobile } = useSidebar()
   const [pipelineCount, setPipelineCount] = useState(0)
+  const [clientCount, setClientCount] = useState(0)
 
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-    async function fetchCount() {
+    async function fetchCounts() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { count } = await supabase
-        .from('businesses')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('status', 'review_ready')
-      setPipelineCount(count ?? 0)
+
+      const [pipelineResult, clientResult] = await Promise.all([
+        supabase
+          .from('businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'review_ready'),
+        supabase
+          .from('businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'active'),
+      ])
+
+      setPipelineCount(pipelineResult.count ?? 0)
+      setClientCount(clientResult.count ?? 0)
     }
-    fetchCount()
+    fetchCounts()
   }, [pathname])
 
   const isActive = (href: string) => {
@@ -123,6 +134,17 @@ export function Sidebar() {
                   )}
                 >
                   {pipelineCount}
+                </span>
+              )}
+              {/* Client count badge */}
+              {item.key === 'clients' && clientCount > 0 && (
+                <span
+                  className={cn(
+                    'ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-success px-1.5 text-[10px] font-semibold text-white',
+                    collapsed && 'lg:absolute lg:right-1 lg:top-1 lg:ml-0'
+                  )}
+                >
+                  {clientCount}
                 </span>
               )}
             </Link>

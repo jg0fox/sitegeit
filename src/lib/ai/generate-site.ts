@@ -64,7 +64,20 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-  // Upsert generated_sites record (idempotent — retries update instead of duplicating)
+  // Check for existing site to support versioning
+  const { data: existingSite } = await supabase
+    .from('generated_sites')
+    .select('id, version, deploy_url, custom_domain')
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  const newVersion = existingSite ? ((existingSite.version as number) || 1) + 1 : 1
+  // Preserve slug and custom domain from previous version
+  const deployUrl = existingSite?.deploy_url || slug
+  const customDomain = existingSite?.custom_domain || null
+
   const sitePayload = {
     business_id: businessId,
     theme_id: themeId,
@@ -80,34 +93,33 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
     content_metadata: content.content_metadata,
     hero_image_url: categoryImages?.heroUrl ?? null,
     about_image_url: categoryImages?.aboutUrl ?? null,
-    deploy_url: slug,
-    deploy_status: 'pending',
+    deploy_url: deployUrl,
+    deploy_status: 'pending' as const,
+    version: newVersion,
+    previous_version_id: existingSite?.id || null,
+    custom_domain: customDomain,
   }
-
-  // Check for existing site for this business
-  const { data: existingSite } = await supabase
-    .from('generated_sites')
-    .select('id')
-    .eq('business_id', businessId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
 
   let site: { id: string }
   if (existingSite) {
-    // Update existing record
-    const { data: updated, error: updateError } = await supabase
+    // Mark old version as superseded
+    await supabase
       .from('generated_sites')
-      .update(sitePayload)
+      .update({ deploy_status: 'superseded' })
       .eq('id', existingSite.id)
+
+    // Create new versioned record
+    const { data: inserted, error: insertError } = await supabase
+      .from('generated_sites')
+      .insert(sitePayload)
       .select('id')
       .single()
-    if (updateError || !updated) {
-      throw new Error(`Failed to update generated site: ${updateError?.message}`)
+    if (insertError || !inserted) {
+      throw new Error(`Failed to create generated site v${newVersion}: ${insertError?.message}`)
     }
-    site = updated
+    site = inserted
   } else {
-    // Insert new record
+    // Insert first version
     const { data: inserted, error: insertError } = await supabase
       .from('generated_sites')
       .insert(sitePayload)
