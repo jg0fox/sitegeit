@@ -21,18 +21,14 @@ export async function POST() {
     let synced = 0
 
     for (const account of accounts) {
-      // Get warmup details
-      let warmup = null
-      try {
-        warmup = await getAccountWarmup(account.email)
-      } catch {
-        // Warmup endpoint may fail for some accounts
-      }
+      // Get warmup analytics for this account
+      const warmup = await getAccountWarmup(account.email)
 
       const domain = account.email.split('@')[1] || ''
-      const warmupStatus = warmup?.warmup_status === 'active' ? 'warming'
-        : warmup?.warmup_status === 'completed' ? 'ready'
-        : warmup?.warmup_status === 'paused' ? 'paused'
+      // Derive warmup status from health score
+      const healthScore = warmup?.health_score ?? account.stat_warmup_score ?? null
+      const warmupStatus = healthScore != null && healthScore >= 90 ? 'ready'
+        : healthScore != null && healthScore > 0 ? 'warming'
         : 'warming'
 
       // Upsert by email_address for this user
@@ -45,10 +41,7 @@ export async function POST() {
 
       const record = {
         warmup_status: warmupStatus,
-        health_score: warmup?.health_score ?? account.health_score ?? null,
-        spf_configured: warmup?.spf ?? false,
-        dkim_configured: warmup?.dkim ?? false,
-        dmarc_configured: warmup?.dmarc ?? false,
+        health_score: healthScore,
         updated_at: new Date().toISOString(),
       }
 

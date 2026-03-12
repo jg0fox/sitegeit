@@ -59,18 +59,28 @@ async function instantlyFetch<T>(
 
 // ── Types ──────────────────────────────────────────────
 
+/** V2 paginated response wrapper */
+interface PaginatedResponse<T> {
+  items: T[]
+  next_starting_after?: string | null
+}
+
 export interface InstantlyAccount {
-  id: string
   email: string
   first_name?: string
   last_name?: string
-  warmup_enabled: boolean
-  warmup_status?: string
+  timestamp_created?: string
+  timestamp_updated?: string
+  warmup?: {
+    limit?: number
+    advanced?: Record<string, unknown>
+  }
+  provider_code?: number
+  setup_pending?: boolean
+  stat_warmup_score?: number
+  sending_gap?: number
+  status?: number
   daily_limit?: number
-  health_score?: number
-  spf?: boolean
-  dkim?: boolean
-  dmarc?: boolean
 }
 
 export interface InstantlyEmailParams {
@@ -87,14 +97,13 @@ export interface InstantlySendResult {
   status: string
 }
 
-export interface InstantlyWarmupStatus {
+export interface InstantlyWarmupAnalytics {
   email: string
-  warmup_enabled: boolean
-  warmup_status: string
-  health_score: number
-  spf: boolean
-  dkim: boolean
-  dmarc: boolean
+  health_score?: number
+  sent?: number
+  landed_inbox?: number
+  landed_spam?: number
+  received?: number
 }
 
 export interface InstantlyCampaignAnalytics {
@@ -109,23 +118,53 @@ export interface InstantlyCampaignAnalytics {
 
 /**
  * List all sending accounts connected to Instantly.
+ * V2 returns paginated { items: [...], next_starting_after }
  */
 export async function listAccounts(): Promise<InstantlyAccount[]> {
-  return instantlyFetch<InstantlyAccount[]>('/accounts')
+  const allAccounts: InstantlyAccount[] = []
+  let cursor: string | undefined
+
+  // Paginate through all accounts
+  for (let page = 0; page < 20; page++) {
+    const params = new URLSearchParams({ limit: '100' })
+    if (cursor) params.set('starting_after', cursor)
+
+    const response = await instantlyFetch<PaginatedResponse<InstantlyAccount>>(
+      `/accounts?${params}`
+    )
+
+    if (response.items && Array.isArray(response.items)) {
+      allAccounts.push(...response.items)
+    }
+
+    if (!response.next_starting_after) break
+    cursor = response.next_starting_after
+  }
+
+  return allAccounts
 }
 
 /**
  * Get a single account's details.
  */
-export async function getAccount(accountId: string): Promise<InstantlyAccount> {
-  return instantlyFetch<InstantlyAccount>(`/accounts/${accountId}`)
+export async function getAccount(email: string): Promise<InstantlyAccount> {
+  return instantlyFetch<InstantlyAccount>(`/accounts/${encodeURIComponent(email)}`)
 }
 
 /**
- * Get warmup status for an account.
+ * Get warmup analytics for accounts.
+ * V2 endpoint: POST /accounts/warmup-analytics with { emails: [...] }
  */
-export async function getAccountWarmup(email: string): Promise<InstantlyWarmupStatus> {
-  return instantlyFetch<InstantlyWarmupStatus>(`/accounts/warmup?email=${encodeURIComponent(email)}`)
+export async function getAccountWarmup(email: string): Promise<InstantlyWarmupAnalytics | null> {
+  try {
+    const response = await instantlyFetch<InstantlyWarmupAnalytics[]>(
+      '/accounts/warmup-analytics',
+      { method: 'POST', body: { emails: [email] } }
+    )
+    return Array.isArray(response) && response.length > 0 ? response[0] : null
+  } catch {
+    return null
+  }
 }
 
 /**
