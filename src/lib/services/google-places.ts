@@ -169,18 +169,56 @@ export async function getPlaceDetails(
   }
 }
 
+export async function searchAllPages(
+  location: { lat: number; lng: number },
+  radiusMeters: number,
+  keyword: string,
+  type?: string,
+  maxPages = 3
+): Promise<PlaceResult[]> {
+  const allResults: PlaceResult[] = []
+  let pageToken: string | undefined
+
+  for (let page = 0; page < maxPages; page++) {
+    const { results, nextPageToken } = await searchNearby(
+      location,
+      radiusMeters,
+      keyword,
+      type,
+      pageToken
+    )
+    allResults.push(...results)
+
+    if (!nextPageToken) break
+    pageToken = nextPageToken
+
+    // Google requires a short delay before using next_page_token
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+  }
+
+  return allResults
+}
+
 export async function batchGetDetails(
-  placeIds: string[]
+  placeIds: string[],
+  concurrency = 5
 ): Promise<PlaceResult[]> {
   const results: PlaceResult[] = []
-  for (const id of placeIds) {
-    try {
-      const detail = await getPlaceDetails(id)
-      results.push(detail)
-    } catch (err) {
-      console.error(`Failed to fetch details for ${id}:`, err)
+
+  for (let i = 0; i < placeIds.length; i += concurrency) {
+    const batch = placeIds.slice(i, i + concurrency)
+    const batchResults = await Promise.allSettled(
+      batch.map((id) => getPlaceDetails(id))
+    )
+    for (const result of batchResults) {
+      if (result.status === 'fulfilled') {
+        results.push(result.value)
+      } else {
+        console.error('Failed to fetch place details:', result.reason)
+      }
     }
   }
+
   return results
 }
 

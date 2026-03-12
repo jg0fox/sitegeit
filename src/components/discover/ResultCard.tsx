@@ -19,14 +19,16 @@ export function ResultCard({
   onToggleSelect,
 }: ResultCardProps) {
   const [expanded, setExpanded] = useState(false)
-  const disabled = result.already_in_pipeline
+  const isActive = result.website_status === 'active'
+  const disabled = result.already_in_pipeline || isActive
 
   return (
     <Card
       className={cn(
         'transition-shadow',
         selected && 'ring-2 ring-primary ring-offset-1',
-        disabled && 'opacity-60'
+        isActive && 'opacity-50',
+        result.already_in_pipeline && !isActive && 'opacity-60'
       )}
     >
       <div className="flex items-start gap-3 p-4">
@@ -50,8 +52,11 @@ export function ResultCard({
               {result.name}
             </button>
             <WebStatusBadge status={result.website_status} />
-            {disabled && (
+            {result.already_in_pipeline && (
               <Badge variant="secondary">Already in pipeline</Badge>
+            )}
+            {isActive && !result.already_in_pipeline && (
+              <Badge variant="secondary">Has website</Badge>
             )}
           </div>
 

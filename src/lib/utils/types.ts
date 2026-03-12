@@ -84,13 +84,13 @@ export interface SearchParams {
   category: string
   radius_km: number
   filters?: SearchFilters
-  pageToken?: string
 }
 
 export interface DiscoveryResponse {
   results: DiscoveryResult[]
-  nextPageToken?: string
   totalFound: number
+  totalGoogleResults: number
+  totalWithActiveSites: number
 }
 
 export interface SavedSearch {

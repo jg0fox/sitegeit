@@ -12,9 +12,8 @@ export const searchFiltersSchema = z.object({
 export const searchParamsSchema = z.object({
   region: z.string().min(1, 'Region is required'),
   category: z.string().min(1, 'Category is required'),
-  radius_km: z.number().min(1).max(50).default(10),
+  radius_km: z.number().min(1).max(80).default(10),
   filters: searchFiltersSchema.optional(),
-  pageToken: z.string().optional(),
 })
 
 export const addToPipelineSchema = z.object({

@@ -51,6 +51,8 @@ export default function DiscoverPage() {
   // Opt-in save state
   const [isSaving, setIsSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [totalGoogleResults, setTotalGoogleResults] = useState(0)
+  const [totalWithActiveSites, setTotalWithActiveSites] = useState(0)
 
   // Restore cached results on mount
   useEffect(() => {
@@ -103,13 +105,18 @@ export default function DiscoverPage() {
 
       const data = await res.json()
       setResults(data.results)
+      setTotalGoogleResults(data.totalGoogleResults ?? 0)
+      setTotalWithActiveSites(data.totalWithActiveSites ?? 0)
       saveCachedState(data.results, params)
 
       if (data.results.length === 0) {
         toast.info('No businesses found matching your criteria.')
       } else {
+        const withoutSites = data.results.filter(
+          (r: { website_status: string }) => r.website_status !== 'active'
+        ).length
         toast.success(
-          `Found ${data.results.length} business${data.results.length !== 1 ? 'es' : ''} without active websites.`
+          `Found ${data.totalGoogleResults} businesses — ${withoutSites} without active websites.`
         )
       }
     } catch (err) {
@@ -161,7 +168,9 @@ export default function DiscoverPage() {
   }
 
   const handleSelectAll = () => {
-    const selectable = results.filter((r) => !r.already_in_pipeline)
+    const selectable = results.filter(
+      (r) => !r.already_in_pipeline && r.website_status !== 'active'
+    )
     if (selectedIds.size === selectable.length) {
       setSelectedIds(new Set())
     } else {
@@ -328,6 +337,8 @@ export default function DiscoverPage() {
               onSaveSearch={lastSearchParams ? handleSaveSearch : undefined}
               isSaving={isSaving}
               isSaved={isSaved}
+              totalGoogleResults={totalGoogleResults}
+              totalWithActiveSites={totalWithActiveSites}
             />
           ) : (
             <EmptyState
