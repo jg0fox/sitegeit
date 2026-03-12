@@ -201,6 +201,7 @@ export default function DiscoverPage() {
             types: r.types,
             formatted_phone_number: r.formatted_phone_number,
             website: r.website,
+            email: r.emails?.[0],
             website_status: r.website_status,
           })),
           category: lastSearchParams.category,

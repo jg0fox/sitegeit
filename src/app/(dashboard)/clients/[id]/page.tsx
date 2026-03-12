@@ -9,6 +9,7 @@ import { ActivityTimeline } from '@/components/shared/ActivityTimeline'
 import { NotesSection } from '@/components/pipeline/NotesSection'
 import { CustomDomainSetup } from '@/components/clients/CustomDomainSetup'
 import { ClientTierEditor } from '@/components/clients/ClientTierEditor'
+import { InlineEmail } from '@/components/shared/InlineEmail'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -96,6 +97,7 @@ export default async function ClientDetailPage({
                   {[business.address_city, business.address_state].filter(Boolean).join(', ')}
                 </span>
               )}
+              <InlineEmail businessId={id} initialEmail={business.email} />
               {business.monthly_rate && (
                 <span className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-[16px]">payments</span>

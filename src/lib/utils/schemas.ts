@@ -29,6 +29,7 @@ export const addToPipelineSchema = z.object({
         types: z.array(z.string()).optional(),
         formatted_phone_number: z.string().optional(),
         website: z.string().optional(),
+        email: z.string().email().optional(),
         website_status: z.enum([
           'none',
           'dead',

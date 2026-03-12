@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       const batchResults = await Promise.allSettled(
         batch.map(async (place) => {
           const details = await getPlaceDetails(place.place_id)
-          const websiteStatus = await detectWebPresence(details.website)
+          const { status: websiteStatus, emails } = await detectWebPresence(details.website)
 
           // Check if already in the user's pipeline
           const { data: existing } = await supabase
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
           return {
             ...details,
             website_status: websiteStatus,
+            emails: emails.length > 0 ? emails : undefined,
             already_in_pipeline: !!existing,
           } as DiscoveryResult
         })

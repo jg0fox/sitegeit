@@ -10,6 +10,7 @@ import { RegenerateSiteButton } from '@/components/pipeline/RegenerateSiteButton
 import Link from 'next/link'
 import { NotesSection } from '@/components/pipeline/NotesSection'
 import { ActivityTimeline } from '@/components/shared/ActivityTimeline'
+import { InlineEmail } from '@/components/shared/InlineEmail'
 import { formatDistanceToNow } from 'date-fns'
 
 interface GoogleReview {
@@ -205,6 +206,7 @@ export default async function ProspectDetailPage({
                   {business.phone}
                 </span>
               )}
+              <InlineEmail businessId={id} initialEmail={business.email} />
               {business.owner_name && (
                 <span className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-[16px]">person</span>

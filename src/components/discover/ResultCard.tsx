@@ -87,6 +87,18 @@ export function ResultCard({
                 {result.formatted_phone_number}
               </a>
             )}
+            {result.emails && result.emails.length > 0 && (
+              <a
+                href={`mailto:${result.emails[0]}`}
+                className="flex items-center gap-1 hover:text-primary"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  mail
+                </span>
+                {result.emails[0]}
+              </a>
+            )}
           </div>
 
           {/* Address (truncated) */}

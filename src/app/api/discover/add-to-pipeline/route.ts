@@ -69,6 +69,7 @@ export async function POST(request: Request) {
         google_review_count: result.user_ratings_total || null,
         website_url: result.website || null,
         website_status: result.website_status,
+        email: result.email || null,
         status: 'discovered',
       }).select('id').single()
 

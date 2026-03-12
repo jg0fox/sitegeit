@@ -70,6 +70,7 @@ export interface PlaceResult {
 export interface DiscoveryResult extends PlaceResult {
   website_status: WebsiteStatus
   already_in_pipeline: boolean
+  emails?: string[]
 }
 
 export interface SearchFilters {

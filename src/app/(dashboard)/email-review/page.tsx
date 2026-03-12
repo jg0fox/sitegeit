@@ -17,6 +17,7 @@ interface EmailRow {
     id: string
     name: string
     category: string
+    email: string | null
     address_city: string | null
     address_state: string | null
   }
@@ -35,7 +36,7 @@ export default async function EmailReviewPage() {
   const { data: emails } = await supabase
     .from('outreach_emails')
     .select(
-      'id, subject, body, edited_body, review_status, sequence_position, created_at, business_id, businesses!inner(id, name, category, address_city, address_state)'
+      'id, subject, body, edited_body, review_status, sequence_position, created_at, business_id, businesses!inner(id, name, category, email, address_city, address_state)'
     )
     .eq('businesses.user_id', user.id)
     .eq('review_status', 'draft')

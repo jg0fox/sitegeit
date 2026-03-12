@@ -22,6 +22,7 @@ interface BusinessGroup {
     id: string
     name: string
     category: string
+    email: string | null
     address_city: string | null
     address_state: string | null
   }
@@ -52,6 +53,16 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
   const [saving, setSaving] = useState(false)
   const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set())
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set())
+  // Track editable business emails (keyed by business ID)
+  const [businessEmails, setBusinessEmails] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {}
+    for (const g of groups) {
+      initial[g.business.id] = g.business.email ?? ''
+    }
+    return initial
+  })
+  const [editingRecipient, setEditingRecipient] = useState<string | null>(null)
+  const [recipientDraft, setRecipientDraft] = useState('')
 
   function startEditing(email: EmailData) {
     setEditingId(email.id)
@@ -153,8 +164,42 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
   }
 
+  function startEditingRecipient(businessId: string) {
+    setRecipientDraft(businessEmails[businessId] ?? '')
+    setEditingRecipient(businessId)
+  }
+
+  async function saveRecipientEmail(businessId: string) {
+    const trimmed = recipientDraft.trim()
+    if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error('Invalid email address')
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/businesses/${businessId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed || null }),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      setBusinessEmails((prev) => ({ ...prev, [businessId]: trimmed }))
+      setEditingRecipient(null)
+      toast.success(trimmed ? 'Recipient email updated' : 'Recipient email removed')
+    } catch {
+      toast.error('Failed to save recipient email')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const allEmails = groups.flatMap((g) => g.emails)
   const currentEmail = allEmails.find((e) => e.id === activeEmail)
+  const currentBusiness = currentEmail
+    ? groups.find((g) => g.emails.some((e) => e.id === currentEmail.id))?.business
+    : null
+  const currentRecipientEmail = currentBusiness ? businessEmails[currentBusiness.id] : ''
+  const hasRecipientEmail = !!currentRecipientEmail
   const reviewedCount = allEmails.filter(
     (e) => approvedIds.has(e.id) || skippedIds.has(e.id)
   ).length
@@ -186,7 +231,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
 
       switch (e.key.toLowerCase()) {
         case 'a':
-          if (!approvedIds.has(currentEmail.id) && !skippedIds.has(currentEmail.id)) {
+          if (!approvedIds.has(currentEmail.id) && !skippedIds.has(currentEmail.id) && hasRecipientEmail) {
             approveEmail(currentEmail.id)
           }
           break
@@ -351,7 +396,8 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                       size="sm"
                       className="mt-2 w-full"
                       onClick={() => approveAll(group.emails.filter((e) => !skippedIds.has(e.id)))}
-                      disabled={saving}
+                      disabled={saving || !businessEmails[group.business.id]}
+                      title={!businessEmails[group.business.id] ? 'Add a recipient email before approving' : undefined}
                     >
                       Approve remaining
                     </Button>
@@ -441,7 +487,8 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                         <Button
                           size="sm"
                           onClick={() => approveEmail(currentEmail.id)}
-                          disabled={saving}
+                          disabled={saving || !hasRecipientEmail}
+                          title={!hasRecipientEmail ? 'Add a recipient email before approving' : undefined}
                         >
                           <span className="material-symbols-outlined text-[16px]">
                             check
@@ -470,6 +517,61 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                 )}
               </div>
             </CardHeader>
+            {/* Recipient email bar */}
+            {currentBusiness && (
+              <div className={cn(
+                'mx-6 mb-2 flex items-center gap-2 rounded-lg px-4 py-2.5',
+                hasRecipientEmail ? 'bg-gray-50' : 'bg-amber-50 border border-amber-200'
+              )}>
+                <span className={cn(
+                  'material-symbols-outlined text-[18px]',
+                  hasRecipientEmail ? 'text-gray-400' : 'text-amber-500'
+                )}>
+                  {hasRecipientEmail ? 'mail' : 'warning'}
+                </span>
+                {editingRecipient === currentBusiness.id ? (
+                  <input
+                    autoFocus
+                    type="email"
+                    value={recipientDraft}
+                    onChange={(e) => setRecipientDraft(e.target.value)}
+                    onBlur={() => saveRecipientEmail(currentBusiness.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); saveRecipientEmail(currentBusiness.id) }
+                      if (e.key === 'Escape') setEditingRecipient(null)
+                    }}
+                    placeholder="recipient@example.com"
+                    className="h-7 flex-1 rounded border border-gray-300 px-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                ) : hasRecipientEmail ? (
+                  <button
+                    type="button"
+                    onClick={() => startEditingRecipient(currentBusiness.id)}
+                    className="flex-1 text-left text-sm text-gray-700 hover:text-primary"
+                    title="Click to edit recipient email"
+                  >
+                    To: {currentRecipientEmail}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => startEditingRecipient(currentBusiness.id)}
+                    className="flex-1 text-left text-sm font-medium text-amber-700 hover:text-amber-900"
+                  >
+                    No recipient email — click to add
+                  </button>
+                )}
+                {editingRecipient !== currentBusiness.id && (
+                  <button
+                    type="button"
+                    onClick={() => startEditingRecipient(currentBusiness.id)}
+                    className="text-gray-400 hover:text-primary"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                  </button>
+                )}
+              </div>
+            )}
             <CardContent>
               {editingId === currentEmail.id ? (
                 <textarea
