@@ -35,10 +35,11 @@ export async function generateLandingPage(
     .eq('id', business.user_id)
     .single()
 
-  // TODO: A real Calendly booking URL must be configured in the user's profile
-  // (public.users.calendly_link) before outreach goes live. The generic
-  // https://calendly.com homepage is a placeholder that won't work for booking.
-  const calendlyUrl = user?.calendly_link || 'https://calendly.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
+  const calendlyUrl = user?.calendly_link || `${appUrl}/sites/go/${site.deploy_url || businessId}`
+  if (!user?.calendly_link) {
+    console.warn(`[generate-landing] No Calendly link configured for user. Using landing page URL as fallback. Set your Calendly link in Settings → Profile.`)
+  }
 
   const servicePages = (site.service_pages as { slug: string }[]) || []
 

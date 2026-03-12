@@ -1,51 +1,33 @@
-## Current State: Phase 3.5 — Site Generation Quality Overhaul
+## Current State: Settings & Polish
 
-We are NOT building new features. We are completing Phase 3 properly.
+Phases 1–6 are complete. The full pipeline works end-to-end:
+discovery → enrichment → generation → deploy → email → client management.
 
-The pipeline works end-to-end (discovery → enrichment → generation → deploy → email).
-The output quality is not good enough. Sites look generic, content follows
-repetitive AI patterns, thin enrichment data produces empty/hedging content,
-and service pages/about/contact/FAQ are generated but never rendered.
+### Completed Phases
+- Phase 1: Foundation (Next.js, Supabase, Tailwind, auth)
+- Phase 2: Lead Discovery (Google Places, filtering, multi-select)
+- Phase 3: Enrichment + Generation Engine (pipeline, themes, multi-page sites)
+- Phase 4: Pipeline Management UI (queue, prospect detail, stage actions)
+- Phase 5: Email Integration (Instantly.ai, domain management, webhooks, follow-ups)
+- Phase 6: Client Management (roster, detail, custom domains, site regeneration, MRR)
+- Settings & Polish: Profile, integrations, notifications, templates pages
 
-### Reference Document
+### Deferred work still queued
+- Phase 3.5 Site Generation Quality Overhaul (see `SITE_GENERATION_OVERHAUL.md`)
+- Stripe billing — placeholder only, no API integration
+- Plausible analytics — placeholder only, UI shell for Growth+ tiers
+- Content editing UI — manual DB edits only for now
 
-Read `SITE_GENERATION_OVERHAUL.md` for the full plan. It has 4 layers
-and 5 sprints. We are executing one sprint at a time.
+### Standing Rules
 
-### Current Phase: Phase 5 — Email Integration (Instantly.ai)
-
-Phase 4 (Pipeline Management UI) is complete. All 5 sprints shipped:
-notes/stage override, email review enhancements, pipeline queue
-sorting/signals, reusable activity timeline, notification triggers.
-
-Phase 3.5 Sprint 6 (images + social proof) is still queued — it does
-not block Phase 5.
-
-### Rules for This Phase
-
-1. Check the current Instantly.ai API docs before writing the client.
-   Their API has changed multiple times. Use v2 endpoints if available.
-   Do not guess at payload shapes from the TECH_SPEC alone.
-2. Never silently swallow send failures. If the Instantly API call
-   fails, the email status stays `approved` (not `sent`), an error
-   notification is created, and the error is logged. The operator
-   must be able to see what failed and retry.
-3. Do not send to businesses with no email address. Validate before
-   the send attempt, not after. Show the validation error in the
-   email review UI.
-4. The webhook receiver must be idempotent. Same event arriving twice
-   must not create duplicate activity log entries or incorrect counts.
-   Use a 1-minute dedup window.
-5. Follow-up emails are generated and stored but sent by Instantly's
-   sequence engine, not by our scheduler. We push the sequence config
-   to Instantly; they handle timing and stop-on-reply.
-6. Domain rotation is round-robin across domains where warmup_status
-   is 'ready' and emails_sent_today < daily_send_limit. Do not send
-   from warming or flagged domains.
-7. Do NOT build Stripe, client management, or analytics features.
-   Those are Phase 6.
-8. Extend the existing webhook stub from Phase 4 Sprint 5 rather
-   than creating a new route. Check for it before scaffolding.
+1. Do NOT build Stripe. Show placeholder: "Stripe billing not yet connected."
+2. Do NOT build Plausible. Show placeholder card for Growth+ tiers only.
+3. Custom domain calls Vercel API. If no VERCEL_TOKEN, log and show error.
+4. Site regeneration creates a NEW generated_sites record (no overwrite).
+5. Conversion flow logs both status_changed and tier_changed to activity_log.
+6. Client pages at /clients and /clients/[id] — separate from pipeline.
+7. MRR uses businesses.monthly_rate (stored in dollars).
+8. "One round of edits" is manual: DB edit → "Update Site" to redeploy.
    
 # CLAUDE.md — Sitegeit Build Instructions
 

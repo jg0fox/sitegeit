@@ -36,9 +36,11 @@ export async function generateEmail(
     .single()
 
   const senderName = user?.full_name || 'The Sitegeit Team'
-  // TODO: A real Calendly booking URL must be configured in the user's profile
-  // (public.users.calendly_link) before outreach goes live.
-  const calendlyUrl = user?.calendly_link || 'https://calendly.com'
+  const landingPageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/go/${landingPage.deploy_url}`
+  const calendlyUrl = user?.calendly_link || landingPageUrl
+  if (!user?.calendly_link) {
+    console.warn(`[generate-email] No Calendly link configured for user. Using landing page URL as fallback. Set your Calendly link in Settings → Profile.`)
+  }
 
   // Get a unique detail for personalization
   const services = (business.services as string[]) || []

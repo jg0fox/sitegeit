@@ -6,11 +6,14 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 import { NAV_ITEMS } from '@/lib/utils/constants'
 import { useSidebar } from './SidebarContext'
+import { UserAvatar } from '@/components/shared/UserAvatar'
+import { useUser } from '@/lib/hooks/useUser'
 import { createBrowserClient } from '@supabase/ssr'
 
 export function Sidebar() {
   const pathname = usePathname()
   const { collapsed, mobileOpen, closeMobile } = useSidebar()
+  const { user: profile } = useUser()
   const [pipelineCount, setPipelineCount] = useState(0)
   const [clientCount, setClientCount] = useState(0)
 
@@ -164,15 +167,13 @@ export function Sidebar() {
               collapsed && 'lg:justify-center lg:px-0'
             )}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600">
-              JF
-            </div>
+            <UserAvatar fullName={profile?.full_name} avatarUrl={profile?.avatar_url} />
             <div className={cn('min-w-0', collapsed && 'lg:hidden')}>
               <p className="truncate text-sm font-medium text-gray-900">
-                Jason Fox
+                {profile?.full_name || 'User'}
               </p>
               <p className="truncate text-xs text-gray-500">
-                jason@sitegeit.com
+                {profile?.email || ''}
               </p>
             </div>
           </div>

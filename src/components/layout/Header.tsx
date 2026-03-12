@@ -3,6 +3,8 @@
 import { usePathname } from 'next/navigation'
 import { useSidebar } from './SidebarContext'
 import { NotificationBell } from './NotificationBell'
+import { UserAvatar } from '@/components/shared/UserAvatar'
+import { useUser } from '@/lib/hooks/useUser'
 import { cn } from '@/lib/utils/cn'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -18,11 +20,13 @@ const PAGE_TITLES: Record<string, string> = {
 export function Header() {
   const pathname = usePathname()
   const { toggle, toggleMobile, collapsed } = useSidebar()
+  const { user } = useUser()
 
   const title =
     PAGE_TITLES[pathname] ??
     (pathname.startsWith('/pipeline/') ? 'Prospect Detail' :
-     pathname.startsWith('/clients/') ? 'Client Detail' : 'Sitegeit')
+     pathname.startsWith('/clients/') ? 'Client Detail' :
+     pathname.startsWith('/settings/') ? 'Settings' : 'Sitegeit')
 
   return (
     <header
@@ -59,9 +63,9 @@ export function Header() {
         <NotificationBell />
 
         {/* User avatar (desktop) */}
-        <button className="hidden h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-300 lg:flex">
-          JF
-        </button>
+        <div className="hidden lg:flex">
+          <UserAvatar fullName={user?.full_name} avatarUrl={user?.avatar_url} size="md" />
+        </div>
       </div>
     </header>
   )

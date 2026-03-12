@@ -10,27 +10,27 @@ const SECTIONS = [
   },
   {
     title: 'Templates',
-    description: 'Browse and edit email, landing page, and site templates.',
+    description: 'Browse email, landing page, and site theme templates.',
     icon: 'description',
-    href: null,
+    href: '/settings/templates',
   },
   {
     title: 'Integrations',
-    description: 'Connect Instantly.ai, Calendly, Google Places, and analytics.',
+    description: 'Connection status for Instantly.ai, Google Places, Vercel, and more.',
     icon: 'extension',
-    href: null,
+    href: '/settings/integrations',
   },
   {
     title: 'Notifications',
     description: 'Choose which events trigger push notifications or emails.',
     icon: 'notifications',
-    href: null,
+    href: '/settings/notifications',
   },
   {
     title: 'Profile',
     description: 'Your business info, Calendly link, email signature, and avatar.',
     icon: 'person',
-    href: null,
+    href: '/settings/profile',
   },
 ]
 

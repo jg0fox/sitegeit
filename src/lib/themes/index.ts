@@ -73,7 +73,7 @@ export const THEMES: Record<string, ThemeConfig> = {
   'modern-minimal': modernMinimal,
 }
 
-const CATEGORY_THEME_MAP: Record<string, string> = {
+export const CATEGORY_THEME_MAP: Record<string, string> = {
   plumber: 'bold-trade',
   electrician: 'bold-trade',
   hvac: 'bold-trade',
