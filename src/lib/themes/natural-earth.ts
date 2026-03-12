@@ -42,7 +42,7 @@ export const naturalEarth: ThemeConfig = {
   componentVariants: {
     card: 'bordered',
     heroBackground: 'pattern',
-    sectionDivider: 'curved',
+    sectionDivider: 'line',
     iconStyle: 'circle-bg',
   },
   sectionBackgrounds: {

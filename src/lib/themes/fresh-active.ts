@@ -45,7 +45,7 @@ export const freshActive: ThemeConfig = {
   componentVariants: {
     card: 'accent-top',
     heroBackground: 'gradient',
-    sectionDivider: 'angled',
+    sectionDivider: 'line',
     iconStyle: 'square-bg',
   },
   sectionBackgrounds: {

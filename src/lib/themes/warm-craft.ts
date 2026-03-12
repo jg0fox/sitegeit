@@ -42,7 +42,7 @@ export const warmCraft: ThemeConfig = {
   componentVariants: {
     card: 'bordered',
     heroBackground: 'solid',
-    sectionDivider: 'curved',
+    sectionDivider: 'line',
     iconStyle: 'circle-bg',
   },
   sectionBackgrounds: {
