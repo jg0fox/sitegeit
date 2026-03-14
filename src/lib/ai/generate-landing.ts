@@ -28,18 +28,9 @@ export async function generateLandingPage(
   const business = businessResult.data
   const site = siteResult.data
 
-  // Fetch user's calendly link
-  const { data: user } = await supabase
-    .from('users')
-    .select('calendly_link')
-    .eq('id', business.user_id)
-    .single()
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
-  const calendlyUrl = user?.calendly_link || `${appUrl}/sites/go/${site.deploy_url || businessId}`
-  if (!user?.calendly_link) {
-    console.warn(`[generate-landing] No Calendly link configured for user. Using landing page URL as fallback. Set your Calendly link in Settings → Profile.`)
-  }
+  // Use the built-in booking page, passing the business ID for pipeline integration
+  const bookingUrl = `${appUrl}/book?ref=${businessId}`
 
   const servicePages = (site.service_pages as { slug: string }[]) || []
 
@@ -54,7 +45,7 @@ export async function generateLandingPage(
     preview_site_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/${site.deploy_url}`,
     theme_id: site.theme_id,
     services_count: servicePages.length,
-    calendly_url: calendlyUrl,
+    calendly_url: bookingUrl,
   })
 
   const content = await generateJSON<LandingPageOutput>(LANDING_PAGE_SYSTEM_PROMPT, userPrompt)
@@ -74,7 +65,7 @@ export async function generateLandingPage(
     site_preview_data: content,
     deploy_url: slug,
     deploy_status: 'live',
-    calendly_link: calendlyUrl,
+    calendly_link: bookingUrl,
   }
 
   const { data: existingLP } = await supabase

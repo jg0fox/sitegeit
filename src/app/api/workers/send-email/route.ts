@@ -21,7 +21,7 @@ async function handler(request: Request) {
       .select(`
         id, subject, body, edited_body, review_status,
         sequence_position, parent_email_id, instantly_id,
-        business_id,
+        from_email, business_id,
         businesses!inner(id, user_id, name, email, status)
       `)
       .eq('id', emailId)
@@ -72,7 +72,7 @@ async function handler(request: Request) {
       return NextResponse.json({ error: 'Business has no email address' }, { status: 400 })
     }
 
-    // Pick the best sending domain: prefer 'ready' warmup, then fall back to 'warming'
+    // Pick the sending domain — use user-specified from_email if set, otherwise auto-select
     const { data: domains } = await supabase
       .from('sending_domains')
       .select('*')
@@ -80,14 +80,21 @@ async function handler(request: Request) {
       .in('warmup_status', ['ready', 'warming'])
       .order('health_score', { ascending: false, nullsFirst: false })
 
-    // Find first domain under its daily limit, preferring 'ready' status
-    const sendingDomain = domains
-      ?.sort((a, b) => {
-        if (a.warmup_status === 'ready' && b.warmup_status !== 'ready') return -1
-        if (b.warmup_status === 'ready' && a.warmup_status !== 'ready') return 1
-        return 0
-      })
-      .find((d) => d.emails_sent_today < d.daily_send_limit)
+    // If user chose a specific from_email in review, try to use that domain
+    let sendingDomain = email.from_email
+      ? domains?.find((d) => d.email_address === email.from_email && d.emails_sent_today < d.daily_send_limit)
+      : null
+
+    // Fall back to auto-selection: prefer 'ready' warmup, then under daily limit
+    if (!sendingDomain) {
+      sendingDomain = domains
+        ?.sort((a, b) => {
+          if (a.warmup_status === 'ready' && b.warmup_status !== 'ready') return -1
+          if (b.warmup_status === 'ready' && a.warmup_status !== 'ready') return 1
+          return 0
+        })
+        .find((d) => d.emails_sent_today < d.daily_send_limit)
+    }
 
     if (!sendingDomain) {
       console.error(`[worker/send-email] No sending domain available for user ${business.user_id}`)
@@ -109,14 +116,29 @@ async function handler(request: Request) {
     console.log(`[worker/send-email] Sent ${emailId} via Instantly: ${result.id}`)
 
     // Update email record
+    const sentAt = new Date().toISOString()
     await supabase
       .from('outreach_emails')
       .update({
         instantly_id: result.id,
-        sent_at: new Date().toISOString(),
+        sent_at: sentAt,
         review_status: 'sent',
       })
       .eq('id', emailId)
+
+    // Store in email_messages for thread tracking
+    await supabase.from('email_messages').insert({
+      user_id: business.user_id,
+      direction: 'outbound',
+      from_email: sendingDomain.email_address,
+      to_email: business.email,
+      subject: email.subject,
+      body_html: emailBody,
+      body_text: emailBody.replace(/<[^>]*>/g, ''),
+      sent_at: sentAt,
+      business_id: business.id,
+      outreach_email_id: emailId,
+    })
 
     // Increment sent today
     await supabase.rpc('increment_sent_today', { domain_id: sendingDomain.id })

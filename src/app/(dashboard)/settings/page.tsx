@@ -15,6 +15,18 @@ const SECTIONS = [
     href: '/settings/templates',
   },
   {
+    title: 'Scheduling',
+    description: 'Availability, booking preferences, and meeting defaults.',
+    icon: 'event',
+    href: '/settings/scheduling',
+  },
+  {
+    title: 'Bookings',
+    description: 'View and manage upcoming and past bookings.',
+    icon: 'calendar_month',
+    href: '/settings/bookings',
+  },
+  {
     title: 'Integrations',
     description: 'Connection status for Instantly.ai, Google Places, Vercel, and more.',
     icon: 'extension',
@@ -28,7 +40,7 @@ const SECTIONS = [
   },
   {
     title: 'Profile',
-    description: 'Your business info, Calendly link, email signature, and avatar.',
+    description: 'Your business info, email signature, and avatar.',
     icon: 'person',
     href: '/settings/profile',
   },

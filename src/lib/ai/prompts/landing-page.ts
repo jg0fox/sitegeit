@@ -59,7 +59,7 @@ export function buildLandingPagePrompt(input: LandingPageInput): string {
 - Theme: ${input.theme_id}
 - Key features: ${input.services_count} service pages, SEO optimized, mobile responsive, ${input.review_count ?? 0}+ reviews featured
 
-## Scheduling Link
+## Booking Page URL
 ${input.calendly_url}
 
 ## Generate this JSON:

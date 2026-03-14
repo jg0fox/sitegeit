@@ -27,7 +27,7 @@ export default function TemplatesPage() {
       title: 'Initial outreach',
       sequence: 1,
       description: 'First email sent to prospects. Under 100 words, leads with value, includes landing page link.',
-      parameters: ['Business name', 'Owner name', 'Category', 'City', 'Unique detail', 'Landing page URL', 'Calendly URL'],
+      parameters: ['Business name', 'Owner name', 'Category', 'City', 'Unique detail', 'Landing page URL', 'Booking URL'],
     },
     {
       title: 'Follow-up 1',
@@ -124,7 +124,7 @@ export default function TemplatesPage() {
               CTA to schedule a meeting.
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {['Business name', 'Category', 'City/State', 'Rating', 'Preview site URL', 'Theme', 'Calendly URL'].map((p) => (
+              {['Business name', 'Category', 'City/State', 'Rating', 'Preview site URL', 'Theme', 'Booking URL'].map((p) => (
                 <span
                   key={p}
                   className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-500"

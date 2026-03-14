@@ -10,6 +10,7 @@ import { NotesSection } from '@/components/pipeline/NotesSection'
 import { CustomDomainSetup } from '@/components/clients/CustomDomainSetup'
 import { ClientTierEditor } from '@/components/clients/ClientTierEditor'
 import { InlineEmail } from '@/components/shared/InlineEmail'
+import { EmailSection } from '@/components/shared/EmailSection'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -235,6 +236,13 @@ export default async function ClientDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Email correspondence */}
+      <EmailSection
+        businessId={id}
+        recipientEmail={business.email}
+        recipientName={business.name}
+      />
 
       {/* Analytics placeholder (Growth+ only) */}
       {isGrowthPlus && (

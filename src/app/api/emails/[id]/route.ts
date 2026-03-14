@@ -17,7 +17,7 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { subject, body: emailBody, review_status } = body
+  const { subject, body: emailBody, review_status, from_email } = body
 
   // Verify the email belongs to the user
   const { data: email } = await supabase
@@ -39,6 +39,7 @@ export async function PATCH(
   const update: Record<string, unknown> = {}
   if (subject !== undefined) update.subject = subject
   if (emailBody !== undefined) update.edited_body = emailBody
+  if (from_email !== undefined) update.from_email = from_email
   if (review_status !== undefined) {
     update.review_status = review_status
     if (review_status === 'approved') {

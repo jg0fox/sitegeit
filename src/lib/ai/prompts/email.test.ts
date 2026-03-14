@@ -13,7 +13,7 @@ describe('email prompts', () => {
     landing_page_url: 'https://go.sitegeit.com/joes-plumbing',
     sender_name: 'Alex',
     sender_company: 'Sitegeit',
-    calendly_url: 'https://calendly.com/alex/sitegeit',
+    calendly_url: 'https://seitgeit.vercel.app/book',
   }
 
   it('system prompt enforces email rules', () => {

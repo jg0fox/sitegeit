@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase/admin'
-import { verifyWebhookSignature } from '@/lib/services/instantly'
+import { verifyWebhookSignature, listEmails } from '@/lib/services/instantly'
 
 /**
  * POST /api/emails/webhook
@@ -141,6 +141,51 @@ export async function POST(request: Request) {
         .update({ review_status: 'skipped' })
         .eq('parent_email_id', primaryEmailId)
         .is('sent_at', null)
+
+      // Try to fetch the reply content from Instantly API
+      const leadEmail = payload.data?.lead_email || payload.data?.to_email
+      if (leadEmail) {
+        try {
+          const messages = await listEmails(leadEmail, 10)
+          // Find inbound messages we haven't stored yet
+          const { data: existingIds } = await supabase
+            .from('email_messages')
+            .select('instantly_id')
+            .eq('business_id', businessId)
+
+          const storedIds = new Set((existingIds ?? []).map((e: { instantly_id: string }) => e.instantly_id))
+
+          // Get business owner for user_id
+          const { data: biz } = await supabase
+            .from('businesses')
+            .select('user_id, email')
+            .eq('id', businessId)
+            .single()
+
+          if (biz) {
+            for (const msg of messages) {
+              if (storedIds.has(msg.id)) continue
+              // Determine direction: if from_address matches the lead, it's inbound
+              const isInbound = msg.from_address_email === leadEmail
+              await supabase.from('email_messages').insert({
+                user_id: biz.user_id,
+                thread_id: msg.thread_id,
+                instantly_id: msg.id,
+                direction: isInbound ? 'inbound' : 'outbound',
+                from_email: msg.from_address_email || (isInbound ? leadEmail : ''),
+                to_email: msg.to_address_email || (isInbound ? '' : leadEmail),
+                subject: msg.subject || '',
+                body_html: msg.body?.html || '',
+                body_text: msg.body?.text || '',
+                sent_at: msg.timestamp_email || msg.timestamp_created,
+                business_id: businessId,
+              })
+            }
+          }
+        } catch (fetchErr) {
+          console.warn('[email/webhook] Failed to fetch reply content:', fetchErr)
+        }
+      }
     }
 
     // Fetch business info for notifications and activity logging

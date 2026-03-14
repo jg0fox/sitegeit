@@ -54,7 +54,7 @@ ${input.landing_page_url}
 ## Sender
 - Name: ${input.sender_name}
 - Company: ${input.sender_company}
-- Calendly: ${input.calendly_url}
+- Booking page: ${input.calendly_url}
 
 ## Generate:
 {

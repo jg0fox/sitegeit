@@ -53,6 +53,9 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
   const [saving, setSaving] = useState(false)
   const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set())
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set())
+  // From-address management
+  const [sendingAccounts, setSendingAccounts] = useState<{ email: string }[]>([])
+  const [selectedFromEmail, setSelectedFromEmail] = useState('')
   // Track editable business emails (keyed by business ID)
   const [businessEmails, setBusinessEmails] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {}
@@ -63,6 +66,26 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
   })
   const [editingRecipient, setEditingRecipient] = useState<string | null>(null)
   const [recipientDraft, setRecipientDraft] = useState('')
+
+  // Load sending accounts for from-address selection
+  useEffect(() => {
+    async function loadAccounts() {
+      try {
+        const res = await fetch('/api/settings/domains')
+        if (res.ok) {
+          const data = await res.json()
+          const accts = (Array.isArray(data) ? data : []).map(
+            (d: { email_address: string }) => ({ email: d.email_address })
+          )
+          setSendingAccounts(accts)
+          if (accts.length > 0) setSelectedFromEmail(accts[0].email)
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    loadAccounts()
+  }, [])
 
   function startEditing(email: EmailData) {
     setEditingId(email.id)
@@ -109,7 +132,10 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
       const res = await fetch(`/api/emails/${emailId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ review_status: 'approved' }),
+        body: JSON.stringify({
+          review_status: 'approved',
+          ...(selectedFromEmail ? { from_email: selectedFromEmail } : {}),
+        }),
       })
       if (!res.ok) throw new Error('Failed to approve')
       setApprovedIds((prev) => new Set(prev).add(emailId))
@@ -131,7 +157,10 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
             fetch(`/api/emails/${e.id}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ review_status: 'approved' }),
+              body: JSON.stringify({
+                review_status: 'approved',
+                ...(selectedFromEmail ? { from_email: selectedFromEmail } : {}),
+              }),
             })
           )
       )
@@ -570,6 +599,23 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                     <span className="material-symbols-outlined text-[16px]">edit</span>
                   </button>
                 )}
+              </div>
+            )}
+            {/* From-address selector */}
+            {sendingAccounts.length > 0 && (
+              <div className="mx-6 mb-2 flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-2.5">
+                <span className="material-symbols-outlined text-[18px] text-gray-400">outgoing_mail</span>
+                <label htmlFor="from-address" className="text-sm text-gray-500">From:</label>
+                <select
+                  id="from-address"
+                  value={selectedFromEmail}
+                  onChange={(e) => setSelectedFromEmail(e.target.value)}
+                  className="flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  {sendingAccounts.map((a) => (
+                    <option key={a.email} value={a.email}>{a.email}</option>
+                  ))}
+                </select>
               </div>
             )}
             <CardContent>

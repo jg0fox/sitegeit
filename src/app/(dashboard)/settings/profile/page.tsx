@@ -160,7 +160,7 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div>
             <label htmlFor="calendly_link" className="block text-sm font-medium text-gray-700">
-              Calendly link
+              Calendly link (legacy)
             </label>
             <input
               id="calendly_link"
@@ -171,7 +171,8 @@ export default function ProfilePage() {
               placeholder="https://calendly.com/your-name"
             />
             <p className="mt-1 text-xs text-gray-400">
-              Used in outreach emails and landing pages for booking meetings.
+              No longer used — outreach emails and landing pages now link to the built-in booking page at /book.
+              Configure scheduling in <a href="/settings/scheduling" className="text-primary hover:underline">Settings &rarr; Scheduling</a>.
             </p>
           </div>
 

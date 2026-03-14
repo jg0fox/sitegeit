@@ -65,6 +65,18 @@ interface PaginatedResponse<T> {
   next_starting_after?: string | null
 }
 
+/** Email message from Instantly API */
+export interface InstantlyEmailMessage {
+  id: string
+  thread_id: string
+  timestamp_created: string
+  timestamp_email: string
+  body: { html: string; text: string }
+  subject?: string
+  from_address_email?: string
+  to_address_email?: string
+}
+
 export interface InstantlyAccount {
   email: string
   first_name?: string
@@ -169,12 +181,22 @@ export async function getAccountWarmup(email: string): Promise<InstantlyWarmupAn
 
 /**
  * Send an email via Instantly.
+ * Uses the /emails/test endpoint which sends a real email
+ * without requiring a campaign context.
  */
 export async function sendEmail(params: InstantlyEmailParams): Promise<InstantlySendResult> {
-  return instantlyFetch<InstantlySendResult>('/emails/send', {
+  const result = await instantlyFetch<{ status: string }>('/emails/test', {
     method: 'POST',
-    body: params,
+    body: {
+      eaccount: params.from_email,
+      to_address_email_list: [params.to],
+      subject: params.subject,
+      body: {
+        html: params.body,
+      },
+    },
   })
+  return { id: '', status: result.status || 'success' }
 }
 
 /**
@@ -182,6 +204,32 @@ export async function sendEmail(params: InstantlyEmailParams): Promise<Instantly
  */
 export async function getCampaignAnalytics(campaignId: string): Promise<InstantlyCampaignAnalytics> {
   return instantlyFetch<InstantlyCampaignAnalytics>(`/campaigns/${campaignId}/analytics`)
+}
+
+/**
+ * List emails from Instantly, optionally filtered by search query.
+ * Search by lead email: search="john@example.com"
+ * Search by thread: search="thread:THREAD_ID"
+ */
+export async function listEmails(search?: string, limit = 20): Promise<InstantlyEmailMessage[]> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (search) params.set('search', search)
+
+  try {
+    const response = await instantlyFetch<PaginatedResponse<InstantlyEmailMessage>>(
+      `/emails?${params}`
+    )
+    return response.items ?? []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Fetch all emails in a thread by thread ID.
+ */
+export async function getThreadEmails(threadId: string): Promise<InstantlyEmailMessage[]> {
+  return listEmails(`thread:${threadId}`, 50)
 }
 
 /**

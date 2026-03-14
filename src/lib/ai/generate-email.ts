@@ -31,16 +31,15 @@ export async function generateEmail(
   // Fetch user info for sender details
   const { data: user } = await supabase
     .from('users')
-    .select('full_name, email, calendly_link')
+    .select('full_name, email')
     .eq('id', business.user_id)
     .single()
 
   const senderName = user?.full_name || 'The Sitegeit Team'
-  const landingPageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/go/${landingPage.deploy_url}`
-  const calendlyUrl = user?.calendly_link || landingPageUrl
-  if (!user?.calendly_link) {
-    console.warn(`[generate-email] No Calendly link configured for user. Using landing page URL as fallback. Set your Calendly link in Settings → Profile.`)
-  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
+  const landingPageUrl = `${appUrl}/sites/go/${landingPage.deploy_url}`
+  // Use the built-in booking page, passing the business ID for pipeline integration
+  const bookingUrl = `${appUrl}/book?ref=${businessId}`
 
   // Get a unique detail for personalization
   const services = (business.services as string[]) || []
@@ -59,7 +58,7 @@ export async function generateEmail(
     landing_page_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/go/${landingPage.deploy_url}`,
     sender_name: senderName,
     sender_company: 'Sitegeit',
-    calendly_url: calendlyUrl,
+    calendly_url: bookingUrl,
   })
 
   const content = await generateJSON<EmailOutput>(EMAIL_SYSTEM_PROMPT, userPrompt)

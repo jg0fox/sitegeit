@@ -1,13 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'sonner'
 
 interface IntegrationStatus {
   instantly: { connected: boolean }
   google_places: { connected: boolean }
   vercel: { connected: boolean }
+  google_calendar: { connected: boolean; email: string | null; configured: boolean }
+  zoom: { connected: boolean; email: string | null; configured: boolean }
   calendly: { connected: boolean; link: string | null }
   stripe: { connected: boolean; status: string }
   plausible: { connected: boolean; status: string }
@@ -35,19 +39,70 @@ function StatusBadge({ connected, comingSoon }: { connected: boolean; comingSoon
 }
 
 export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={<div className="space-y-6"><p className="py-12 text-center text-sm text-gray-400">Loading integrations...</p></div>}>
+      <IntegrationsContent />
+    </Suspense>
+  )
+}
+
+function IntegrationsContent() {
   const [status, setStatus] = useState<IntegrationStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  const [disconnecting, setDisconnecting] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+
+  const loadStatus = useCallback(async () => {
+    const res = await fetch('/api/settings/integrations')
+    if (res.ok) {
+      setStatus(await res.json())
+    }
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
-    async function load() {
-      const res = await fetch('/api/settings/integrations')
-      if (res.ok) {
-        setStatus(await res.json())
-      }
-      setLoading(false)
+    loadStatus()
+  }, [loadStatus])
+
+  // Handle OAuth callback messages
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+    if (success === 'google_connected') {
+      toast.success('Google Calendar connected')
+      loadStatus()
     }
-    load()
-  }, [])
+    if (error === 'google_denied') {
+      toast.error('Google Calendar connection was denied')
+    }
+    if (error === 'token_exchange_failed') {
+      toast.error('Failed to connect Google Calendar. Please try again.')
+    }
+    if (success === 'zoom_connected') {
+      toast.success('Zoom connected')
+      loadStatus()
+    }
+    if (error === 'zoom_denied') {
+      toast.error('Zoom connection was denied')
+    }
+  }, [searchParams, loadStatus])
+
+  async function handleDisconnect(service: 'google' | 'zoom') {
+    setDisconnecting(service)
+    try {
+      const res = await fetch(`/api/auth/${service}/disconnect`, { method: 'POST' })
+      if (res.ok) {
+        toast.success(`${service === 'google' ? 'Google Calendar' : 'Zoom'} disconnected`)
+        await loadStatus()
+      } else {
+        toast.error('Failed to disconnect')
+      }
+    } catch {
+      toast.error('Failed to disconnect')
+    } finally {
+      setDisconnecting(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -57,7 +112,18 @@ export default function IntegrationsPage() {
     )
   }
 
-  const integrations = [
+  interface IntegrationItem {
+    key: string
+    title: string
+    description: string
+    icon: string
+    connected?: boolean
+    comingSoon?: boolean
+    action?: { label: string; href?: string; onClick?: () => void } | null
+    hint?: string | null
+  }
+
+  const integrations: IntegrationItem[] = [
     {
       key: 'instantly',
       title: 'Instantly.ai',
@@ -70,6 +136,40 @@ export default function IntegrationsPage() {
       hint: !status?.instantly.connected
         ? 'INSTANTLY_API_KEY not configured in environment variables.'
         : null,
+    },
+    {
+      key: 'google_calendar',
+      title: 'Google Calendar',
+      description: 'Calendar availability and event creation for scheduling.',
+      icon: 'event',
+      connected: status?.google_calendar.connected ?? false,
+      action: status?.google_calendar.connected
+        ? { label: 'Disconnect', onClick: () => handleDisconnect('google') }
+        : status?.google_calendar.configured
+          ? { label: 'Connect Google Calendar', href: '/api/auth/google' }
+          : null,
+      hint: status?.google_calendar.connected
+        ? `Connected as ${status.google_calendar.email || 'unknown'}`
+        : !status?.google_calendar.configured
+          ? 'GOOGLE_OAUTH_CLIENT_ID not configured in environment variables.'
+          : 'Connect your Google Calendar to enable scheduling.',
+    },
+    {
+      key: 'zoom',
+      title: 'Zoom',
+      description: 'Automatic meeting link generation for bookings.',
+      icon: 'videocam',
+      connected: status?.zoom.connected ?? false,
+      action: status?.zoom.connected
+        ? { label: 'Disconnect', onClick: () => handleDisconnect('zoom') }
+        : status?.zoom.configured
+          ? { label: 'Connect Zoom', href: '/api/auth/zoom' }
+          : null,
+      hint: status?.zoom.connected
+        ? `Connected as ${status.zoom.email || 'unknown'}`
+        : !status?.zoom.configured
+          ? 'ZOOM_CLIENT_ID not configured. Bookings will default to phone calls.'
+          : 'Connect Zoom to generate meeting links for bookings.',
     },
     {
       key: 'google_places',
@@ -94,7 +194,7 @@ export default function IntegrationsPage() {
     {
       key: 'calendly',
       title: 'Calendly',
-      description: 'Meeting scheduling for outreach.',
+      description: 'Meeting scheduling for outreach (legacy).',
       icon: 'calendar_month',
       connected: status?.calendly.connected ?? false,
       action: { label: status?.calendly.connected ? 'Edit in profile' : 'Set up in profile', href: '/settings/profile' },
@@ -148,24 +248,44 @@ export default function IntegrationsPage() {
                   <CardTitle>{item.title}</CardTitle>
                 </div>
                 <StatusBadge
-                  connected={'connected' in item ? item.connected ?? false : false}
+                  connected={item.connected ?? false}
                   comingSoon={item.comingSoon}
                 />
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-500">{item.description}</p>
-              {'hint' in item && item.hint && (
+              {item.hint && (
                 <p className="mt-2 text-xs text-gray-400">{item.hint}</p>
               )}
-              {'action' in item && item.action && (
-                <Link
-                  href={item.action.href}
-                  className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                >
-                  {item.action.label}
-                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </Link>
+              {item.action && (
+                item.action.onClick ? (
+                  <button
+                    onClick={item.action.onClick}
+                    disabled={disconnecting === item.key.replace('google_calendar', 'google')}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline disabled:opacity-50"
+                  >
+                    {disconnecting === item.key.replace('google_calendar', 'google')
+                      ? 'Disconnecting...'
+                      : item.action.label}
+                  </button>
+                ) : item.action.href?.startsWith('/api/') ? (
+                  <a
+                    href={item.action.href}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                  >
+                    {item.action.label}
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </a>
+                ) : (
+                  <Link
+                    href={item.action.href || '#'}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                  >
+                    {item.action.label}
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                )
               )}
             </CardContent>
           </Card>

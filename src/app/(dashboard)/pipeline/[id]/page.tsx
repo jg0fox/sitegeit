@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { NotesSection } from '@/components/pipeline/NotesSection'
 import { ActivityTimeline } from '@/components/shared/ActivityTimeline'
 import { InlineEmail } from '@/components/shared/InlineEmail'
+import { EmailSection } from '@/components/shared/EmailSection'
 import { formatDistanceToNow } from 'date-fns'
 
 interface GoogleReview {
@@ -403,6 +404,13 @@ export default async function ProspectDetailPage({
           </CardContent>
         </Card>
       )}
+
+      {/* Email correspondence */}
+      <EmailSection
+        businessId={id}
+        recipientEmail={business.email}
+        recipientName={business.name}
+      />
 
       {/* Reviews & Ratings */}
       {hasReviews && (
