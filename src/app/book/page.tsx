@@ -56,14 +56,39 @@ function getTimezoneAbbr(timezone: string): string {
   return abbr.split(' ').pop() || timezone
 }
 
-function MeetingTypeBadge({ type }: { type: string }) {
-  const icon = type === 'zoom' ? 'videocam' : type === 'phone' ? 'call' : 'location_on'
-  const label = type === 'zoom' ? 'Zoom meeting' : type === 'phone' ? 'Phone call' : 'In person'
+function MeetingTypeToggle({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (type: string) => void
+}) {
+  const options = [
+    { key: 'zoom', icon: 'videocam', label: 'Zoom' },
+    { key: 'phone', icon: 'call', label: 'Phone' },
+  ]
+
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
-      <span className="material-symbols-outlined text-[16px]">{icon}</span>
-      {label}
-    </span>
+    <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-0.5">
+      {options.map((opt) => {
+        const isActive = value === opt.key
+        return (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => onChange(opt.key)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+              isActive
+                ? 'bg-white text-blue-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">{opt.icon}</span>
+            {opt.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -103,6 +128,8 @@ function BookingPageContent() {
 
   const guestTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
+  const [meetingType, setMeetingType] = useState('phone')
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -117,7 +144,12 @@ function BookingPageContent() {
     if (res.ok) {
       const data = await res.json()
       setAvailableDays(data.days || [])
-      if (data.config) setConfig(data.config)
+      if (data.config) {
+        setConfig(data.config)
+        if (data.config.default_meeting_type) {
+          setMeetingType(data.config.default_meeting_type)
+        }
+      }
     }
     setLoadingDays(false)
   }, [currentMonth])
@@ -157,6 +189,7 @@ function BookingPageContent() {
           guest_email: form.email,
           guest_phone: form.phone || undefined,
           guest_message: form.message || undefined,
+          meeting_type: meetingType,
           business_id: businessId || undefined,
         }),
       })
@@ -268,19 +301,24 @@ function BookingPageContent() {
 
           {/* Selected time summary */}
           <div
-            className="mt-4 flex items-center gap-3 rounded-lg px-4 py-3"
+            className="mt-4 rounded-lg px-4 py-3"
             style={{ background: '#eff6ff', border: '1px solid #dbeafe' }}
           >
-            <span className="material-symbols-outlined text-[20px] text-blue-600">calendar_month</span>
-            <div>
-              <p className="text-sm font-semibold text-blue-700">
-                {formatDateLong(selectedSlot.start, guestTimezone)} at{' '}
-                {formatTimeInTz(selectedSlot.start, guestTimezone)}
-              </p>
-              <p className="text-xs text-slate-500">
-                {config?.meeting_duration || 15} min &middot;{' '}
-                {config?.default_meeting_type === 'zoom' ? 'Zoom meeting' : config?.default_meeting_type === 'phone' ? 'Phone call' : 'In person'}
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[20px] text-blue-600">calendar_month</span>
+              <div>
+                <p className="text-sm font-semibold text-blue-700">
+                  {formatDateLong(selectedSlot.start, guestTimezone)} at{' '}
+                  {formatTimeInTz(selectedSlot.start, guestTimezone)}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {config?.meeting_duration || 15} min
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-2 border-t border-blue-100 pt-3">
+              <span className="text-xs font-medium text-slate-500">Meeting type:</span>
+              <MeetingTypeToggle value={meetingType} onChange={setMeetingType} />
             </div>
           </div>
 
@@ -362,7 +400,7 @@ function BookingPageContent() {
           {config?.booking_page_subtitle || 'Pick a time that works for you — no pressure, no pitch.'}
         </p>
 
-        {/* Meeting details badges */}
+        {/* Meeting details */}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
           {config && (
             <>
@@ -370,7 +408,7 @@ function BookingPageContent() {
                 <span className="material-symbols-outlined text-[16px]">schedule</span>
                 {config.meeting_duration} min
               </span>
-              <MeetingTypeBadge type={config.default_meeting_type} />
+              <MeetingTypeToggle value={meetingType} onChange={setMeetingType} />
             </>
           )}
         </div>

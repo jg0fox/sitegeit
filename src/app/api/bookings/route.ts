@@ -13,7 +13,7 @@ import { createZoomMeeting } from '@/lib/services/zoom'
  */
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { start_time, end_time, guest_name, guest_email, guest_phone, guest_message, business_id } = body
+  const { start_time, end_time, guest_name, guest_email, guest_phone, guest_message, meeting_type: requestedMeetingType, business_id } = body
 
   if (!start_time || !end_time || !guest_name || !guest_email) {
     return NextResponse.json(
@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
 
   const supabase = getAdminClient()
   const config = await getSchedulingConfig(userId)
-  const meetingType = config?.default_meeting_type || 'phone'
+  const validTypes = ['zoom', 'phone', 'in_person']
+  const meetingType = (requestedMeetingType && validTypes.includes(requestedMeetingType))
+    ? requestedMeetingType
+    : (config?.default_meeting_type || 'phone')
 
   // Idempotency: check if booking already exists for this slot + email
   const { data: existing } = await supabase

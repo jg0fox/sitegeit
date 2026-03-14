@@ -48,20 +48,10 @@ export default function BookLayout({ children }: { children: React.ReactNode }) 
               >
                 Simple Instant Sites
               </span>
-              <div className="flex items-center gap-4 text-sm text-white/80">
-                <span className="hidden items-center gap-1.5 sm:flex">
-                  <span className="material-symbols-outlined text-[16px]">schedule</span>
-                  15 min
-                </span>
-                <span className="hidden items-center gap-1.5 sm:flex">
-                  <span className="material-symbols-outlined text-[16px]">videocam</span>
-                  Zoom
-                </span>
-                <span className="hidden items-center gap-1.5 sm:flex">
-                  <span className="material-symbols-outlined text-[16px]">call</span>
-                  Phone
-                </span>
-              </div>
+              <span className="hidden items-center gap-1.5 text-sm text-white/80 sm:flex">
+                <span className="material-symbols-outlined text-[16px]">schedule</span>
+                Free consultation
+              </span>
             </div>
           </header>
 
