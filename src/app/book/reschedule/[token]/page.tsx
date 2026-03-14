@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback, use } from 'react'
 
+const FRAUNCES = "'Fraunces', Georgia, serif"
+
 interface TimeSlot {
   start: string
   end: string
@@ -59,7 +61,6 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
     return { year: now.getFullYear(), month: now.getMonth() + 1 }
   })
 
-  // Load booking info
   useEffect(() => {
     async function load() {
       const res = await fetch(`/api/bookings/lookup?reschedule_token=${token}`)
@@ -73,7 +74,6 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
     load()
   }, [token])
 
-  // Load available days
   const loadDays = useCallback(async () => {
     const monthStr = `${currentMonth.year}-${currentMonth.month.toString().padStart(2, '0')}`
     const res = await fetch(`/api/bookings/slots?month=${monthStr}`)
@@ -125,8 +125,11 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-gray-400">Loading...</p>
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
+          <span className="material-symbols-outlined animate-spin text-[24px] text-blue-600">progress_activity</span>
+          <p className="mt-2 text-sm text-slate-400">Loading...</p>
+        </div>
       </div>
     )
   }
@@ -135,10 +138,20 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <div className="mb-4 flex justify-center">
-          <span className="material-symbols-outlined text-[48px] text-red-400">error</span>
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+            <span className="material-symbols-outlined text-[32px] text-red-400">error</span>
+          </div>
         </div>
-        <h1 className="text-xl font-bold text-gray-900">{error || 'Booking not found'}</h1>
-        <a href="/book" className="mt-4 inline-block text-sm text-primary hover:underline">
+        <h1
+          className="text-slate-900"
+          style={{ fontFamily: FRAUNCES, fontSize: 'clamp(1.35rem, 1.15rem + 1vw, 1.5rem)', fontWeight: 600 }}
+        >
+          {error || 'Booking not found'}
+        </h1>
+        <a
+          href="/book"
+          className="mt-4 inline-block text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+        >
           Book a new time
         </a>
       </div>
@@ -148,8 +161,21 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
   if (booking.status === 'cancelled') {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="text-xl font-bold text-gray-900">This booking was cancelled</h1>
-        <a href="/book" className="mt-4 inline-block text-sm text-primary hover:underline">
+        <div className="mb-6 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <span className="material-symbols-outlined text-[32px] text-slate-400">event_busy</span>
+          </div>
+        </div>
+        <h1
+          className="text-slate-900"
+          style={{ fontFamily: FRAUNCES, fontSize: 'clamp(1.35rem, 1.15rem + 1vw, 1.5rem)', fontWeight: 600 }}
+        >
+          This booking was cancelled
+        </h1>
+        <a
+          href="/book"
+          className="mt-4 inline-block text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+        >
           Book a new time
         </a>
       </div>
@@ -160,12 +186,25 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <span className="material-symbols-outlined text-[32px] text-green-600">check_circle</span>
+          <div
+            className="flex h-20 w-20 items-center justify-center rounded-full"
+            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' }}
+          >
+            <span
+              className="material-symbols-outlined text-[36px] text-white"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              check_circle
+            </span>
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Rescheduled!</h1>
-        <p className="mt-2 text-gray-500">
+        <h1
+          className="text-slate-900"
+          style={{ fontFamily: FRAUNCES, fontSize: 'clamp(1.9rem, 1.5rem + 2vw, 2.25rem)', fontWeight: 700 }}
+        >
+          Rescheduled!
+        </h1>
+        <p className="mt-3 text-lg text-slate-600">
           Your new time is {formatDateLong(newTime, guestTimezone)} at{' '}
           {formatTimeInTz(newTime, guestTimezone)}.
         </p>
@@ -182,37 +221,81 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
   for (let i = 0; i < firstDay; i++) cells.push(null)
   for (let i = 1; i <= daysInMonth; i++) cells.push(i)
 
+  const canGoPrev = currentMonth.year > new Date().getFullYear() ||
+    (currentMonth.year === new Date().getFullYear() && currentMonth.month > new Date().getMonth() + 1)
+
+  const meetingLabel =
+    booking.meeting_type === 'zoom' ? 'Zoom meeting'
+      : booking.meeting_type === 'phone' ? 'Phone call'
+        : 'In person'
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Reschedule your booking</h1>
-        <p className="mt-1 text-gray-500">
-          Currently: {formatDateLong(booking.start_time, guestTimezone)} at{' '}
-          {formatTimeInTz(booking.start_time, guestTimezone)}
-        </p>
+        <h1
+          className="text-slate-900"
+          style={{
+            fontFamily: FRAUNCES,
+            fontSize: 'clamp(1.9rem, 1.5rem + 2vw, 2.25rem)',
+            fontWeight: 700,
+            lineHeight: 1.15,
+          }}
+        >
+          Reschedule your booking
+        </h1>
+        <div
+          className="mx-auto mt-4 inline-flex items-center gap-3 rounded-lg px-4 py-2.5"
+          style={{ background: '#eff6ff', border: '1px solid #dbeafe' }}
+        >
+          <span className="material-symbols-outlined text-[18px] text-blue-600">event</span>
+          <p className="text-sm font-medium text-blue-700">
+            Currently: {formatDateLong(booking.start_time, guestTimezone)} at{' '}
+            {formatTimeInTz(booking.start_time, guestTimezone)}
+            <span className="text-blue-500"> &middot; {meetingLabel}</span>
+          </p>
+        </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
         <div className="grid gap-6 md:grid-cols-2">
+          {/* Calendar */}
           <div>
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between">
               <button
-                onClick={() => setCurrentMonth(m => m.month === 1 ? { year: m.year - 1, month: 12 } : { year: m.year, month: m.month - 1 })}
-                className="rounded p-1 text-gray-500 hover:bg-gray-100"
+                onClick={() => {
+                  const prev = month === 1
+                    ? { year: year - 1, month: 12 }
+                    : { year, month: month - 1 }
+                  setCurrentMonth(prev)
+                }}
+                disabled={!canGoPrev}
+                className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-30"
               >
                 <span className="material-symbols-outlined text-[20px]">chevron_left</span>
               </button>
-              <span className="text-sm font-semibold text-gray-900">{monthName}</span>
+              <span
+                className="font-semibold text-slate-900"
+                style={{ fontFamily: FRAUNCES }}
+              >
+                {monthName}
+              </span>
               <button
-                onClick={() => setCurrentMonth(m => m.month === 12 ? { year: m.year + 1, month: 1 } : { year: m.year, month: m.month + 1 })}
-                className="rounded p-1 text-gray-500 hover:bg-gray-100"
+                onClick={() => {
+                  const next = month === 12
+                    ? { year: year + 1, month: 1 }
+                    : { year, month: month + 1 }
+                  setCurrentMonth(next)
+                }}
+                className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100"
               >
                 <span className="material-symbols-outlined text-[20px]">chevron_right</span>
               </button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
               {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                <div key={d} className="py-1 text-xs font-medium text-gray-400">{d}</div>
+                <div key={d} className="py-1.5 text-xs font-semibold uppercase text-slate-400" style={{ letterSpacing: '0.05em' }}>
+                  {d}
+                </div>
               ))}
               {cells.map((day, i) => {
                 if (day === null) return <div key={`e-${i}`} />
@@ -224,10 +307,12 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
                     key={dateStr}
                     onClick={() => isAvailable && setSelectedDate(dateStr)}
                     disabled={!isAvailable}
-                    className={`rounded-md py-2 text-sm transition-colors ${
-                      isSelected ? 'bg-primary font-semibold text-white'
-                        : isAvailable ? 'font-medium text-gray-900 hover:bg-primary/10'
-                          : 'text-gray-300'
+                    className={`rounded-lg py-2.5 text-sm transition-all ${
+                      isSelected
+                        ? 'bg-blue-600 font-semibold text-white shadow-sm'
+                        : isAvailable
+                          ? 'font-medium text-slate-900 hover:bg-blue-50 hover:text-blue-700'
+                          : 'text-slate-300'
                     }`}
                   >
                     {day}
@@ -237,38 +322,57 @@ export default function ReschedulePage({ params }: { params: Promise<{ token: st
             </div>
           </div>
 
-          <div>
+          {/* Time slots */}
+          <div className="border-t border-slate-100 pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
             {!selectedDate ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-gray-400">Select a new date</p>
+              <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
+                <span className="material-symbols-outlined text-[32px] text-slate-200">calendar_today</span>
+                <p className="text-sm text-slate-400">Select a new date</p>
               </div>
             ) : loadingSlots ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-gray-400">Loading times...</p>
+              <div className="flex h-full items-center justify-center py-8">
+                <span className="material-symbols-outlined animate-spin text-[24px] text-blue-600">progress_activity</span>
               </div>
             ) : slots.length === 0 ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-gray-400">No available times</p>
+              <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
+                <span className="material-symbols-outlined text-[32px] text-slate-200">event_busy</span>
+                <p className="text-sm text-slate-400">No available times for this date</p>
               </div>
             ) : (
-              <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
-                {slots.map((slot) => (
-                  <button
-                    key={slot.start}
-                    onClick={() => handleReschedule(slot)}
-                    disabled={submitting}
-                    className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-left text-sm font-medium text-gray-700 transition-colors hover:border-primary/30 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {formatTimeInTz(slot.start, guestTimezone)}
-                  </button>
-                ))}
+              <div>
+                <p
+                  className="mb-3 font-semibold text-slate-800"
+                  style={{ fontFamily: FRAUNCES }}
+                >
+                  {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+                <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
+                  {slots.map((slot) => (
+                    <button
+                      key={slot.start}
+                      onClick={() => handleReschedule(slot)}
+                      disabled={submitting}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition-all hover:-translate-y-px hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm disabled:opacity-50"
+                    >
+                      {formatTimeInTz(slot.start, guestTimezone)}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="mt-4 border-t border-gray-100 pt-3 text-xs text-gray-400">
-          Showing times in {getTimezoneAbbr(guestTimezone)}
+        {/* Footer */}
+        <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-xs text-slate-400">
+          <span className="inline-flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px]">public</span>
+            {getTimezoneAbbr(guestTimezone)}
+          </span>
         </div>
       </div>
     </div>
