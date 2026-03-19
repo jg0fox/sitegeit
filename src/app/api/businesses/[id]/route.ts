@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { removeDomainFromProject } from '@/lib/vercel/domains'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -48,7 +49,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     // Only allow updating specific fields
     const allowedFields = [
-      'name', 'phone', 'email', 'owner_name',
+      'name', 'phone', 'email', 'contact_email', 'owner_name',
       'status', 'tier', 'monthly_rate', 'converted_at',
     ]
     const updates: Record<string, unknown> = {}
@@ -84,6 +85,16 @@ export async function PATCH(request: Request, context: RouteContext) {
         event_type: 'status_changed',
         event_data: { new_status: updates.status },
       })
+
+      // Auto-populate contact_email on conversion if not already set
+      if (updates.status === 'converted' || updates.status === 'active') {
+        if (!business.contact_email && business.email) {
+          await supabase
+            .from('businesses')
+            .update({ contact_email: business.email })
+            .eq('id', id)
+        }
+      }
     }
 
     // Log tier changes
@@ -113,6 +124,19 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
 
     const { id } = await context.params
+
+    // Remove any custom domains from Vercel before deleting
+    const { data: sites } = await supabase
+      .from('generated_sites')
+      .select('custom_domain')
+      .eq('business_id', id)
+      .not('custom_domain', 'is', null)
+
+    if (sites?.length) {
+      await Promise.all(
+        sites.map((s) => removeDomainFromProject(s.custom_domain!))
+      )
+    }
 
     // RLS ensures user can only delete their own businesses.
     // Cascade deletes handle generated_sites, landing_pages, outreach_emails, activity_log, notes.

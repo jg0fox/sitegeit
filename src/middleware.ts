@@ -2,19 +2,35 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 
-const SITE_DOMAIN = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'sitegeit.com'
+const SITE_DOMAIN = (process.env.NEXT_PUBLIC_SITE_DOMAIN || 'goget.im').trim()
 
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const pathname = request.nextUrl.pathname
 
-  // Check for client site subdomains (e.g., joes-plumbing.sitegeit.com)
+  // Check for landing page subdomain (go.goget.im/slug) — must be before general subdomain check
+  if (hostname === `go.${SITE_DOMAIN}`) {
+    const slug = pathname.split('/')[1]
+    if (slug) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/sites/go/${slug}`
+      return NextResponse.rewrite(url)
+    }
+    return updateSession(request)
+  }
+
+  // Check for client site subdomains (e.g., joes-plumbing.goget.im)
   if (hostname.endsWith(`.${SITE_DOMAIN}`)) {
     const subdomain = hostname.replace(`.${SITE_DOMAIN}`, '')
 
     // Skip known app subdomains
-    if (['app', 'www', 'go', 'api'].includes(subdomain)) {
+    if (['app', 'www', 'api'].includes(subdomain)) {
       return updateSession(request)
+    }
+
+    // Let API routes pass through without rewriting (e.g., contact form, booking API)
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next()
     }
 
     // Rewrite to the client site renderer
@@ -23,17 +39,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
-  // Check for landing page subdomain (go.sitegeit.com/slug)
-  if (hostname === `go.${SITE_DOMAIN}`) {
-    const slug = pathname.split('/')[1]
-    if (slug) {
-      const url = request.nextUrl.clone()
-      url.pathname = `/sites/go/${slug}`
-      return NextResponse.rewrite(url)
-    }
-  }
-
-  // Check for custom domain routing (non-sitegeit.com hostnames)
+  // Check for custom domain routing (non-goget.im hostnames)
   const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1')
   const isVercelPreview = hostname.endsWith('.vercel.app')
   const isSiteDomain = hostname === SITE_DOMAIN || hostname.endsWith(`.${SITE_DOMAIN}`)

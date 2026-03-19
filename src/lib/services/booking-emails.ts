@@ -192,3 +192,129 @@ export async function sendBookingEmail(type: EmailType, booking: BookingRecord):
 
   console.log(`[booking-emails] Sent ${type} email to ${booking.guest_email}`)
 }
+
+/**
+ * Send a notification email to the client (business owner)
+ * when a customer books through their site.
+ */
+export async function sendClientBookingNotification(
+  booking: BookingRecord,
+  businessId: string,
+): Promise<void> {
+  if (!RESEND_API_KEY) {
+    console.warn(`[booking-emails] RESEND_API_KEY not configured. Skipping client notification.`)
+    return
+  }
+
+  const supabase = getAdminClient()
+
+  // Look up business contact_email (single source of truth), then fall back
+  // to scheduling config contact_email, then business outreach email
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('name, contact_email, email')
+    .eq('id', businessId)
+    .single()
+
+  const { data: schedConfig } = await supabase
+    .from('client_scheduling_config')
+    .select('contact_email')
+    .eq('business_id', businessId)
+    .single()
+
+  const recipientEmail = business?.contact_email || schedConfig?.contact_email || business?.email
+
+  if (!recipientEmail) {
+    console.warn(`[booking-emails] No contact email found for business ${businessId}. Skipping client notification.`)
+    return
+  }
+
+  const businessName = business?.name || 'your business'
+  const timezone = await getTimezone(booking.user_id)
+  const { date, time } = formatDateTime(booking.start_time, timezone)
+  const tzAbbr = getTimezoneAbbr(timezone)
+  const meetingLabel = booking.meeting_type === 'zoom' ? 'Zoom' : booking.meeting_type === 'phone' ? 'Phone' : 'In person'
+
+  const subject = `New booking: ${booking.guest_name} — ${date}`
+  const text = [
+    `New booking for ${businessName}`,
+    '',
+    `${booking.guest_name} has booked a ${meetingLabel.toLowerCase()} meeting.`,
+    '',
+    `Date: ${date}`,
+    `Time: ${time} (${tzAbbr})`,
+    `Email: ${booking.guest_email}`,
+    ...(booking.guest_phone ? [`Phone: ${booking.guest_phone}`] : []),
+    '',
+    'You can manage this booking from your Sitegeit dashboard.',
+  ].join('\n')
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1e293b; font-size: 18px;">New booking for ${escapeHtml(businessName)}</h2>
+      <p style="color: #334155;">${escapeHtml(booking.guest_name)} has booked a ${meetingLabel.toLowerCase()} meeting.</p>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 14px; vertical-align: top; width: 80px;">Date</td>
+          <td style="padding: 8px 0; color: #1e293b; font-size: 14px;"><strong>${date}</strong></td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 14px; vertical-align: top;">Time</td>
+          <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${time} (${tzAbbr})</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 14px; vertical-align: top;">Name</td>
+          <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${escapeHtml(booking.guest_name)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 14px; vertical-align: top;">Email</td>
+          <td style="padding: 8px 0; color: #1e293b; font-size: 14px;"><a href="mailto:${escapeHtml(booking.guest_email)}">${escapeHtml(booking.guest_email)}</a></td>
+        </tr>
+        ${booking.guest_phone ? `
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 14px; vertical-align: top;">Phone</td>
+          <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${escapeHtml(booking.guest_phone)}</td>
+        </tr>` : ''}
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 14px; vertical-align: top;">Type</td>
+          <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${meetingLabel}</td>
+        </tr>
+      </table>
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+      <p style="font-size: 12px; color: #94a3b8;">
+        This booking was made through the ${escapeHtml(businessName)} website, powered by Sitegeit.
+      </p>
+    </div>
+  `.trim()
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'Sitegeit Bookings <noreply@simpleinstantsites.com>',
+      replyTo: booking.guest_email,
+      to: [recipientEmail],
+      subject,
+      text,
+      html,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => '')
+    throw new Error(`Resend API error (${res.status}): ${err}`)
+  }
+
+  console.log(`[booking-emails] Sent client notification to ${recipientEmail} for business ${businessId}`)
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
