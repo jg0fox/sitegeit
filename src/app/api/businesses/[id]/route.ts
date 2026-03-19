@@ -50,6 +50,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     // Only allow updating specific fields
     const allowedFields = [
       'name', 'phone', 'email', 'contact_email', 'owner_name',
+      'address_street', 'address_city', 'address_state', 'address_zip',
       'status', 'tier', 'monthly_rate', 'converted_at',
     ]
     const updates: Record<string, unknown> = {}

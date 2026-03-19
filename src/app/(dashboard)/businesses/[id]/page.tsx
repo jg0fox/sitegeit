@@ -273,9 +273,10 @@ export default async function BusinessDetailPage({
         businessId={id}
         contactEmail={business.contact_email}
         phone={business.phone}
-        address={[business.address_street, business.address_city, business.address_state, business.address_zip]
-          .filter(Boolean)
-          .join(', ') || null}
+        addressStreet={business.address_street}
+        addressCity={business.address_city}
+        addressState={business.address_state}
+        addressZip={business.address_zip}
       />
 
       {/* Email candidates */}
