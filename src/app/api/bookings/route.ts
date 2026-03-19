@@ -13,7 +13,7 @@ import { createZoomMeeting } from '@/lib/services/zoom'
  */
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { start_time, end_time, guest_name, guest_email, guest_phone, guest_message, meeting_type: requestedMeetingType, business_id } = body
+  const { start_time, end_time, guest_name, guest_email, guest_phone, guest_message, meeting_type: requestedMeetingType, business_id, booking_source } = body
 
   if (!start_time || !end_time || !guest_name || !guest_email) {
     return NextResponse.json(
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     guest_phone: guest_phone || null,
     guest_message: guest_message || null,
     business_id: business_id || null,
+    booking_source: booking_source || 'marketing',
   }
 
   const { data: booking, error } = await supabase
@@ -228,7 +229,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('bookings')
-    .select('*, businesses(id, name, category)')
+    .select('*, businesses(id, name, category), booking_source')
     .eq('user_id', user.id)
     .order('start_time', { ascending: false })
 

@@ -201,6 +201,7 @@ function BookingPageContent() {
           guest_message: form.message || undefined,
           meeting_type: meetingType,
           business_id: businessId || undefined,
+          booking_source: bookingSlug ? 'client_site' : 'marketing',
         }),
       })
 

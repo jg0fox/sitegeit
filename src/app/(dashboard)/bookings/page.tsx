@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { EmailComposeDialog } from '@/components/shared/EmailComposeDialog'
 import { EmailThread } from '@/components/shared/EmailThread'
@@ -18,6 +17,7 @@ interface Booking {
   meeting_type: string
   status: string
   zoom_join_url: string | null
+  booking_source: string
   businesses: { id: string; name: string; category: string } | null
 }
 
@@ -47,10 +47,13 @@ function MeetingTypeBadge({ type }: { type: string }) {
   )
 }
 
+type BookingFilter = 'all' | 'mine' | 'client'
+
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [showPast, setShowPast] = useState(false)
+  const [filter, setFilter] = useState<BookingFilter>('all')
   const [emailBooking, setEmailBooking] = useState<Booking | null>(null)
   const [expandedThread, setExpandedThread] = useState<string | null>(null)
 
@@ -81,12 +84,22 @@ export default function BookingsPage() {
   }
 
   const now = new Date()
-  const upcoming = bookings.filter(
-    (b) => new Date(b.start_time) >= now && ['confirmed', 'rescheduled'].includes(b.status)
-  )
-  const past = bookings.filter(
-    (b) => new Date(b.start_time) < now || !['confirmed', 'rescheduled'].includes(b.status)
-  )
+
+  // Apply filter
+  // "My bookings" = booked via Simple Instant Site marketing page (prospects wanting to talk to you)
+  // "Client bookings" = booked via a client's website (their customers booking with them)
+  const filtered = bookings.filter((b) => {
+    if (filter === 'mine') return b.booking_source !== 'client_site'
+    if (filter === 'client') return b.booking_source === 'client_site'
+    return true
+  })
+
+  const upcoming = filtered
+    .filter((b) => new Date(b.start_time) >= now && ['confirmed', 'rescheduled'].includes(b.status))
+    .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+  const past = filtered
+    .filter((b) => new Date(b.start_time) < now || !['confirmed', 'rescheduled'].includes(b.status))
+    .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
 
   if (loading) {
     return (
@@ -105,162 +118,185 @@ export default function BookingsPage() {
         </p>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+        {([
+          { key: 'all' as const, label: 'All', icon: 'list' },
+          { key: 'mine' as const, label: 'My bookings', icon: 'person' },
+          { key: 'client' as const, label: 'Client bookings', icon: 'storefront' },
+        ]).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              filter === tab.key
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Upcoming */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming ({upcoming.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {upcoming.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-400">No upcoming bookings</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {upcoming.map((b) => (
-                <div key={b.id} className="py-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      {/* Name + status */}
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-gray-900">{b.guest_name}</p>
-                        <StatusBadge status={b.status} />
-                        <MeetingTypeBadge type={b.meeting_type} />
-                      </div>
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          Upcoming ({upcoming.length})
+        </h2>
+        {upcoming.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <span className="material-symbols-outlined text-[32px] text-gray-300">calendar_today</span>
+            <p className="mt-2 text-sm text-gray-400">No upcoming bookings</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {upcoming.map((b) => (
+              <div key={b.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    {/* Name + status */}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-900">{b.guest_name}</p>
+                      <StatusBadge status={b.status} />
+                      <MeetingTypeBadge type={b.meeting_type} />
+                    </div>
 
-                      {/* Date/time */}
-                      <p className="mt-1 text-sm text-gray-600">
-                        {new Date(b.start_time).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                        })}{' '}
-                        at{' '}
-                        {new Date(b.start_time).toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true,
-                        })}
-                      </p>
+                    {/* Date/time */}
+                    <p className="mt-1 text-sm text-gray-600">
+                      {new Date(b.start_time).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      })}{' '}
+                      at{' '}
+                      {new Date(b.start_time).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      })}
+                    </p>
 
-                      {/* Contact info */}
-                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    {/* Contact info */}
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <a
+                        href={`mailto:${b.guest_email}`}
+                        className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-primary"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">mail</span>
+                        {b.guest_email}
+                      </a>
+                      {b.guest_phone && (
                         <a
-                          href={`mailto:${b.guest_email}`}
+                          href={`tel:${b.guest_phone}`}
                           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-primary"
                         >
-                          <span className="material-symbols-outlined text-[14px]">mail</span>
-                          {b.guest_email}
+                          <span className="material-symbols-outlined text-[14px]">call</span>
+                          {b.guest_phone}
                         </a>
-                        {b.guest_phone && (
-                          <a
-                            href={`tel:${b.guest_phone}`}
-                            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-primary"
-                          >
-                            <span className="material-symbols-outlined text-[14px]">call</span>
-                            {b.guest_phone}
-                          </a>
-                        )}
-                      </div>
-
-                      {/* Guest message */}
-                      {b.guest_message && (
-                        <p className="mt-2 rounded bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600 italic">
-                          &ldquo;{b.guest_message}&rdquo;
-                        </p>
-                      )}
-
-                      {/* Linked business */}
-                      {b.businesses && (
-                        <Link
-                          href={`/pipeline/${b.businesses.id}`}
-                          className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">storefront</span>
-                          {b.businesses.name}
-                        </Link>
                       )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-shrink-0 flex-col items-end gap-2">
-                      <button
-                        onClick={() => setEmailBooking(b)}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                    {/* Guest message */}
+                    {b.guest_message && (
+                      <p className="mt-2 rounded bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600 italic">
+                        &ldquo;{b.guest_message}&rdquo;
+                      </p>
+                    )}
+
+                    {/* Linked business */}
+                    {b.businesses && (
+                      <Link
+                        href={`/businesses/${b.businesses.id}`}
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                       >
-                        <span className="material-symbols-outlined text-[16px]">send</span>
-                        Email
-                      </button>
-                      {b.zoom_join_url && (
-                        <a
-                          href={b.zoom_join_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">videocam</span>
-                          Join Zoom
-                        </a>
-                      )}
-                      <button
-                        onClick={() => updateStatus(b.id, 'cancelled')}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                        <span className="material-symbols-outlined text-[14px]">storefront</span>
+                        {b.businesses.name}
+                      </Link>
+                    )}
                   </div>
 
-                  {/* Thread toggle */}
-                  <button
-                    onClick={() => setExpandedThread(expandedThread === b.id ? null : b.id)}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-primary"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">forum</span>
-                    Email history
-                    <span className="material-symbols-outlined text-[14px]">
-                      {expandedThread === b.id ? 'expand_less' : 'expand_more'}
-                    </span>
-                  </button>
-
-                  {/* Email thread */}
-                  {expandedThread === b.id && (
-                    <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50/50 p-4">
-                      <EmailThread
-                        bookingId={b.id}
-                        businessId={b.businesses?.id}
-                        recipientEmail={b.guest_email}
-                        recipientName={b.guest_name}
-                        defaultSubject={`Your upcoming appointment — ${new Date(b.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`}
-                      />
-                    </div>
-                  )}
+                  {/* Actions */}
+                  <div className="flex flex-shrink-0 flex-col items-end gap-2">
+                    <button
+                      onClick={() => setEmailBooking(b)}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">send</span>
+                      Email
+                    </button>
+                    {b.zoom_join_url && (
+                      <a
+                        href={b.zoom_join_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">videocam</span>
+                        Join Zoom
+                      </a>
+                    )}
+                    <button
+                      onClick={() => updateStatus(b.id, 'cancelled')}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                {/* Thread toggle */}
+                <button
+                  onClick={() => setExpandedThread(expandedThread === b.id ? null : b.id)}
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-primary"
+                >
+                  <span className="material-symbols-outlined text-[16px]">forum</span>
+                  Email history
+                  <span className="material-symbols-outlined text-[14px]">
+                    {expandedThread === b.id ? 'expand_less' : 'expand_more'}
+                  </span>
+                </button>
+
+                {/* Email thread */}
+                {expandedThread === b.id && (
+                  <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50/50 p-4">
+                    <EmailThread
+                      bookingId={b.id}
+                      businessId={b.businesses?.id}
+                      recipientEmail={b.guest_email}
+                      recipientName={b.guest_name}
+                      defaultSubject={`Your upcoming appointment — ${new Date(b.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Past bookings */}
-      <Card>
-        <CardHeader>
-          <button
-            onClick={() => setShowPast(!showPast)}
-            className="flex w-full items-center justify-between"
-          >
-            <CardTitle>Past ({past.length})</CardTitle>
-            <span className="material-symbols-outlined text-[20px] text-gray-400">
-              {showPast ? 'expand_less' : 'expand_more'}
-            </span>
-          </button>
-        </CardHeader>
+      <div>
+        <button
+          onClick={() => setShowPast(!showPast)}
+          className="mb-3 flex w-full items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
+        >
+          Past ({past.length})
+          <span className="material-symbols-outlined text-[18px]">
+            {showPast ? 'expand_less' : 'expand_more'}
+          </span>
+        </button>
         {showPast && (
-          <CardContent>
+          <>
             {past.length === 0 ? (
-              <p className="py-4 text-center text-sm text-gray-400">No past bookings</p>
+              <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <p className="text-sm text-gray-400">No past bookings</p>
+              </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="space-y-3">
                 {past.map((b) => (
-                  <div key={b.id} className="py-4">
+                  <div key={b.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -295,7 +331,7 @@ export default function BookingsPage() {
                         </div>
                         {b.businesses && (
                           <Link
-                            href={`/pipeline/${b.businesses.id}`}
+                            href={`/businesses/${b.businesses.id}`}
                             className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                           >
                             <span className="material-symbols-outlined text-[14px]">storefront</span>
@@ -326,9 +362,9 @@ export default function BookingsPage() {
                 ))}
               </div>
             )}
-          </CardContent>
+          </>
         )}
-      </Card>
+      </div>
 
       {/* Email dialog */}
       {emailBooking && (
