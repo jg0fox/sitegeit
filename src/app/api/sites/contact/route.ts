@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   if (resend) {
     try {
       await resend.emails.send({
-        from: 'Contact Form <noreply@simpleinstantsites.com>',
+        from: 'Contact Form <noreply@simpleinstantsite.com>',
         replyTo: email,
         to: recipientEmail,
         subject: `New contact form submission — ${name}`,

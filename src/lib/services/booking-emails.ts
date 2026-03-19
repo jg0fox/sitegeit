@@ -166,7 +166,7 @@ export async function sendBookingEmail(type: EmailType, booking: BookingRecord):
   const operator = await getOperatorInfo(booking.user_id)
   const timezone = await getTimezone(booking.user_id)
   const operatorName = operator?.full_name || 'Sitegeit'
-  const fromEmail = operator?.email || 'noreply@sitegeit.com'
+  const replyToEmail = operator?.email || undefined
 
   const { subject, text, html } = buildEmailContent(type, booking, operatorName, timezone)
 
@@ -177,7 +177,8 @@ export async function sendBookingEmail(type: EmailType, booking: BookingRecord):
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: `${operatorName} <${fromEmail}>`,
+      from: `${operatorName} <noreply@simpleinstantsite.com>`,
+      replyTo: replyToEmail,
       to: [booking.guest_email],
       subject,
       text,
@@ -294,7 +295,7 @@ export async function sendClientBookingNotification(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Sitegeit Bookings <noreply@simpleinstantsites.com>',
+      from: 'Sitegeit Bookings <noreply@simpleinstantsite.com>',
       replyTo: booking.guest_email,
       to: [recipientEmail],
       subject,
