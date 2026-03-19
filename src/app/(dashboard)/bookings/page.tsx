@@ -86,11 +86,14 @@ export default function BookingsPage() {
   const now = new Date()
 
   // Apply filter
-  // "My bookings" = booked via Simple Instant Site marketing page (prospects wanting to talk to you)
-  // "Client bookings" = booked via a client's website (their customers booking with them)
+  // "My bookings" = prospects wanting to talk to you (marketing page, or pipeline ?ref= bookings)
+  // "Client bookings" = customers booking on a client's website
+  // For bookings created before booking_source was added, fall back to business_id presence
+  const isClientBooking = (b: Booking) =>
+    b.booking_source === 'client_site' || (b.booking_source === 'marketing' && !!b.businesses)
   const filtered = bookings.filter((b) => {
-    if (filter === 'mine') return b.booking_source !== 'client_site'
-    if (filter === 'client') return b.booking_source === 'client_site'
+    if (filter === 'mine') return !isClientBooking(b)
+    if (filter === 'client') return isClientBooking(b)
     return true
   })
 
