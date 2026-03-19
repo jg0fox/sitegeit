@@ -13,12 +13,12 @@ interface SiteFooterProps {
   phone: string | null
   address: string
   hours: Record<string, string> | null
-  siteSlug?: string
+  basePath?: string
 }
 
-export function SiteFooter({ businessName, phone, address, hours, siteSlug }: SiteFooterProps) {
+export function SiteFooter({ businessName, phone, address, hours, basePath }: SiteFooterProps) {
   const currentYear = new Date().getFullYear()
-  const basePath = siteSlug ? `/sites/${siteSlug}` : null
+  const homePath = basePath != null ? (basePath || '/') : null
 
   return (
     <footer
@@ -52,7 +52,7 @@ export function SiteFooter({ businessName, phone, address, hours, siteSlug }: Si
         </div>
 
         {/* Page links */}
-        {basePath && (
+        {homePath && (
           <div>
             <h3
               className="mb-3 text-sm font-semibold uppercase tracking-wide"
@@ -62,7 +62,7 @@ export function SiteFooter({ businessName, phone, address, hours, siteSlug }: Si
             </h3>
             <ul className="space-y-0 text-sm">
               <li>
-                <a href={basePath} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                <a href={homePath} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
                   Home
                 </a>
               </li>
@@ -114,8 +114,8 @@ export function SiteFooter({ businessName, phone, address, hours, siteSlug }: Si
           </p>
           <p className="mt-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             Website by{' '}
-            <a href="https://sitegeit.com" style={{ color: 'var(--color-link, var(--color-primary))' }}>
-              Sitegeit
+            <a href="https://simpleinstantsite.com" style={{ color: 'var(--color-link, var(--color-primary))' }}>
+              Simple Instant Site
             </a>
           </p>
         </div>

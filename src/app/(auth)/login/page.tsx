@@ -14,6 +14,13 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
+    const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || []
+    if (allowedEmails.length > 0 && !allowedEmails.includes(email.trim().toLowerCase())) {
+      setError('This email is not authorized to sign in.')
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -35,7 +42,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col items-center">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Sitegeit</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Simple Instant Site</h1>
         <p className="mt-1 text-sm text-gray-500">
           Lead pipeline &amp; website generator
         </p>

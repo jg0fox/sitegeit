@@ -70,9 +70,20 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Look up business name for client site bookings
+  let businessName: string | undefined
+  if (booking.business_id) {
+    const { data: biz } = await supabase
+      .from('businesses')
+      .select('name')
+      .eq('id', booking.business_id)
+      .single()
+    businessName = biz?.name || undefined
+  }
+
   // Send rescheduled email
   try {
-    await sendBookingEmail('rescheduled', updated)
+    await sendBookingEmail('rescheduled', updated, businessName)
   } catch (err) {
     console.error('[reschedule] Failed to send email:', err)
   }

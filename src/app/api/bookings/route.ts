@@ -3,7 +3,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { getOperatorUserId, getSchedulingConfig } from '@/lib/services/scheduling'
 import { createEvent } from '@/lib/services/google-calendar'
-import { sendBookingEmail } from '@/lib/services/booking-emails'
+import { sendBookingEmail, sendClientBookingNotification } from '@/lib/services/booking-emails'
 import { createZoomMeeting } from '@/lib/services/zoom'
 
 /**
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
   if (meetingType === 'zoom') {
     try {
       const zoom = await createZoomMeeting(userId, {
-        topic: `Sitegeit — ${guest_name}`,
+        topic: `Simple Instant Site — ${guest_name}`,
         startTime: new Date(start_time),
         duration: config?.meeting_duration || 15,
         agenda: guest_message || undefined,
@@ -107,14 +107,14 @@ export async function POST(request: NextRequest) {
       .single()
 
     // Build event summary
-    let summary = `Sitegeit — ${guest_name}`
+    let summary = `Simple Instant Site — ${guest_name}`
     if (business_id) {
       const { data: biz } = await supabase
         .from('businesses')
         .select('name')
         .eq('id', business_id)
         .single()
-      if (biz?.name) summary = `Sitegeit — ${guest_name} (${biz.name})`
+      if (biz?.name) summary = `Simple Instant Site — ${guest_name} (${biz.name})`
     }
 
     // Build description
@@ -123,8 +123,8 @@ export async function POST(request: NextRequest) {
     if (guest_phone) lines.push(`Phone: ${guest_phone}`)
     if (guest_message) lines.push(`\nMessage: ${guest_message}`)
     if (business_id) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
-      lines.push(`\nPipeline: ${appUrl}/pipeline/${business_id}`)
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://goget.im'
+      lines.push(`\nPipeline: ${appUrl}/businesses/${business_id}`)
     }
 
     const calEvent = await createEvent(userId, {
@@ -182,11 +182,31 @@ export async function POST(request: NextRequest) {
     data: { booking_id: booking.id, business_id },
   })
 
+  // Look up business name for client site bookings
+  let clientBusinessName: string | undefined
+  if (business_id) {
+    const { data: biz } = await supabase
+      .from('businesses')
+      .select('name')
+      .eq('id', business_id)
+      .single()
+    clientBusinessName = biz?.name || undefined
+  }
+
   // Send confirmation email to guest
   try {
-    await sendBookingEmail('confirmation', booking)
+    await sendBookingEmail('confirmation', booking, clientBusinessName)
   } catch (err) {
     console.error('[bookings] Confirmation email failed:', err)
+  }
+
+  // Notify client if this booking is through their site
+  if (business_id) {
+    try {
+      await sendClientBookingNotification(booking, business_id)
+    } catch (err) {
+      console.error('[bookings] Client notification email failed:', err)
+    }
   }
 
   return NextResponse.json(booking, { status: 201 })
@@ -210,7 +230,7 @@ export async function GET(request: NextRequest) {
     .from('bookings')
     .select('*, businesses(id, name, category)')
     .eq('user_id', user.id)
-    .order('start_time', { ascending: true })
+    .order('start_time', { ascending: false })
 
   if (status) {
     query = query.eq('status', status)

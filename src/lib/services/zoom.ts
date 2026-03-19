@@ -1,5 +1,5 @@
 /**
- * Zoom API client for Sitegeit scheduling.
+ * Zoom API client for Simple Instant Site scheduling.
  *
  * Handles OAuth token management and meeting creation.
  * If Zoom is not connected, the system falls back to phone calls.

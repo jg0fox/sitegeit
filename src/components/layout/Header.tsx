@@ -10,8 +10,7 @@ import { cn } from '@/lib/utils/cn'
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
   '/discover': 'Discover',
-  '/pipeline': 'Pipeline',
-  '/clients': 'Clients',
+  '/businesses': 'Businesses',
   '/settings': 'Settings',
   '/notifications': 'Notifications',
   '/email-review': 'Email Review',
@@ -24,9 +23,8 @@ export function Header() {
 
   const title =
     PAGE_TITLES[pathname] ??
-    (pathname.startsWith('/pipeline/') ? 'Prospect Detail' :
-     pathname.startsWith('/clients/') ? 'Client Detail' :
-     pathname.startsWith('/settings/') ? 'Settings' : 'Sitegeit')
+    (pathname.startsWith('/businesses/') ? 'Business Detail' :
+     pathname.startsWith('/settings/') ? 'Settings' : 'Simple Instant Site')
 
   return (
     <header

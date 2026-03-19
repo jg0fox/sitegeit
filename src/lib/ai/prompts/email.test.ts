@@ -10,10 +10,10 @@ describe('email prompts', () => {
     rating: 4.8,
     review_count: 247,
     unique_detail: 'Known for same-day emergency service',
-    landing_page_url: 'https://go.sitegeit.com/joes-plumbing',
+    landing_page_url: 'https://go.goget.im/joes-plumbing',
     sender_name: 'Alex',
-    sender_company: 'Sitegeit',
-    calendly_url: 'https://seitgeit.vercel.app/book',
+    sender_company: 'Simple Instant Site',
+    booking_url: 'https://goget.im/book',
   }
 
   it('system prompt enforces email rules', () => {
@@ -30,9 +30,9 @@ describe('email prompts', () => {
     expect(prompt).toContain('Austin')
     expect(prompt).toContain('4.8')
     expect(prompt).toContain('same-day emergency service')
-    expect(prompt).toContain('go.sitegeit.com/joes-plumbing')
+    expect(prompt).toContain('go.goget.im/joes-plumbing')
     expect(prompt).toContain('Alex')
-    expect(prompt).toContain('Sitegeit')
+    expect(prompt).toContain('Simple Instant Site')
   })
 
   it('handles unknown owner name', () => {

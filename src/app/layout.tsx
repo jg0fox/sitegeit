@@ -9,7 +9,7 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: 'Sitegeit — Lead Pipeline & Website Generator',
+  title: 'Simple Instant Site — Lead Pipeline & Website Generator',
   description:
     'Discover local businesses, generate conversion-optimized websites, and manage outreach — all from one dashboard.',
 }

@@ -5,6 +5,7 @@ import {
   buildEmailPrompt,
   type EmailOutput,
 } from './prompts/email'
+import { getLandingPageUrl } from '@/lib/utils/site-urls'
 
 export async function generateEmail(
   businessId: string,
@@ -35,9 +36,9 @@ export async function generateEmail(
     .eq('id', business.user_id)
     .single()
 
-  const senderName = user?.full_name || 'The Sitegeit Team'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
-  const landingPageUrl = `${appUrl}/sites/go/${landingPage.deploy_url}`
+  const senderName = user?.full_name || 'The Simple Instant Site Team'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://goget.im'
+  const landingPageUrl = getLandingPageUrl(landingPage.deploy_url)
   // Use the built-in booking page, passing the business ID for pipeline integration
   const bookingUrl = `${appUrl}/book?ref=${businessId}`
 
@@ -55,13 +56,15 @@ export async function generateEmail(
     rating: business.google_rating,
     review_count: business.google_review_count,
     unique_detail: uniqueDetail,
-    landing_page_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/go/${landingPage.deploy_url}`,
+    landing_page_url: getLandingPageUrl(landingPage.deploy_url),
     sender_name: senderName,
-    sender_company: 'Sitegeit',
-    calendly_url: bookingUrl,
+    sender_company: 'Simple Instant Site',
+    booking_url: bookingUrl,
   })
 
-  const content = await generateJSON<EmailOutput>(EMAIL_SYSTEM_PROMPT, userPrompt)
+  const { getEffectivePrompt } = await import('./prompt-overrides')
+  const systemPrompt = await getEffectivePrompt(business.user_id, 'email', EMAIL_SYSTEM_PROMPT)
+  const content = await generateJSON<EmailOutput>(systemPrompt, userPrompt)
 
   // Delete any existing draft emails for this business (idempotent — retries replace instead of duplicating)
   await supabase

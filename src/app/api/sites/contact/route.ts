@@ -55,14 +55,14 @@ export async function POST(request: NextRequest) {
     message,
   })
 
-  // Send email via Resend
+  // Send notification email to business owner
   if (resend) {
     try {
       await resend.emails.send({
-        from: 'Contact Form <noreply@simpleinstantsite.com>',
+        from: `${business.name} <noreply@simpleinstantsite.com>`,
         replyTo: email,
         to: recipientEmail,
-        subject: `New contact form submission — ${name}`,
+        subject: `New message from ${name}`,
         html: `
           <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #1e293b; font-size: 18px;">New message from your website</h2>
@@ -93,11 +93,35 @@ export async function POST(request: NextRequest) {
         `,
       })
     } catch (err) {
-      console.error('[contact] Resend email failed:', err)
-      // Don't fail the request — submission is still stored
+      console.error('[contact] Resend email to business failed:', err)
+    }
+
+    // Send confirmation email to the person who submitted the form
+    try {
+      await resend.emails.send({
+        from: `${business.name} <noreply@simpleinstantsite.com>`,
+        to: email,
+        subject: `We received your message — ${business.name}`,
+        html: `
+          <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1e293b; font-size: 18px;">Thanks for reaching out, ${escapeHtml(name)}!</h2>
+            <p style="color: #334155; font-size: 14px; line-height: 1.6;">
+              We received your message and will follow up within one business day — usually sooner.
+            </p>
+            <p style="color: #64748b; font-size: 13px; margin-top: 16px;">Here's a copy of what you sent:</p>
+            <blockquote style="border-left: 3px solid #e2e8f0; padding-left: 12px; margin: 12px 0; color: #475569; font-size: 14px; white-space: pre-wrap;">${escapeHtml(message)}</blockquote>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+            <p style="font-size: 14px; color: #1e293b;">
+              Best regards,<br>${escapeHtml(business.name)}
+            </p>
+          </div>
+        `,
+      })
+    } catch (err) {
+      console.error('[contact] Resend confirmation to guest failed:', err)
     }
   } else {
-    console.warn('[contact] No RESEND_API_KEY configured — email not sent')
+    console.warn('[contact] No RESEND_API_KEY configured — emails not sent')
   }
 
   // Create notification for operator

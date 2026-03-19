@@ -1,5 +1,5 @@
 /**
- * Google Calendar API client for Sitegeit scheduling.
+ * Google Calendar API client for Simple Instant Site scheduling.
  *
  * Handles OAuth token management, free/busy queries,
  * and calendar event CRUD. Tokens are stored as jsonb

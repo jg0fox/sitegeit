@@ -9,7 +9,7 @@
 import { getAdminClient } from '@/lib/supabase/admin'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://goget.im'
 
 interface BookingRecord {
   id: string
@@ -72,23 +72,40 @@ async function getTimezone(userId: string): Promise<string> {
   return data?.timezone || 'America/Phoenix'
 }
 
-function buildEmailContent(type: EmailType, booking: BookingRecord, operatorName: string, timezone: string) {
+function buildMeetingDetails(booking: BookingRecord): string {
+  if (booking.zoom_join_url) {
+    return `Join via Zoom: ${booking.zoom_join_url}`
+  }
+  if (booking.meeting_type === 'phone' && booking.guest_phone) {
+    return `We'll call you at ${booking.guest_phone}.`
+  }
+  return 'Meeting details will be shared before the call.'
+}
+
+function buildMeetingDetailsHtml(booking: BookingRecord): string {
+  if (booking.zoom_join_url) {
+    return `Join via Zoom: <a href="${booking.zoom_join_url}">${booking.zoom_join_url}</a>`
+  }
+  if (booking.meeting_type === 'phone' && booking.guest_phone) {
+    return `We'll call you at ${booking.guest_phone}.`
+  }
+  return 'Meeting details will be shared before the call.'
+}
+
+function buildEmailContent(type: EmailType, booking: BookingRecord, displayName: string, timezone: string) {
   const { date, time } = formatDateTime(booking.start_time, timezone)
   const tzAbbr = getTimezoneAbbr(timezone)
   const rescheduleLink = `${APP_URL}/book/reschedule/${booking.reschedule_token}`
   const cancelLink = `${APP_URL}/book/cancel/${booking.cancel_token}`
   const bookingLink = `${APP_URL}/book`
 
-  const meetingDetails = booking.zoom_join_url
-    ? `Join via Zoom: ${booking.zoom_join_url}`
-    : booking.meeting_type === 'phone' && booking.guest_phone
-      ? `We'll call you at ${booking.guest_phone}.`
-      : 'Meeting details will be shared before the call.'
+  const meetingDetails = buildMeetingDetails(booking)
+  const meetingDetailsHtml = buildMeetingDetailsHtml(booking)
 
   switch (type) {
     case 'confirmation':
       return {
-        subject: `Your call with ${operatorName} is confirmed`,
+        subject: `Your call with ${displayName} is confirmed`,
         text: [
           `Hi ${booking.guest_name},`,
           '',
@@ -101,21 +118,21 @@ function buildEmailContent(type: EmailType, booking: BookingRecord, operatorName
           `Cancel: ${cancelLink}`,
           '',
           'Talk soon,',
-          operatorName,
+          displayName,
         ].join('\n'),
         html: `
           <p>Hi ${booking.guest_name},</p>
           <p>You're booked for <strong>${date}</strong> at <strong>${time}</strong> (${tzAbbr}).</p>
-          <p>${meetingDetails.replace(booking.zoom_join_url || '', `<a href="${booking.zoom_join_url}">${booking.zoom_join_url}</a>`)}</p>
+          <p>${meetingDetailsHtml}</p>
           <p>Need to change plans?<br>
           <a href="${rescheduleLink}">Reschedule</a> &middot; <a href="${cancelLink}">Cancel</a></p>
-          <p>Talk soon,<br>${operatorName}</p>
+          <p>Talk soon,<br>${displayName}</p>
         `.trim(),
       }
 
     case 'rescheduled': {
       return {
-        subject: 'Your call has been rescheduled',
+        subject: `Your call with ${displayName} has been rescheduled`,
         text: [
           `Hi ${booking.guest_name},`,
           '',
@@ -129,7 +146,7 @@ function buildEmailContent(type: EmailType, booking: BookingRecord, operatorName
         html: `
           <p>Hi ${booking.guest_name},</p>
           <p>Your call has been moved to <strong>${date}</strong> at <strong>${time}</strong> (${tzAbbr}).</p>
-          <p>${meetingDetails.replace(booking.zoom_join_url || '', `<a href="${booking.zoom_join_url}">${booking.zoom_join_url}</a>`)}</p>
+          <p>${meetingDetailsHtml}</p>
           <p><a href="${rescheduleLink}">Reschedule again</a> &middot; <a href="${cancelLink}">Cancel</a></p>
         `.trim(),
       }
@@ -137,7 +154,7 @@ function buildEmailContent(type: EmailType, booking: BookingRecord, operatorName
 
     case 'cancelled':
       return {
-        subject: 'Your call has been cancelled',
+        subject: `Your call with ${displayName} has been cancelled`,
         text: [
           `Hi ${booking.guest_name},`,
           '',
@@ -155,9 +172,16 @@ function buildEmailContent(type: EmailType, booking: BookingRecord, operatorName
 }
 
 /**
- * Send a booking notification email.
+ * Send a booking email to the guest.
+ *
+ * If businessName is provided (client site booking), use it as the display name.
+ * Otherwise fall back to operator name (Simple Instant Site marketing booking).
  */
-export async function sendBookingEmail(type: EmailType, booking: BookingRecord): Promise<void> {
+export async function sendBookingEmail(
+  type: EmailType,
+  booking: BookingRecord,
+  businessName?: string,
+): Promise<void> {
   if (!RESEND_API_KEY) {
     console.warn(`[booking-emails] RESEND_API_KEY not configured. Skipping ${type} email to ${booking.guest_email}.`)
     return
@@ -165,10 +189,10 @@ export async function sendBookingEmail(type: EmailType, booking: BookingRecord):
 
   const operator = await getOperatorInfo(booking.user_id)
   const timezone = await getTimezone(booking.user_id)
-  const operatorName = operator?.full_name || 'Sitegeit'
+  const displayName = businessName || operator?.full_name || 'Simple Instant Site'
   const replyToEmail = operator?.email || undefined
 
-  const { subject, text, html } = buildEmailContent(type, booking, operatorName, timezone)
+  const { subject, text, html } = buildEmailContent(type, booking, displayName, timezone)
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -177,7 +201,7 @@ export async function sendBookingEmail(type: EmailType, booking: BookingRecord):
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: `${operatorName} <noreply@simpleinstantsite.com>`,
+      from: `${displayName} <noreply@simpleinstantsite.com>`,
       replyTo: replyToEmail,
       to: [booking.guest_email],
       subject,
@@ -247,7 +271,7 @@ export async function sendClientBookingNotification(
     `Email: ${booking.guest_email}`,
     ...(booking.guest_phone ? [`Phone: ${booking.guest_phone}`] : []),
     '',
-    'You can manage this booking from your Sitegeit dashboard.',
+    'You can manage this booking from your dashboard.',
   ].join('\n')
 
   const html = `
@@ -283,7 +307,7 @@ export async function sendClientBookingNotification(
       </table>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
       <p style="font-size: 12px; color: #94a3b8;">
-        This booking was made through the ${escapeHtml(businessName)} website, powered by Sitegeit.
+        This booking was made through the ${escapeHtml(businessName)} website, powered by Simple Instant Site.
       </p>
     </div>
   `.trim()
@@ -295,7 +319,7 @@ export async function sendClientBookingNotification(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Sitegeit Bookings <noreply@simpleinstantsite.com>',
+      from: `${businessName} Bookings <noreply@simpleinstantsite.com>`,
       replyTo: booking.guest_email,
       to: [recipientEmail],
       subject,

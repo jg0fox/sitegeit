@@ -70,7 +70,7 @@ const JUNK_EMAIL_PREFIXES = new Set([
   'null',
 ])
 
-const EMAIL_REGEX = /[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g
+export const EMAIL_REGEX = /[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g
 
 const TIMEOUT_MS = 5000
 
@@ -127,7 +127,7 @@ export function extractEmailsFromHtml(
 /**
  * Fetch a URL with timeout, returning the body text or null on failure.
  */
-async function fetchPage(url: string): Promise<string | null> {
+export async function fetchPage(url: string): Promise<string | null> {
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
@@ -137,7 +137,7 @@ async function fetchPage(url: string): Promise<string | null> {
       redirect: 'follow',
       headers: {
         'User-Agent':
-          'Mozilla/5.0 (compatible; SitegeitBot/1.0; +https://sitegeit.com)',
+          'Mozilla/5.0 (compatible; SimpleInstantSiteBot/1.0; +https://simpleinstantsite.com)',
       },
     })
     clearTimeout(timeout)
