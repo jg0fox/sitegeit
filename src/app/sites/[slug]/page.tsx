@@ -7,8 +7,12 @@ import { SiteAbout } from '@/components/sites/SiteAbout'
 import { SiteCTA } from '@/components/sites/SiteCTA'
 import { SiteTrustBar } from '@/components/sites/SiteTrustBar'
 import { SiteSectionDivider } from '@/components/sites/SiteSectionDivider'
+import { SiteProcessSteps } from '@/components/sites/SiteProcessSteps'
 import { buildLocalBusinessSchema } from '@/lib/utils/schema-org'
 import { getCategoryImageUrls } from '@/lib/images/category-images'
+import { getBasePath } from '@/lib/utils/site-urls.server'
+import { getBookingSlug } from '@/lib/services/booking-config'
+import { getBookingUrl } from '@/lib/utils/site-urls'
 import type { ReactNode } from 'react'
 
 interface Props {
@@ -45,6 +49,10 @@ export default async function SitePage({ params }: Props) {
   }
 
   const business = site.businesses as Record<string, unknown>
+  // Detect editorial design system
+  const themeConfig = site.theme_config as { designSystem?: 'editorial' } | null
+  const isEditorial = themeConfig?.designSystem === 'editorial'
+
   const homepage = site.homepage_content as {
     section_order?: string[]
     hero: {
@@ -52,10 +60,16 @@ export default async function SitePage({ params }: Props) {
       subheadline: string
       primary_cta: { label: string; type: string }
       secondary_cta: { label: string; type: string }
+      sparkle_tags?: string[]
     }
     services_section: {
       heading: string
       services: { name: string; description: string; icon_suggestion: string }[]
+      featured_index?: number
+    }
+    process_steps?: {
+      heading: string
+      steps: { number: string; title: string; description: string; icon: string }[]
     }
     social_proof: {
       rating_display: { source: string; rating: number; count: number } | null
@@ -83,6 +97,12 @@ export default async function SitePage({ params }: Props) {
     homepage_description?: string
   } | null
   const phoneTel = globalContent?.phone_tel || (business.phone as string)
+  const businessId = (business as Record<string, unknown>).id as string
+  const [basePath, bookingSlug] = await Promise.all([
+    getBasePath(slug),
+    getBookingSlug(businessId),
+  ])
+  const bookingUrl = bookingSlug ? getBookingUrl(bookingSlug) : null
 
   // Build JSON-LD schema server-side using verified business data
   const categorySlug = (business.category_slug as string) || (business.category as string || '').toLowerCase().replace(/\s+/g, '_')
@@ -102,7 +122,8 @@ export default async function SitePage({ params }: Props) {
   })
 
   // Extract component variants from theme config (populated by generate-site.ts)
-  const themeConfig = site.theme_config as {
+  const themeConfigFull = site.theme_config as {
+    designSystem?: 'editorial'
     componentVariants?: {
       card: 'flat' | 'bordered' | 'accent-top' | 'accent-left'
       heroBackground: 'solid' | 'gradient' | 'pattern'
@@ -110,7 +131,7 @@ export default async function SitePage({ params }: Props) {
       iconStyle: 'bare' | 'circle-bg' | 'square-bg'
     }
   } | null
-  const variants = themeConfig?.componentVariants
+  const variants = themeConfigFull?.componentVariants
   const cardVariant = variants?.card || 'bordered'
   const heroBackground = variants?.heroBackground || 'solid'
   const sectionDivider = variants?.sectionDivider || 'none'
@@ -171,8 +192,11 @@ export default async function SitePage({ params }: Props) {
         primaryCta={homepage.hero.primary_cta}
         secondaryCta={homepage.hero.secondary_cta}
         phoneTel={phoneTel}
+        bookingUrl={bookingUrl}
         heroBackground={heroBackground}
         heroImageUrl={(site.hero_image_url as string | null) || getCategoryImageUrls(categorySlug)?.heroUrl || null}
+        isEditorial={isEditorial}
+        sparkleTags={homepage.hero.sparkle_tags}
       />
     ),
     trust_bar: homepage.trust_bar ? (
@@ -180,6 +204,7 @@ export default async function SitePage({ params }: Props) {
         key="trust_bar"
         items={homepage.trust_bar.items}
         iconStyle={iconStyle}
+        isEditorial={isEditorial}
       />
     ) : null,
     services: (
@@ -187,13 +212,22 @@ export default async function SitePage({ params }: Props) {
         key="services"
         heading={homepage.services_section.heading}
         services={homepage.services_section.services}
-        siteSlug={slug}
+        basePath={basePath}
         servicePageSlugs={servicePageSlugs}
         cardVariant={cardVariant}
         iconStyle={iconStyle}
         dataSource={defaultFields.includes('services') ? 'default' : 'verified'}
+        isEditorial={isEditorial}
+        featuredIndex={homepage.services_section.featured_index}
       />
     ),
+    process: homepage.process_steps ? (
+      <SiteProcessSteps
+        key="process"
+        heading={homepage.process_steps.heading}
+        steps={homepage.process_steps.steps}
+      />
+    ) : null,
     social_proof: (
       <SiteTestimonials
         key="social_proof"
@@ -202,6 +236,7 @@ export default async function SitePage({ params }: Props) {
         businessName={business.name as string}
         cardVariant={cardVariant}
         googlePlaceId={business.google_place_id as string | null}
+        isEditorial={isEditorial}
       />
     ),
     about: homepage.about_snippet ? (
@@ -211,6 +246,7 @@ export default async function SitePage({ params }: Props) {
         body={homepage.about_snippet.body}
         ownerName={homepage.about_snippet.owner_name}
         imageUrl={(site.about_image_url as string | null) || getCategoryImageUrls(categorySlug)?.aboutUrl || null}
+        isEditorial={isEditorial}
       />
     ) : null,
     cta: (
@@ -220,6 +256,8 @@ export default async function SitePage({ params }: Props) {
         body={homepage.cta_section.body}
         cta={homepage.cta_section.primary_cta}
         phoneTel={phoneTel}
+        bookingUrl={bookingUrl}
+        isEditorial={isEditorial}
       />
     ),
   }
@@ -236,7 +274,7 @@ export default async function SitePage({ params }: Props) {
           <div key={i}>
             {section}
             {i < renderedSections.length - 1 && (
-              <SiteSectionDivider variant={sectionDivider} />
+              <SiteSectionDivider variant={sectionDivider} isEditorial={isEditorial} />
             )}
           </div>
         ))}

@@ -9,6 +9,7 @@ import { PipelineProgress } from './PipelineProgress'
 import { PipelineBulkBar } from './PipelineBulkBar'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { getSiteUrl, getLandingPageUrl } from '@/lib/utils/site-urls'
 
 interface GeneratedSite {
   id: string
@@ -223,24 +224,26 @@ export function PipelineList({ businesses }: { businesses: PipelineBusiness[] })
               {hasGeneratedMaterial && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pl-8 pt-3">
                   {liveSite && (
-                    <Link
-                      href={`/sites/${liveSite.deploy_url}`}
+                    <a
+                      href={getSiteUrl(liveSite.deploy_url)}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-md bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-100"
                     >
                       <span className="material-symbols-outlined text-[14px] text-primary">web</span>
                       View site
-                    </Link>
+                    </a>
                   )}
                   {liveLanding && (
-                    <Link
-                      href={`/sites/go/${liveLanding.deploy_url}`}
+                    <a
+                      href={getLandingPageUrl(liveLanding.deploy_url)}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-md bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-100"
                     >
                       <span className="material-symbols-outlined text-[14px] text-purple-500">campaign</span>
                       Landing page
-                    </Link>
+                    </a>
                   )}
                   {draftEmails.length > 0 && (
                     <Link

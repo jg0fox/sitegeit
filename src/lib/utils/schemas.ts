@@ -30,6 +30,7 @@ export const addToPipelineSchema = z.object({
         formatted_phone_number: z.string().optional(),
         website: z.string().optional(),
         email: z.string().email().optional(),
+        emails: z.array(z.string().email()).optional(),
         website_status: z.enum([
           'none',
           'dead',
@@ -42,6 +43,7 @@ export const addToPipelineSchema = z.object({
     )
     .min(1, 'At least one result is required'),
   category: z.string(),
+  skipEmailSearch: z.boolean().optional(),
 })
 
 export type SearchParamsInput = z.infer<typeof searchParamsSchema>

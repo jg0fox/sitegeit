@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { SiteBreadcrumb } from '@/components/sites/SiteBreadcrumb'
+import { ContactForm } from '@/components/sites/ContactForm'
+import { getBasePath } from '@/lib/utils/site-urls.server'
 
 interface ContactContent {
   h1: string
@@ -95,13 +97,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ContactPage({ params }: Props) {
   const { slug } = await params
-  const site = await getSiteData(slug)
+  const [site, basePath] = await Promise.all([getSiteData(slug), getBasePath(slug)])
 
   if (!site) {
     notFound()
   }
 
   const contact = site.contact_content as ContactContent | null
+  const isEditorial = (site.theme_config as { designSystem?: string } | null)?.designSystem === 'editorial'
 
   if (!contact) {
     notFound()
@@ -125,7 +128,8 @@ export default async function ContactPage({ params }: Props) {
             <div className="mb-8">
               <SiteBreadcrumb
                 items={[{ label: 'Contact' }]}
-                siteSlug={slug}
+                basePath={basePath}
+                isEditorial={isEditorial}
               />
             </div>
 
@@ -228,90 +232,11 @@ export default async function ContactPage({ params }: Props) {
                   borderRadius: 'var(--radius-card)',
                 }}
               >
-                <form className="space-y-5">
-                  {contact.form_fields.map((field) => {
-                    const fieldId = field.toLowerCase().replace(/\s+/g, '-')
-                    const isTextarea =
-                      field.toLowerCase().includes('message') ||
-                      field.toLowerCase().includes('comment') ||
-                      field.toLowerCase().includes('details')
-                    const isPreferredContact =
-                      field.toLowerCase().replace(/[\s_-]+/g, '') === 'preferredcontact'
-
-                    const inputStyle = {
-                      borderColor: 'var(--color-border)',
-                      borderRadius: 'var(--radius-button, 6px)',
-                      backgroundColor: 'var(--color-background)',
-                      color: 'var(--color-text-primary)',
-                    }
-
-                    return (
-                      <div key={field}>
-                        <label
-                          htmlFor={fieldId}
-                          className="mb-1.5 block text-sm font-medium"
-                          style={{ color: 'var(--color-text-primary)' }}
-                        >
-                          {formatFieldLabel(field)}
-                        </label>
-                        {isPreferredContact ? (
-                          <select
-                            id={fieldId}
-                            name={fieldId}
-                            defaultValue=""
-                            className="w-full appearance-none border px-3 py-2 text-sm outline-none transition-colors focus:ring-2"
-                            style={inputStyle}
-                          >
-                            <option value="" disabled>Select one</option>
-                            <option value="phone">Phone</option>
-                            <option value="email">Email</option>
-                            <option value="text">Text Message</option>
-                          </select>
-                        ) : isTextarea ? (
-                          <textarea
-                            id={fieldId}
-                            name={fieldId}
-                            rows={4}
-                            className="w-full border px-3 py-2 text-sm outline-none transition-colors focus:ring-2"
-                            style={inputStyle}
-                          />
-                        ) : (
-                          <input
-                            id={fieldId}
-                            name={fieldId}
-                            type={
-                              field.toLowerCase().includes('email')
-                                ? 'email'
-                                : field.toLowerCase().includes('phone')
-                                  ? 'tel'
-                                  : 'text'
-                            }
-                            className="w-full border px-3 py-2 text-sm outline-none transition-colors focus:ring-2"
-                            style={inputStyle}
-                          />
-                        )}
-                      </div>
-                    )
-                  })}
-
-                  <button
-                    type="submit"
-                    className="w-full px-6 py-3 text-base font-semibold text-white transition-colors"
-                    style={{
-                      backgroundColor: 'var(--color-primary)',
-                      borderRadius: 'var(--radius-button)',
-                    }}
-                  >
-                    Send Your Message
-                  </button>
-
-                  <p
-                    className="text-center text-xs"
-                    style={{ color: 'var(--color-text-secondary)' }}
-                  >
-                    {contact.response_expectation}
-                  </p>
-                </form>
+                <ContactForm
+                  businessId={site.businesses.id}
+                  formFields={contact.form_fields}
+                  responseExpectation={contact.response_expectation}
+                />
               </div>
             </div>
           </div>

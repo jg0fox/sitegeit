@@ -127,6 +127,10 @@ export interface SiteGenerationInput {
   enriched_profile_json: string
   theme_id: string
   layout_variant: string
+  /** Editorial design system palette ID (when designSystem is 'editorial') */
+  palette_id?: string
+  /** Whether to use the editorial design system */
+  design_system?: 'editorial' | 'legacy'
 }
 
 export interface SiteContentOutput {
@@ -137,10 +141,19 @@ export interface SiteContentOutput {
       subheadline: string
       primary_cta: { label: string; type: string }
       secondary_cta: { label: string; type: string }
+      /** Editorial: badge chips displayed above the hero headline */
+      sparkle_tags?: string[]
     }
     services_section: {
       heading: string
       services: { name: string; description: string; icon_suggestion: string }[]
+      /** Editorial: index of the featured/primary service for bento layout emphasis */
+      featured_index?: number
+    }
+    /** Editorial: optional "How it works" process section */
+    process_steps?: {
+      heading: string
+      steps: { number: string; title: string; description: string; icon: string }[]
     }
     social_proof: {
       rating_display: { source: string; rating: number; count: number } | null
@@ -209,11 +222,27 @@ export interface SiteContentOutput {
 }
 
 export function buildSiteGenerationPrompt(input: SiteGenerationInput): string {
-  return `Generate website content for this business.
+  const isEditorial = input.design_system === 'editorial'
 
-## Business Profile
-${input.enriched_profile_json}
+  // Editorial design system prompt additions
+  const editorialSection = isEditorial ? `
+## Design System: Pristine Editorial
+This site uses the "Pristine Editorial" design system with palette "${input.palette_id}".
 
+### Editorial-Specific Content Requirements
+
+1. **sparkle_tags** (hero): Generate 2-3 short badge phrases that highlight the business's key differentiators. Examples: "Licensed & Insured", "Family-Owned", "Eco-Friendly", "Same-Day Service", "5-Star Rated", "Locally Owned". Only use tags that are supported by the business profile data. Set to empty array if no verified differentiators.
+
+2. **featured_index** (services_section): Set to the index (0-based) of the service that should be visually emphasized in the bento grid layout. Choose the service that is most prominent in the enrichment data — typically the first service listed or the one most mentioned in reviews.
+
+3. **process_steps** (optional section): If the business type has a clear workflow (booking, service delivery, follow-up), generate 3-4 process steps. Each step needs: number ("01", "02", etc.), title, short description, and a Material Symbols icon name. Include this section for service businesses with a clear process. Omit for businesses where the process isn't meaningful (e.g., restaurants).
+
+### Editorial Section Order
+Use this section order (adapting based on inclusion rules):
+["hero", "trust_bar", "services", "process", "social_proof", "about", "cta"]
+
+The "process" section is optional — include it only if you generate process_steps.
+` : `
 ## Theme & Layout
 - Theme: ${input.theme_id}
 - Layout variant: ${input.layout_variant}
@@ -226,7 +255,13 @@ Use the section_order that matches the layout variant. Only include sections tha
 - **community**: ["hero", "about", "services", "social_proof", "trust_bar", "cta"] — leads with the story/personality. Best for cafes, bakeries, florists, barbers.
 - **portfolio**: ["hero", "services", "about", "social_proof", "trust_bar", "cta"] — visual services first, then context. Best for photographers, landscapers.
 
-The layout variant "${input.layout_variant}" determines the starting section_order. Remove any sections that don't pass inclusion rules and list them in content_metadata.sections_omitted.
+The layout variant "${input.layout_variant}" determines the starting section_order. Remove any sections that don't pass inclusion rules and list them in content_metadata.sections_omitted.`
+
+  return `Generate website content for this business.
+
+## Business Profile
+${input.enriched_profile_json}
+${editorialSection}
 
 ## Generate this JSON structure:
 
@@ -237,7 +272,8 @@ The layout variant "${input.layout_variant}" determines the starting section_ord
       "headline": "Customer-problem-first headline, 8-12 words, includes city name",
       "subheadline": "What the business does + location, 12-18 words",
       "primary_cta": { "label": "low-commitment action label", "type": "phone | form | link" },
-      "secondary_cta": { "label": "...", "type": "..." }
+      "secondary_cta": { "label": "...", "type": "..." },
+      "sparkle_tags": ["Licensed & Insured", "Family-Owned"]
     },
     "services_section": {
       "heading": "Section heading with city name",
@@ -247,6 +283,15 @@ The layout variant "${input.layout_variant}" determines the starting section_ord
           "description": "1-4 sentences varying in structure and length per service. Primary services get more detail.",
           "icon_suggestion": "material_symbol_icon_name"
         }
+      ],
+      "featured_index": 0
+    },
+    "process_steps": {
+      "heading": "Simple steps to get started",
+      "steps": [
+        { "number": "01", "title": "Book Online", "description": "Schedule in seconds.", "icon": "event_note" },
+        { "number": "02", "title": "We Arrive", "description": "On time, every time.", "icon": "local_shipping" },
+        { "number": "03", "title": "Relax", "description": "Sit back and enjoy the result.", "icon": "check_circle" }
       ]
     },
     "social_proof": {
@@ -344,5 +389,8 @@ IMPORTANT RULES FOR THE JSON:
 - content_metadata.default_fields: list every field where _source shows "default"
 - All service descriptions must vary in sentence structure and length
 - The CTA section headline must address the customer's situation, not say "Contact Us"
-- Use the faq_templates from the profile when available — adapt them to this specific business`
+- Use the faq_templates from the profile when available — adapt them to this specific business
+- sparkle_tags: 2-3 short verified differentiators, or empty array if none. Only for editorial design system.
+- featured_index: 0-based index of the primary service for bento emphasis. Default to 0.
+- process_steps: include for service businesses with a clear workflow, omit otherwise. 3-4 steps max.`
 }

@@ -130,7 +130,7 @@ export default function BookingsPage() {
                     </p>
                     {b.businesses && (
                       <Link
-                        href={`/pipeline/${b.businesses.id}`}
+                        href={`/businesses/${b.businesses.id}`}
                         className="mt-0.5 text-xs text-primary hover:underline"
                       >
                         {b.businesses.name}
@@ -203,7 +203,7 @@ export default function BookingsPage() {
                       </p>
                       {b.businesses && (
                         <Link
-                          href={`/pipeline/${b.businesses.id}`}
+                          href={`/businesses/${b.businesses.id}`}
                           className="mt-0.5 text-xs text-primary hover:underline"
                         >
                           {b.businesses.name}

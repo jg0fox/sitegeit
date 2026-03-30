@@ -75,7 +75,7 @@ export function UpcomingBookings() {
                 </p>
                 {b.businesses && (
                   <Link
-                    href={`/pipeline/${b.businesses.id}`}
+                    href={`/businesses/${b.businesses.id}`}
                     className="text-xs text-primary hover:underline"
                   >
                     {b.businesses.name}

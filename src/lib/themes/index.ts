@@ -7,6 +7,16 @@ import { freshActive } from './fresh-active'
 import { naturalEarth } from './natural-earth'
 import { modernMinimal } from './modern-minimal'
 
+// Editorial design system — new unified template
+export {
+  buildEditorialThemeConfig,
+  getEditorialPaletteForCategory,
+  getEditorialPaletteId,
+  EDITORIAL_PALETTES,
+  CATEGORY_EDITORIAL_PALETTE_MAP,
+} from './editorial'
+export type { EditorialPalette, EditorialThemeConfig } from './editorial'
+
 export interface ThemeConfig {
   themeId: string
   layoutVariant: string

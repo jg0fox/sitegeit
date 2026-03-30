@@ -42,7 +42,7 @@ export async function QuickActions() {
     },
     {
       label: 'View responses',
-      href: '/pipeline',
+      href: '/businesses?filter=engaged',
       icon: 'forum',
       badge: respondedCount,
       variant: 'outline' as const,

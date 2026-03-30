@@ -5,7 +5,7 @@ import {
   buildSiteGenerationPrompt,
   type SiteContentOutput,
 } from './prompts/site-generation'
-import { getThemeForCategory, getThemeId, getLayoutForCategory, themeConfigToCSSVars } from '@/lib/themes'
+import { getThemeForCategory, getThemeId, getLayoutForCategory, themeConfigToCSSVars, buildEditorialThemeConfig, getEditorialPaletteId } from '@/lib/themes'
 import { getCategoryDefaults } from '@/lib/defaults/category-defaults'
 import { mergeEnrichmentWithDefaults } from '@/lib/defaults/merge'
 import { getCategoryImageUrls } from '@/lib/images/category-images'
@@ -33,9 +33,16 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
 
   // Select theme and layout based on category
   const categorySlug = business.category_slug || business.category.toLowerCase().replace(/\s+/g, '_')
-  const themeId = getThemeId(categorySlug)
-  const layoutVariant = getLayoutForCategory(categorySlug)
-  const themeConfig = getThemeForCategory(categorySlug)
+
+  // Use editorial design system for all new sites
+  const useEditorial = true
+  const editorialPaletteId = getEditorialPaletteId(categorySlug)
+  const editorialConfig = useEditorial ? buildEditorialThemeConfig(categorySlug) : null
+
+  // Legacy theme selection (kept for fallback / existing sites)
+  const themeId = useEditorial ? `editorial-${editorialPaletteId}` : getThemeId(categorySlug)
+  const layoutVariant = useEditorial ? 'editorial' : getLayoutForCategory(categorySlug)
+  const themeConfig = useEditorial ? null : getThemeForCategory(categorySlug)
 
   // Resolve category stock images
   const categoryImages = getCategoryImageUrls(categorySlug)
@@ -54,15 +61,39 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
     enriched_profile_json: JSON.stringify(mergedProfile, null, 2),
     theme_id: themeId,
     layout_variant: layoutVariant,
+    palette_id: useEditorial ? editorialPaletteId : undefined,
+    design_system: useEditorial ? 'editorial' : 'legacy',
   })
 
-  const content = await generateJSON<SiteContentOutput>(SITE_GENERATION_SYSTEM_PROMPT, userPrompt)
+  const { getEffectivePrompt } = await import('./prompt-overrides')
+  const systemPrompt = await getEffectivePrompt(business.user_id, 'site_generation', SITE_GENERATION_SYSTEM_PROMPT)
+  const content = await generateJSON<SiteContentOutput>(systemPrompt, userPrompt)
 
-  // Generate slug for the site URL
-  const slug = business.name
+  // Replace real phone numbers with sample number for non-client businesses
+  const clientStatuses = ['closed_won', 'active']
+  if (!clientStatuses.includes(business.status)) {
+    const sampleDisplay = '(555) 000-0100'
+    const sampleTel = '+15550000100'
+    if (content.global) {
+      content.global.phone_display = sampleDisplay
+      content.global.phone_tel = sampleTel
+    }
+    if (content.contact_page?.phone) {
+      content.contact_page.phone = sampleDisplay
+    }
+    if (content.seo?.schema_data?.telephone) {
+      content.seo.schema_data.telephone = sampleTel
+    }
+  }
+
+  // Generate slug for the site URL (max 48 chars, break at word boundary)
+  const rawSlug = business.name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
+  const slug = rawSlug.length > 48
+    ? rawSlug.slice(0, 48).replace(/-[^-]*$/, '')
+    : rawSlug
 
   // Check for existing site to support versioning
   const { data: existingSite } = await supabase
@@ -78,11 +109,16 @@ export async function generateSite(businessId: string): Promise<{ siteId: string
   const deployUrl = existingSite?.deploy_url || slug
   const customDomain = existingSite?.custom_domain || null
 
+  // Build theme_config based on design system
+  const storedThemeConfig = editorialConfig
+    ? editorialConfig  // EditorialThemeConfig includes cssVars, designSystem flag, palette
+    : { ...themeConfig, cssVars: themeConfigToCSSVars(themeConfig!) }
+
   const sitePayload = {
     business_id: businessId,
     theme_id: themeId,
     layout_variant: layoutVariant,
-    theme_config: { ...themeConfig, cssVars: themeConfigToCSSVars(themeConfig) },
+    theme_config: storedThemeConfig,
     homepage_content: { ...content.homepage, global: content.global },
     service_pages: content.service_pages,
     about_content: content.about_page,

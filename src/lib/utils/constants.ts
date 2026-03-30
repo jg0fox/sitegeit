@@ -34,10 +34,9 @@ export type ServiceTier = (typeof SERVICE_TIERS)[number]['key']
 export const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', href: '/', icon: 'dashboard' },
   { key: 'discover', label: 'Discover', href: '/discover', icon: 'travel_explore' },
-  { key: 'pipeline', label: 'Pipeline', href: '/pipeline', icon: 'conversion_path' },
+  { key: 'businesses', label: 'Businesses', href: '/businesses', icon: 'store' },
   { key: 'email-review', label: 'Email Review', href: '/email-review', icon: 'rate_review' },
   { key: 'bookings', label: 'Bookings', href: '/bookings', icon: 'calendar_month' },
-  { key: 'clients', label: 'Clients', href: '/clients', icon: 'group' },
   { key: 'settings', label: 'Settings', href: '/settings', icon: 'settings' },
 ] as const
 

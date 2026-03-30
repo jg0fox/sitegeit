@@ -40,7 +40,7 @@ export async function PipelineSummary() {
       <h2 className="mb-3 text-sm font-semibold text-gray-900">Pipeline overview</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         {stages.map((stage) => (
-          <Link key={stage.label} href={`/pipeline?status=${stage.status}`}>
+          <Link key={stage.label} href={`/businesses?status=${stage.status}`}>
             <Card className="flex cursor-pointer flex-col items-center px-3 py-4 transition-shadow hover:shadow-md">
               <div
                 className={cn(

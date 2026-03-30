@@ -79,7 +79,9 @@ export async function enrichBusiness(businessId: string): Promise<EnrichmentOutp
   }
 
   const userPrompt = buildEnrichmentPrompt(input)
-  const result = await generateJSON<EnrichmentOutput>(ENRICHMENT_SYSTEM_PROMPT, userPrompt)
+  const { getEffectivePrompt } = await import('./prompt-overrides')
+  const systemPrompt = await getEffectivePrompt(business.user_id, 'enrichment', ENRICHMENT_SYSTEM_PROMPT)
+  const result = await generateJSON<EnrichmentOutput>(systemPrompt, userPrompt)
 
   // Update business with enrichment data + raw reviews + extracted excerpts
   const { error: updateError } = await supabase

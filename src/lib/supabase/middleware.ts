@@ -33,6 +33,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Enforce email allowlist — sign out unauthorized users
+  if (user) {
+    const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || []
+    if (allowedEmails.length > 0 && !allowedEmails.includes(user.email?.toLowerCase() || '')) {
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+  }
+
   // If user is not logged in and trying to access dashboard routes, redirect to login
   // Skip auth for worker routes (QStash uses its own signature verification)
   if (

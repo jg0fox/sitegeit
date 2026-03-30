@@ -53,6 +53,7 @@ export default function DiscoverPage() {
   const [isSaved, setIsSaved] = useState(false)
   const [totalGoogleResults, setTotalGoogleResults] = useState(0)
   const [totalWithActiveSites, setTotalWithActiveSites] = useState(0)
+  const [searchForEmails, setSearchForEmails] = useState(true)
 
   // Restore cached results on mount
   useEffect(() => {
@@ -202,9 +203,11 @@ export default function DiscoverPage() {
             formatted_phone_number: r.formatted_phone_number,
             website: r.website,
             email: r.emails?.[0],
+            emails: r.emails || [],
             website_status: r.website_status,
           })),
           category: lastSearchParams.category,
+          skipEmailSearch: !searchForEmails,
         }),
       })
 
@@ -365,12 +368,26 @@ export default function DiscoverPage() {
       {selectedIds.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-lg lg:left-64">
           <div className="mx-auto flex max-w-5xl items-center justify-between">
-            <p className="text-sm text-gray-600">
-              <span className="font-semibold text-gray-900">
-                {selectedIds.size}
-              </span>{' '}
-              business{selectedIds.size !== 1 ? 'es' : ''} selected
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-gray-600">
+                <span className="font-semibold text-gray-900">
+                  {selectedIds.size}
+                </span>{' '}
+                business{selectedIds.size !== 1 ? 'es' : ''} selected
+              </p>
+              <label
+                className="flex items-center gap-1.5 text-sm text-gray-500 cursor-pointer select-none"
+                title="Automatically search the web for email contacts. Disable if you already have the email."
+              >
+                <input
+                  type="checkbox"
+                  checked={searchForEmails}
+                  onChange={(e) => setSearchForEmails(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                Search for emails
+              </label>
+            </div>
             <Button onClick={handleAddToPipeline} disabled={isAdding}>
               {isAdding ? (
                 <>

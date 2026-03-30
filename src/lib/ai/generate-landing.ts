@@ -45,10 +45,12 @@ export async function generateLandingPage(
     preview_site_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'}/sites/${site.deploy_url}`,
     theme_id: site.theme_id,
     services_count: servicePages.length,
-    calendly_url: bookingUrl,
+    booking_url: bookingUrl,
   })
 
-  const content = await generateJSON<LandingPageOutput>(LANDING_PAGE_SYSTEM_PROMPT, userPrompt)
+  const { getEffectivePrompt } = await import('./prompt-overrides')
+  const systemPrompt = await getEffectivePrompt(business.user_id, 'landing_page', LANDING_PAGE_SYSTEM_PROMPT)
+  const content = await generateJSON<LandingPageOutput>(systemPrompt, userPrompt)
 
   // Generate slug for landing page URL
   const slug = business.name

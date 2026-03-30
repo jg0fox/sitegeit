@@ -1,0 +1,125 @@
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+function sortHours(hours: Record<string, string>): [string, string][] {
+  return Object.entries(hours).sort(([a], [b]) => {
+    const ai = DAY_ORDER.indexOf(a.toLowerCase())
+    const bi = DAY_ORDER.indexOf(b.toLowerCase())
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+  })
+}
+
+interface SiteFooterProps {
+  businessName: string
+  phone: string | null
+  address: string
+  hours: Record<string, string> | null
+  basePath?: string
+}
+
+export function SiteFooter({ businessName, phone, address, hours, basePath }: SiteFooterProps) {
+  const currentYear = new Date().getFullYear()
+  const homePath = basePath != null ? (basePath || '/') : null
+
+  return (
+    <footer
+      className="border-t px-4 py-10"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
+      }}
+    >
+      <div className="mx-auto grid gap-8 sm:grid-cols-2 lg:grid-cols-4" style={{ maxWidth: '1200px' }}>
+        {/* Business info */}
+        <div>
+          <h3
+            className="mb-3 text-lg font-bold"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            {businessName}
+          </h3>
+          {address && (
+            <p className="mb-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              {address}
+            </p>
+          )}
+          {phone && (
+            <p className="text-sm">
+              <a href={`tel:${phone}`} style={{ color: 'var(--color-link, var(--color-primary))' }}>
+                {phone}
+              </a>
+            </p>
+          )}
+        </div>
+
+        {/* Page links */}
+        {homePath && (
+          <div>
+            <h3
+              className="mb-3 text-sm font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Pages
+            </h3>
+            <ul className="space-y-0 text-sm">
+              <li>
+                <a href={homePath} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  Home
+                </a>
+              </li>
+              <li>
+                <a href={`${basePath}/about`} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  About
+                </a>
+              </li>
+              <li>
+                <a href={`${basePath}/contact`} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  Contact
+                </a>
+              </li>
+              <li>
+                <a href={`${basePath}/faq`} className="inline-block py-2 transition-colors hover:underline" style={{ color: 'var(--color-text-primary)' }}>
+                  FAQ
+                </a>
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {/* Hours */}
+        {hours && Object.keys(hours).length > 0 && (
+          <div>
+            <h3
+              className="mb-3 text-sm font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Hours
+            </h3>
+            <dl className="space-y-1 text-sm">
+              {sortHours(hours).map(([day, time]) => (
+                <div key={day} className="flex justify-between gap-4">
+                  <dt className="capitalize" style={{ color: 'var(--color-text-secondary)' }}>
+                    {day}
+                  </dt>
+                  <dd>{time}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+
+        {/* Copyright */}
+        <div className="sm:col-span-2 lg:col-span-1">
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            &copy; {currentYear} {businessName}. All rights reserved.
+          </p>
+          <p className="mt-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Website by{' '}
+            <a href="https://simpleinstantsite.com" style={{ color: 'var(--color-link, var(--color-primary))' }}>
+              Simple Instant Site
+            </a>
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}

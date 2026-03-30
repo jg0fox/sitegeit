@@ -17,7 +17,7 @@ export interface LandingPageInput {
   preview_site_url: string
   theme_id: string
   services_count: number
-  calendly_url: string
+  booking_url: string
 }
 
 export interface LandingPageOutput {
@@ -60,7 +60,7 @@ export function buildLandingPagePrompt(input: LandingPageInput): string {
 - Key features: ${input.services_count} service pages, SEO optimized, mobile responsive, ${input.review_count ?? 0}+ reviews featured
 
 ## Booking Page URL
-${input.calendly_url}
+${input.booking_url}
 
 ## Generate this JSON:
 {
@@ -93,7 +93,7 @@ ${input.calendly_url}
     "heading": "...",
     "body": "1 sentence, no pressure. Always say '15-minute call' (not 20 or 30).",
     "button_label": "Book a free 15-minute call",
-    "button_url": "${input.calendly_url}"
+    "button_url": "${input.booking_url}"
   }
 }`
 }

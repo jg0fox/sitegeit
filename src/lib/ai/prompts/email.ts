@@ -19,7 +19,7 @@ export interface EmailInput {
   landing_page_url: string
   sender_name: string
   sender_company: string
-  calendly_url: string
+  booking_url: string
 }
 
 export interface EmailOutput {
@@ -54,7 +54,7 @@ ${input.landing_page_url}
 ## Sender
 - Name: ${input.sender_name}
 - Company: ${input.sender_company}
-- Booking page: ${input.calendly_url}
+- Booking page: ${input.booking_url}
 
 ## Generate:
 {

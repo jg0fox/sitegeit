@@ -4,6 +4,9 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { SiteNav } from '@/components/sites/SiteNav'
 import { SiteFooter } from '@/components/sites/SiteFooter'
+import { getBasePath } from '@/lib/utils/site-urls.server'
+import { getBookingSlug } from '@/lib/services/booking-config'
+import { getBookingUrl } from '@/lib/utils/site-urls'
 
 interface Props {
   children: ReactNode
@@ -77,18 +80,35 @@ export default async function SiteLayout({ children, params }: Props) {
   }
 
   const themeConfig = site.theme_config as {
+    designSystem?: 'editorial'
     cssVars?: Record<string, string>
-    typography?: { headingFont?: string; bodyFont?: string }
+    typography?: { headingFont?: string; bodyFont?: string; headingWeights?: string; bodyWeights?: string }
   }
+  const isEditorial = themeConfig?.designSystem === 'editorial'
   const cssVars = themeConfig?.cssVars || {}
 
   // Build Google Fonts URL from theme fonts
-  const headingFont = themeConfig?.typography?.headingFont?.split("'")[1]
-  const bodyFont = themeConfig?.typography?.bodyFont?.split("'")[1]
-  const fonts = [headingFont, bodyFont].filter(Boolean)
-  const fontsUrl = fonts.length > 0
-    ? `https://fonts.googleapis.com/css2?${fonts.map(f => `family=${encodeURIComponent(f!)}:wght@400;500;600;700;800`).join('&')}&display=swap`
-    : null
+  let fontsUrl: string | null = null
+  if (isEditorial) {
+    // Editorial: always Epilogue + Plus Jakarta Sans with full weight ranges
+    const headingWeights = themeConfig?.typography?.headingWeights || '300;400;600;700;800'
+    const bodyWeights = themeConfig?.typography?.bodyWeights || '300;400;500;600'
+    fontsUrl = `https://fonts.googleapis.com/css2?family=Epilogue:wght@${headingWeights.replace(/;/g, '..')}&family=Plus+Jakarta+Sans:wght@${bodyWeights.replace(/;/g, '..')}&display=swap`
+  } else {
+    const headingFont = themeConfig?.typography?.headingFont?.split("'")[1]
+    const bodyFont = themeConfig?.typography?.bodyFont?.split("'")[1]
+    const fonts = [headingFont, bodyFont].filter(Boolean)
+    fontsUrl = fonts.length > 0
+      ? `https://fonts.googleapis.com/css2?${fonts.map(f => `family=${encodeURIComponent(f!)}:wght@400;500;600;700;800`).join('&')}&display=swap`
+      : null
+  }
+
+  const businessId = (site.businesses as Record<string, unknown>).id as string
+  const [basePath, bookingSlug] = await Promise.all([
+    getBasePath(slug),
+    getBookingSlug(businessId),
+  ])
+  const bookingUrl = bookingSlug ? getBookingUrl(bookingSlug) : null
 
   // Extract data for SiteNav
   const business = site.businesses as Record<string, unknown>
@@ -152,8 +172,10 @@ export default async function SiteLayout({ children, params }: Props) {
             phone={globalContent?.phone_display || (business.phone as string)}
             phoneTel={globalContent?.phone_tel || (business.phone as string)}
             services={navServices}
-            siteSlug={slug}
+            basePath={basePath}
             navLabels={globalContent?.nav_labels}
+            bookingUrl={bookingUrl}
+            isEditorial={isEditorial}
           />
           <div id="main-content" className="flex-1">
             {children}
@@ -165,7 +187,8 @@ export default async function SiteLayout({ children, params }: Props) {
               .filter(Boolean)
               .join(', ') as string}
             hours={business.hours as Record<string, string> | null}
-            siteSlug={slug}
+            basePath={basePath}
+            isEditorial={isEditorial}
           />
         </div>
       </body>

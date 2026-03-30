@@ -87,7 +87,7 @@ export function ResultsList({
           </span>
           <span className="h-3 w-px bg-gray-300" />
           <span className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-[14px] text-emerald-500">language_off</span>
+            <span className="material-symbols-outlined text-[14px] text-emerald-500">public_off</span>
             {withoutSites} without active site
           </span>
           {(totalWithActiveSites ?? 0) > 0 && (

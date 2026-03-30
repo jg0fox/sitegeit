@@ -7,6 +7,9 @@ import { SiteServiceWhy } from '@/components/sites/SiteServiceWhy'
 import { SiteServiceRelated } from '@/components/sites/SiteServiceRelated'
 import { SiteSectionDivider } from '@/components/sites/SiteSectionDivider'
 import { buildServiceSchema } from '@/lib/utils/schema-org'
+import { getBasePath } from '@/lib/utils/site-urls.server'
+import { getBookingSlug } from '@/lib/services/booking-config'
+import { getBookingUrl } from '@/lib/utils/site-urls'
 
 interface ServicePage {
   slug: string
@@ -75,7 +78,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ServicePageRoute({ params }: Props) {
   const { slug, 'service-slug': serviceSlug } = await params
-  const site = await getSiteData(slug)
+  const [site, basePath] = await Promise.all([getSiteData(slug), getBasePath(slug)])
+  const businessId = site ? ((site.businesses as Record<string, unknown>).id as string) : null
+  const bookingSlug = businessId ? await getBookingSlug(businessId) : null
+  const bookingUrl = bookingSlug ? getBookingUrl(bookingSlug) : null
 
   if (!site) {
     notFound()
@@ -97,6 +103,7 @@ export default async function ServicePageRoute({ params }: Props) {
 
   // Extract component variants
   const themeConfig = site.theme_config as {
+    designSystem?: 'editorial'
     componentVariants?: {
       card: 'flat' | 'bordered' | 'accent-top' | 'accent-left'
       heroBackground: 'solid' | 'gradient' | 'pattern'
@@ -104,6 +111,7 @@ export default async function ServicePageRoute({ params }: Props) {
       iconStyle: 'bare' | 'circle-bg' | 'square-bg'
     }
   } | null
+  const isEditorial = themeConfig?.designSystem === 'editorial'
   const variants = themeConfig?.componentVariants
   const cardVariant = variants?.card || 'bordered'
   const heroBackground = variants?.heroBackground || 'solid'
@@ -122,15 +130,17 @@ export default async function ServicePageRoute({ params }: Props) {
           opening={service.opening}
           cta={service.cta}
           phoneTel={phone}
+          bookingUrl={bookingUrl}
           breadcrumbs={[
-            { label: 'Services', href: `/sites/${slug}#services` },
+            { label: 'Services', href: `${basePath}#services` },
             { label: service.h1 },
           ]}
-          siteSlug={slug}
+          basePath={basePath}
           heroBackground={heroBackground}
+          isEditorial={isEditorial}
         />
 
-        <SiteSectionDivider variant={sectionDivider} />
+        <SiteSectionDivider variant={sectionDivider} isEditorial={isEditorial} />
 
         <SiteServiceDetails
           items={service.whats_involved}
@@ -140,7 +150,7 @@ export default async function ServicePageRoute({ params }: Props) {
 
         {service.pricing && (
           <>
-            <SiteSectionDivider variant={sectionDivider} />
+            <SiteSectionDivider variant={sectionDivider} isEditorial={isEditorial} />
             <section
               className="px-4"
               style={{
@@ -192,7 +202,7 @@ export default async function ServicePageRoute({ params }: Props) {
           </>
         )}
 
-        <SiteSectionDivider variant={sectionDivider} />
+        <SiteSectionDivider variant={sectionDivider} isEditorial={isEditorial} />
 
         <SiteServiceWhy
           items={service.why_this_business}
@@ -202,11 +212,12 @@ export default async function ServicePageRoute({ params }: Props) {
 
         {relatedServices.length > 0 && (
           <>
-            <SiteSectionDivider variant={sectionDivider} />
+            <SiteSectionDivider variant={sectionDivider} isEditorial={isEditorial} />
             <SiteServiceRelated
               services={relatedServices.map((s) => ({ name: s.h1, slug: s.slug }))}
-              siteSlug={slug}
+              basePath={basePath}
               cardVariant={cardVariant}
+              isEditorial={isEditorial}
             />
           </>
         )}

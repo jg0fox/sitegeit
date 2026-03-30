@@ -12,7 +12,6 @@ interface ProfileData {
   full_name: string
   email: string
   avatar_url: string
-  calendly_link: string
   email_signature: string
 }
 
@@ -24,7 +23,6 @@ export default function ProfilePage() {
     full_name: '',
     email: '',
     avatar_url: '',
-    calendly_link: '',
     email_signature: '',
   })
 
@@ -37,7 +35,6 @@ export default function ProfilePage() {
           full_name: data.full_name || '',
           email: data.email || '',
           avatar_url: data.avatar_url || '',
-          calendly_link: data.calendly_link || '',
           email_signature: data.email_signature || '',
         })
       }
@@ -55,7 +52,6 @@ export default function ProfilePage() {
         body: JSON.stringify({
           full_name: form.full_name,
           avatar_url: form.avatar_url,
-          calendly_link: form.calendly_link,
           email_signature: form.email_signature,
         }),
       })
@@ -158,24 +154,6 @@ export default function ProfilePage() {
           <CardTitle>Outreach configuration</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label htmlFor="calendly_link" className="block text-sm font-medium text-gray-700">
-              Calendly link (legacy)
-            </label>
-            <input
-              id="calendly_link"
-              type="url"
-              value={form.calendly_link}
-              onChange={(e) => setForm({ ...form, calendly_link: e.target.value })}
-              className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder="https://calendly.com/your-name"
-            />
-            <p className="mt-1 text-xs text-gray-400">
-              No longer used — outreach emails and landing pages now link to the built-in booking page at /book.
-              Configure scheduling in <a href="/settings/scheduling" className="text-primary hover:underline">Settings &rarr; Scheduling</a>.
-            </p>
-          </div>
-
           <div>
             <label htmlFor="email_signature" className="block text-sm font-medium text-gray-700">
               Email signature

@@ -426,9 +426,9 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                       className="mt-2 w-full"
                       onClick={() => approveAll(group.emails.filter((e) => !skippedIds.has(e.id)))}
                       disabled={saving || !businessEmails[group.business.id]}
-                      title={!businessEmails[group.business.id] ? 'Add a recipient email before approving' : undefined}
+                      title={!businessEmails[group.business.id] ? 'Add a recipient email before approving' : 'Emails will be sent via your next sending window'}
                     >
-                      Approve remaining
+                      Approve &amp; queue remaining
                     </Button>
                   )}
                 </div>
@@ -517,12 +517,12 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                           size="sm"
                           onClick={() => approveEmail(currentEmail.id)}
                           disabled={saving || !hasRecipientEmail}
-                          title={!hasRecipientEmail ? 'Add a recipient email before approving' : undefined}
+                          title={!hasRecipientEmail ? 'Add a recipient email before approving' : 'Email will be sent via your next sending window'}
                         >
                           <span className="material-symbols-outlined text-[16px]">
                             check
                           </span>
-                          Approve
+                          Approve &amp; queue
                         </Button>
                       </>
                     )}

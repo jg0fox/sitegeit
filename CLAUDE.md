@@ -1,7 +1,7 @@
-## Current State: Settings & Polish
+## Current State: Client Services & Content Management
 
-Phases 1–6 are complete. The full pipeline works end-to-end:
-discovery → enrichment → generation → deploy → email → client management.
+Phases 1–6 + Settings & Polish are complete. Current focus:
+content editing, multi-tenant booking, and client site services.
 
 ### Completed Phases
 - Phase 1: Foundation (Next.js, Supabase, Tailwind, auth)
@@ -11,12 +11,21 @@ discovery → enrichment → generation → deploy → email → client manageme
 - Phase 5: Email Integration (Instantly.ai, domain management, webhooks, follow-ups)
 - Phase 6: Client Management (roster, detail, custom domains, site regeneration, MRR)
 - Settings & Polish: Profile, integrations, notifications, templates pages
+- Phase 7: Quick Fixes & Email Polish (badge fix, discover artifact, sample phone numbers, bookings styling, email UX)
+- Phase 8: Content Management (section editor, image upload, AI rewrite)
+- Phase 9: Client Booking Service (multi-tenant scheduling, ICS, themed pages)
+- Phase 10: Client Site Services (contact form email via Resend, checkout placeholder)
+- Phase 11: System Prompt Editor (per-user prompt overrides, settings UI)
+- Phase 12: Enhanced Email Discovery (4-tier search, email candidates table, Serper.dev web search, human-in-the-loop selection)
 
 ### Deferred work still queued
 - Phase 3.5 Site Generation Quality Overhaul (see `SITE_GENERATION_OVERHAUL.md`)
-- Stripe billing — placeholder only, no API integration
+- Stripe billing — placeholder checkout page exists at /sites/go/[slug]/checkout, no API integration
 - Plausible analytics — placeholder only, UI shell for Growth+ tiers
-- Content editing UI — manual DB edits only for now
+- Google Calendar OAuth for client bookings (Phase 2 of booking service)
+- Client self-service booking management portal (Phase 3)
+- Stock photo search in content editor (Unsplash/Pexels API)
+- AI-suggested image swaps in content editor
 
 ### Standing Rules
 
@@ -25,9 +34,13 @@ discovery → enrichment → generation → deploy → email → client manageme
 3. Custom domain calls Vercel API. If no VERCEL_TOKEN, log and show error.
 4. Site regeneration creates a NEW generated_sites record (no overwrite).
 5. Conversion flow logs both status_changed and tier_changed to activity_log.
-6. Client pages at /clients and /clients/[id] — separate from pipeline.
+6. All businesses at /businesses and /businesses/[id]. Client features render conditionally based on status.
 7. MRR uses businesses.monthly_rate (stored in dollars).
-8. "One round of edits" is manual: DB edit → "Update Site" to redeploy.
+8. Content editing: section editor at /businesses/[id]/edit-site. Publish triggers redeploy.
+9. Client booking: per-business config in client_scheduling_config table. Pages at /book/[slug].
+10. Contact forms: transactional email via Resend. Submissions stored in contact_submissions.
+11. Phone numbers: preview/prospect sites use sample number (555) 000-0100. Converted clients use real number.
+12. Email discovery: 4-tier system (website scrape → Serper.dev web search → MX pattern guess → Hunter.io). All candidates stored in `email_candidates` table. Toggle on/off per batch in discovery. Business detail page shows all candidates for human selection.
    
 # CLAUDE.md — Sitegeit Build Instructions
 
@@ -59,6 +72,7 @@ npm install sonner  # toast notifications
 # Utilities
 npm install date-fns zod
 npm install sharp  # image processing for screenshots
+npm install resend  # transactional email for contact forms
 ```
 
 ### Font & Icons
@@ -117,11 +131,15 @@ src/
 │   │   │   └── page.tsx            # Email Review (batch + single)
 │   │   ├── clients/
 │   │   │   ├── page.tsx            # Client Roster
-│   │   │   └── [id]/page.tsx       # Client Detail
+│   │   │   ├── [id]/page.tsx       # Client Detail
+│   │   │   └── [id]/edit-site/page.tsx  # Content editor
 │   │   ├── notifications/
 │   │   │   └── page.tsx            # Notification Center
 │   │   └── settings/
-│   │       └── page.tsx            # Settings & Config
+│   │       ├── page.tsx            # Settings & Config
+│   │       └── prompts/page.tsx    # System prompt editor
+│   ├── book/
+│   │   └── [[...slug]]/page.tsx    # Multi-tenant booking
 │   └── api/
 │       ├── discover/route.ts       # Google Places search
 │       ├── pipeline/
@@ -133,6 +151,14 @@ src/
 │       │   └── webhook/route.ts    # Instantly.ai webhook receiver
 │       ├── businesses/
 │       │   └── [id]/route.ts       # CRUD
+│       ├── sites/
+│       │   ├── [siteId]/content/route.ts  # Site content CRUD
+│       │   ├── by-business/[businessId]/route.ts
+│       │   └── contact/route.ts    # Contact form handler
+│       ├── ai/rewrite/route.ts     # AI text rewrite
+│       ├── uploads/route.ts        # Image upload + processing
+│       ├── settings/prompts/route.ts  # Prompt override CRUD
+│       ├── client-scheduling/[businessId]/route.ts
 │       └── notifications/
 │           └── route.ts
 ├── components/

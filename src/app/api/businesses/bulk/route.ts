@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { removeDomainFromProject } from '@/lib/vercel/domains'
 
 export async function PATCH(request: Request) {
   try {
@@ -90,6 +91,19 @@ export async function DELETE(request: Request) {
 
     if (!ids || ids.length === 0) {
       return NextResponse.json({ error: 'No business IDs provided' }, { status: 400 })
+    }
+
+    // Remove any custom domains from Vercel before deleting
+    const { data: sites } = await supabase
+      .from('generated_sites')
+      .select('custom_domain')
+      .in('business_id', ids)
+      .not('custom_domain', 'is', null)
+
+    if (sites?.length) {
+      await Promise.all(
+        sites.map((s) => removeDomainFromProject(s.custom_domain!))
+      )
     }
 
     // RLS ensures user can only delete their own businesses.

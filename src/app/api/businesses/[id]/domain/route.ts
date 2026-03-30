@@ -31,17 +31,13 @@ export async function POST(request: Request, { params }: Props) {
   // Verify ownership
   const { data: business } = await supabase
     .from('businesses')
-    .select('id, name, tier')
+    .select('id, name')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
 
   if (!business) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  }
-
-  if (business.tier === 'starter') {
-    return NextResponse.json({ error: 'Custom domains require Growth tier or higher' }, { status: 400 })
   }
 
   // Check domain isn't already assigned to another business

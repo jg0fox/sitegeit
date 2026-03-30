@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { results, category } = parsed.data
+    const { results, category, skipEmailSearch } = parsed.data
     let added = 0
     let skipped = 0
 
@@ -70,12 +70,34 @@ export async function POST(request: Request) {
         website_url: result.website || null,
         website_status: result.website_status,
         email: result.email || null,
+        skip_email_search: skipEmailSearch || false,
         status: 'discovered',
       }).select('id').single()
 
       if (insertError || !inserted) {
         console.error(`Failed to insert business ${result.name}:`, insertError)
         continue
+      }
+
+      // Store ALL discovered emails as candidates (fix data loss — previously only saved emails[0])
+      const allEmails = result.emails || (result.email ? [result.email] : [])
+      if (allEmails.length > 0) {
+        const candidateRows = allEmails.map((email: string) => ({
+          business_id: inserted.id,
+          email: email.toLowerCase().trim(),
+          source: 'website_scrape',
+          confidence: 'high',
+          source_url: result.website || null,
+          source_context: 'Found during discovery search',
+          is_selected: email === (result.email || allEmails[0]),
+        }))
+
+        await supabase
+          .from('email_candidates')
+          .upsert(candidateRows, { onConflict: 'business_id,email', ignoreDuplicates: true })
+          .then(({ error }) => {
+            if (error) console.error(`Failed to insert email candidates for ${inserted.id}:`, error)
+          })
       }
 
       // Log the activity

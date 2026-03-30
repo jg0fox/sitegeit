@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     // For regeneration, allow any status past enrichment; otherwise only 'enriched'
-    const REGENERATE_STATUSES = ['enriched', 'generating', 'review_ready', 'sent', 'opened', 'clicked', 'responded', 'meeting_scheduled', 'closed_won']
+    const REGENERATE_STATUSES = ['enriched', 'generating', 'review_ready', 'sent', 'opened', 'clicked', 'responded', 'meeting_scheduled', 'closed_won', 'active']
     const allowedStatuses = regenerate ? REGENERATE_STATUSES : ['enriched']
 
     const validIds = businesses

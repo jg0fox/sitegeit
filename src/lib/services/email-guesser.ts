@@ -92,3 +92,29 @@ export async function guessBusinessEmail(
     pattern: `${bestPrefix}@`,
   }
 }
+
+/**
+ * Return ALL pattern-guessed email candidates for a domain.
+ * Used by the email candidates system to show all possibilities.
+ */
+export async function guessAllBusinessEmails(
+  websiteUrl: string,
+  ownerName?: string | null
+): Promise<GuessedEmail[]> {
+  const domain = extractDomain(websiteUrl)
+  if (!domain) return []
+
+  const hasMx = await hasMxRecords(domain)
+  if (!hasMx) return []
+
+  const prefixes = [...COMMON_PREFIXES]
+  if (ownerName) {
+    prefixes.push(...ownerNameCandidates(ownerName))
+  }
+
+  return prefixes.map((prefix) => ({
+    email: `${prefix}@${domain}`,
+    method: 'mx_pattern' as const,
+    pattern: `${prefix}@`,
+  }))
+}

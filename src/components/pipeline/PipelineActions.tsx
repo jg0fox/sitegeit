@@ -81,7 +81,7 @@ export function PipelineActions({ businessId, businessName, status }: PipelineAc
       })
       if (res.ok) {
         router.refresh()
-        router.push('/pipeline')
+        router.push('/businesses')
       }
     } finally {
       setLoading(false)

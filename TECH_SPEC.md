@@ -49,6 +49,7 @@ Sitegeit is an AI-enabled business pipeline that discovers local businesses with
 | Icons | Material Symbols (Outlined, 300 weight) | Consistent with mockup designs |
 | Font | Manrope (Google Fonts) | Matches mockup typography |
 | Notifications | Web push (service worker) + email fallback | Mobile notification when drafts are ready, prospects engage |
+| Transactional email | Resend | Contact form submissions + booking notifications to clients |
 | DNS | Cloudflare (wildcard subdomains) | Free wildcard DNS, edge caching for client sites |
 
 ---
@@ -63,8 +64,8 @@ id              uuid PRIMARY KEY DEFAULT gen_random_uuid()
 email           text UNIQUE NOT NULL
 full_name       text
 avatar_url      text
-calendly_link   text
 email_signature text
+prompt_overrides jsonb DEFAULT '{}'  -- per-user AI prompt overrides
 created_at      timestamptz DEFAULT now()
 updated_at      timestamptz DEFAULT now()
 ```
@@ -166,7 +167,7 @@ site_id             uuid REFERENCES generated_sites(id)
 headline            text NOT NULL
 strategy_summary    text NOT NULL   -- plain-language pitch
 site_preview_data   jsonb           -- screenshots, snippets from generated site
-calendly_link       text
+booking_url         text            -- link to booking page
 -- Deployment
 deploy_url          text            -- e.g. "go.sitegeit.com/joes-plumbing"
 deploy_status       text
@@ -255,6 +256,34 @@ daily_send_limit    integer DEFAULT 20
 emails_sent_today   integer DEFAULT 0
 created_at          timestamptz DEFAULT now()
 updated_at          timestamptz DEFAULT now()
+```
+
+#### `client_scheduling_config` (per-business booking pages)
+```sql
+id                  uuid PRIMARY KEY DEFAULT gen_random_uuid()
+business_id         uuid REFERENCES businesses(id) ON DELETE CASCADE UNIQUE
+contact_email       text NOT NULL
+timezone            text DEFAULT 'America/Phoenix'
+meeting_duration    integer DEFAULT 15
+meeting_types       text[] DEFAULT ARRAY['phone']
+availability        jsonb           -- same schema as scheduling_config.available_hours
+booking_slug        text UNIQUE     -- e.g. "joes-plumbing"
+booking_page_title  text
+booking_page_subtitle text
+is_active           boolean DEFAULT true
+created_at          timestamptz DEFAULT now()
+```
+
+#### `contact_submissions` (client site contact form entries)
+```sql
+id                  uuid PRIMARY KEY DEFAULT gen_random_uuid()
+business_id         uuid REFERENCES businesses(id) ON DELETE CASCADE
+guest_name          text
+guest_email         text
+guest_phone         text
+message             text
+form_data           jsonb           -- all form fields as key-value
+created_at          timestamptz DEFAULT now()
 ```
 
 ---
@@ -388,10 +417,10 @@ updated_at          timestamptz DEFAULT now()
 | Conversion-optimized website | ✓ | ✓ | ✓ | ✓ |
 | SEO optimization + LocalBusiness schema | ✓ | ✓ | ✓ | ✓ |
 | Mobile responsive + SSL | ✓ | ✓ | ✓ | ✓ |
-| Basic contact form | ✓ | ✓ | ✓ | ✓ |
+| Contact form (email via Resend) | ✓ | ✓ | ✓ | ✓ |
 | Initial brand assessment | ✓ | ✓ | ✓ | ✓ |
 | Monthly uptime monitoring | ✓ | ✓ | ✓ | ✓ |
-| Appointment scheduling | | ✓ | ✓ | ✓ |
+| Appointment scheduling (multi-tenant /book/[slug]) | | ✓ | ✓ | ✓ |
 | Custom domain setup | | ✓ | ✓ | ✓ |
 | Analytics dashboard | | ✓ | ✓ | ✓ |
 | Monthly analytics email | | ✓ | ✓ | ✓ |
@@ -461,9 +490,10 @@ updated_at          timestamptz DEFAULT now()
 ### 7. Settings & Configuration
 - Email accounts: sending domains, warmup status, health scores
 - Templates: email templates, site templates, landing page templates
-- Integrations: Instantly connection, Calendly link, analytics config
+- Integrations: Instantly connection, analytics config
+- System prompts: per-user AI prompt overrides for enrichment, site generation, email, landing page
 - Notification preferences
-- Profile: business info, Calendly link, avatar, email signature
+- Profile: business info, avatar, email signature
 
 ### 8. Notifications Center
 - Chronological activity feed
@@ -552,6 +582,9 @@ PLAUSIBLE_API_KEY=
 UPSTASH_REDIS_URL=
 UPSTASH_REDIS_TOKEN=
 
+# Resend (transactional email for contact forms)
+RESEND_API_KEY=
+
 # App
 NEXT_PUBLIC_APP_URL=
 NEXT_PUBLIC_SITE_DOMAIN=sitegeit.com
@@ -604,12 +637,18 @@ NEXT_PUBLIC_SITE_DOMAIN=sitegeit.com
 - Follow-up sequence automation
 - Engagement signal display in Pipeline Queue
 
-### Phase 6: Client Management (Week 7-8)
+### Phase 6: Client Management & Custom Domains (Week 7-8)
 - Client roster UI
 - Tier management
 - Analytics integration (Plausible per-site provisioning)
 - Automated report generation
 - Client detail views with analytics
+- Custom domain support for converted clients:
+  - Add "Custom domain" field to client detail page (writes to `generated_sites.custom_domain`)
+  - Vercel API integration in deploy worker: add domain alias, provision SSL
+  - Update middleware to match incoming hostnames against `custom_domain` column in DB
+  - Optional redirect from `{slug}.sitegeit.com` → custom domain
+  - DNS setup guide shown in UI (CNAME instructions for the client)
 
 ### Phase 7: Polish & Scale (Week 8-10)
 - Performance optimization (caching, lazy loading, optimistic UI)
@@ -619,14 +658,40 @@ NEXT_PUBLIC_SITE_DOMAIN=sitegeit.com
 - Domain warming guidance and checklist
 - Documentation
 
+### Phase 8: Quick Fixes & Email Polish
+- Pricing badge clipping fix, discover icon artifact
+- Sample phone numbers for non-client preview sites
+- Bookings styling (individual cards), email UX clarification
+- Calendly references removed, replaced with booking_url throughout
+
+### Phase 9: Content Management & System Prompts
+- Section-based site editor at /clients/[id]/edit-site
+- Image upload with Sharp processing (resize, compress, Supabase Storage)
+- AI text rewrite via Claude Haiku (preset options + custom instructions)
+- System prompt editor at /settings/prompts (per-user overrides stored in users.prompt_overrides)
+
+### Phase 10: Multi-Tenant Booking Service
+- Per-business scheduling config (client_scheduling_config table)
+- Multi-tenant booking pages at /book/[slug]
+- Client booking setup card in client detail page
+- ICS calendar file generation for booking confirmations
+
+### Phase 11: Client Site Services
+- Contact form transactional email via Resend (/api/sites/contact)
+- Contact submissions stored in contact_submissions table
+- Checkout placeholder page at /sites/go/[slug]/checkout
+
 ### Future Phases
-- Stripe billing integration
+- Stripe billing integration (checkout placeholder exists)
 - AI customer portal (chat widget for client sites)
 - AI-generated blog posts and social content
 - Growth experiment engine (A/B testing landing pages)
 - Competitor monitoring
 - AI avatar video greeting on landing pages
 - Multi-location support
+- Google Calendar OAuth for client bookings
+- Client self-service booking management portal
+- Stock photo search + AI image suggestions in content editor
 
 ---
 

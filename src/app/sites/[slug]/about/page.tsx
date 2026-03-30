@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { SiteBreadcrumb } from '@/components/sites/SiteBreadcrumb'
 import { getCategoryImageUrls } from '@/lib/images/category-images'
+import { getBasePath } from '@/lib/utils/site-urls.server'
 
 interface AboutContent {
   h1: string
@@ -67,7 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function AboutPage({ params }: Props) {
   const { slug } = await params
-  const site = await getSiteData(slug)
+  const [site, basePath] = await Promise.all([getSiteData(slug), getBasePath(slug)])
 
   if (!site) {
     notFound()
@@ -75,6 +76,7 @@ export default async function AboutPage({ params }: Props) {
 
   const about = site.about_content as AboutContent | null
   const business = site.businesses as Record<string, unknown>
+  const isEditorial = (site.theme_config as { designSystem?: string } | null)?.designSystem === 'editorial'
   const categorySlug = (business?.category_slug as string) || (business?.category as string || '').toLowerCase().replace(/\s+/g, '_')
   const aboutImageUrl = (site.about_image_url as string | null) || getCategoryImageUrls(categorySlug)?.aboutUrl || null
 
@@ -97,7 +99,8 @@ export default async function AboutPage({ params }: Props) {
             <div className="mb-8">
               <SiteBreadcrumb
                 items={[{ label: 'About' }]}
-                siteSlug={slug}
+                basePath={basePath}
+                isEditorial={isEditorial}
               />
             </div>
 

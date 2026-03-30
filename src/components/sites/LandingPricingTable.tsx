@@ -359,10 +359,10 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
 function PricingCard({ tier, ctaUrl }: { tier: Tier; ctaUrl: string }) {
   return (
     <div
-      className={`relative flex flex-col overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-lg ${
+      className={`relative flex flex-col rounded-xl border bg-white transition-shadow hover:shadow-lg ${
         tier.popular ? 'border-blue-600 shadow-md' : 'border-slate-200'
       }`}
-      style={{ padding: '2rem 1.5rem' }}
+      style={{ padding: tier.badge ? '2.5rem 1.5rem 2rem' : '2rem 1.5rem' }}
     >
       {/* Badge */}
       {tier.badge && (
@@ -372,7 +372,7 @@ function PricingCard({ tier, ctaUrl }: { tier: Tier; ctaUrl: string }) {
               ? 'bg-amber-500 text-slate-900'
               : 'bg-blue-600 text-white'
           }`}
-          style={{ top: '-0.5rem', letterSpacing: '0.05em' }}
+          style={{ top: '-0.625rem', letterSpacing: '0.05em' }}
         >
           {tier.badge}
         </span>

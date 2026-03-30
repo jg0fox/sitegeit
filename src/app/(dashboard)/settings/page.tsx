@@ -44,6 +44,12 @@ const SECTIONS = [
     icon: 'person',
     href: '/settings/profile',
   },
+  {
+    title: 'System prompts',
+    description: 'View and override AI prompts for enrichment, sites, emails, and landing pages.',
+    icon: 'edit_note',
+    href: '/settings/prompts',
+  },
 ]
 
 export default function SettingsPage() {

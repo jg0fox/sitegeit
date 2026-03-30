@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { SiteFAQ } from '@/components/sites/SiteFAQ'
+import { getBasePath } from '@/lib/utils/site-urls.server'
 
 interface FAQContent {
   h1: string
@@ -61,13 +62,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function FAQPage({ params }: Props) {
   const { slug } = await params
-  const site = await getSiteData(slug)
+  const [site, basePath] = await Promise.all([getSiteData(slug), getBasePath(slug)])
 
   if (!site) {
     notFound()
   }
 
   const faq = site.faq_content as FAQContent | null
+  const isEditorial = (site.theme_config as { designSystem?: string } | null)?.designSystem === 'editorial'
 
   if (!faq) {
     notFound()
@@ -93,7 +95,8 @@ export default async function FAQPage({ params }: Props) {
       <SiteFAQ
         h1={faq.h1}
         questions={faq.questions}
-        siteSlug={slug}
+        basePath={basePath}
+        isEditorial={isEditorial}
       />
     </main>
 

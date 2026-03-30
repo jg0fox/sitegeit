@@ -7,6 +7,7 @@ const STEPS = [
   { key: 'review_ready', label: 'Review', icon: 'rate_review' },
   { key: 'sent', label: 'Sent', icon: 'send' },
   { key: 'responded', label: 'Responded', icon: 'forum', includes: ['responded', 'meeting_scheduled', 'closed_won'] },
+  { key: 'client', label: 'Client', icon: 'verified', includes: ['active', 'churned', 'closed_lost'] },
 ] as const
 
 // Map every status to which step index it corresponds to

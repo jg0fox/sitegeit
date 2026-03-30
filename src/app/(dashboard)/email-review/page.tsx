@@ -74,7 +74,7 @@ export default async function EmailReviewPage() {
           description="When the pipeline generates outreach emails, they'll appear here for your review before sending."
           action={
             <Button asChild variant="outline">
-              <Link href="/pipeline">View pipeline</Link>
+              <Link href="/businesses">View businesses</Link>
             </Button>
           }
         />

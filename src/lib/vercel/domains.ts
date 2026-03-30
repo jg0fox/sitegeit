@@ -87,3 +87,33 @@ export async function checkDomainConfig(domain: string): Promise<{
     verified: data.verified === true,
   }
 }
+
+export interface VercelDomain {
+  name: string
+  verified: boolean
+}
+
+export async function listAccountDomains(): Promise<{
+  domains: VercelDomain[]
+  error?: string
+}> {
+  if (!VERCEL_TOKEN) {
+    return { domains: [], error: 'Vercel credentials not configured' }
+  }
+
+  const res = await fetch(
+    `${BASE_URL}/v5/domains${teamQuery()}`,
+    {
+      method: 'GET',
+      headers: headers(),
+    }
+  )
+
+  if (!res.ok) {
+    const data = await res.json()
+    return { domains: [], error: data.error?.message || `HTTP ${res.status}` }
+  }
+
+  const data = await res.json()
+  return { domains: data.domains || [] }
+}
