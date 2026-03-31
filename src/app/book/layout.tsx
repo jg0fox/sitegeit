@@ -10,7 +10,7 @@ export default function BookLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -30,39 +30,7 @@ export default function BookLayout({ children }: { children: React.ReactNode }) 
         ` }} />
 
         <div className="min-h-screen bg-white">
-          {/* Header */}
-          <header
-            className="text-white"
-            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' }}
-          >
-            <div
-              className="mx-auto flex items-center justify-between"
-              style={{ maxWidth: '1120px', padding: '1rem clamp(1rem, 0.5rem + 2vw, 2rem)' }}
-            >
-              <span
-                className="font-bold text-white"
-                style={{
-                  fontFamily: "'Fraunces', Georgia, serif",
-                  fontSize: 'clamp(1.15rem, 1.05rem + 0.5vw, 1.25rem)',
-                }}
-              >
-                Simple Instant Sites
-              </span>
-              <span className="hidden items-center gap-1.5 text-sm text-white/80 sm:flex">
-                <span className="material-symbols-outlined text-[16px]">schedule</span>
-                Free consultation
-              </span>
-            </div>
-          </header>
-
           {children}
-
-          {/* Footer */}
-          <footer className="border-t border-slate-100 py-6 text-center">
-            <p className="text-xs text-slate-400">
-              &copy; {new Date().getFullYear()} Simple Instant Sites
-            </p>
-          </footer>
         </div>
       </body>
     </html>

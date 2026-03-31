@@ -11,6 +11,13 @@ interface SlotConfig {
   booking_page_subtitle: string
 }
 
+interface Branding {
+  business_name: string
+  primary_color: string
+  primary_dark: string
+  font_heading: string
+}
+
 interface TimeSlot {
   start: string
   end: string
@@ -116,6 +123,7 @@ function BookingPageContent() {
   const businessId = resolvedBusinessId || refBusinessId
 
   const [config, setConfig] = useState<SlotConfig | null>(null)
+  const [branding, setBranding] = useState<Branding | null>(null)
   const [availableDays, setAvailableDays] = useState<string[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [slots, setSlots] = useState<TimeSlot[]>([])
@@ -155,9 +163,12 @@ function BookingPageContent() {
           setMeetingType(data.config.default_meeting_type)
         }
       }
-      // Capture business_id from client scheduling config
+      // Capture business_id and branding from client scheduling config
       if (data.client?.business_id) {
         setResolvedBusinessId(data.client.business_id)
+      }
+      if (data.client?.branding) {
+        setBranding(data.client.branding)
       }
     }
     setLoadingDays(false)
@@ -220,15 +231,26 @@ function BookingPageContent() {
     }
   }
 
+  // Brand colors — use business theme if available, default to Simple Instant Sites blue
+  const headerBg = branding
+    ? `linear-gradient(135deg, ${branding.primary_color} 0%, ${branding.primary_dark} 100%)`
+    : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'
+  const headerName = branding?.business_name || 'Simple Instant Sites'
+  const headingFont = branding?.font_heading || FRAUNCES
+  const accentColor = branding?.primary_color || '#2563eb'
+  const accentDark = branding?.primary_dark || '#1e40af'
+
   // ═══════════ CONFIRMED STEP ═══════════
   if (step === 'confirmed' && booking) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seitgeit.vercel.app'
     return (
+      <>
+      <BookingHeader name={headerName} background={headerBg} fontHeading={headingFont} />
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <div className="mb-6 flex justify-center">
           <div
             className="flex h-20 w-20 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' }}
+            style={{ background: headerBg }}
           >
             <span className="material-symbols-outlined text-[36px] text-white" style={{ fontVariationSettings: "'FILL' 1" }}>
               check_circle
@@ -237,7 +259,7 @@ function BookingPageContent() {
         </div>
         <h1
           className="text-slate-900"
-          style={{ fontFamily: FRAUNCES, fontSize: 'clamp(1.9rem, 1.5rem + 2vw, 2.25rem)', fontWeight: 700 }}
+          style={{ fontFamily: headingFont, fontSize: 'clamp(1.9rem, 1.5rem + 2vw, 2.25rem)', fontWeight: 700 }}
         >
           You&apos;re booked!
         </h1>
@@ -287,12 +309,16 @@ function BookingPageContent() {
           </a>
         </div>
       </div>
+      <BookingFooter name={headerName} />
+      </>
     )
   }
 
   // ═══════════ FORM STEP ═══════════
   if (step === 'form' && selectedSlot) {
     return (
+      <>
+      <BookingHeader name={headerName} background={headerBg} fontHeading={headingFont} />
       <div className="mx-auto max-w-lg px-4 py-12">
         <button
           onClick={() => setStep('select')}
@@ -380,26 +406,30 @@ function BookingPageContent() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3.5 font-semibold text-white shadow-sm transition-all hover:-translate-y-px hover:bg-blue-700 hover:shadow-md disabled:opacity-50 disabled:hover:translate-y-0"
-              style={{ fontFamily: FRAUNCES, fontSize: '1.0625rem' }}
+              className="w-full rounded-lg px-4 py-3.5 font-semibold text-white shadow-sm transition-all hover:-translate-y-px hover:shadow-md disabled:opacity-50 disabled:hover:translate-y-0"
+              style={{ fontFamily: headingFont, fontSize: '1.0625rem', backgroundColor: accentColor }}
             >
               {submitting ? 'Confirming...' : 'Confirm booking'}
             </button>
           </form>
         </div>
       </div>
+      <BookingFooter name={headerName} />
+      </>
     )
   }
 
   // ═══════════ SELECT STEP ═══════════
   return (
+    <>
+    <BookingHeader name={headerName} background={headerBg} fontHeading={headingFont} />
     <div className="mx-auto max-w-3xl px-4 py-12">
       {/* Hero heading */}
       <div className="mb-8 text-center">
         <h1
           className="text-slate-900"
           style={{
-            fontFamily: FRAUNCES,
+            fontFamily: headingFont,
             fontSize: 'clamp(1.9rem, 1.5rem + 2vw, 2.25rem)',
             fontWeight: 700,
             lineHeight: 1.15,
@@ -415,7 +445,10 @@ function BookingPageContent() {
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
           {config && (
             <>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+                style={{ backgroundColor: `${accentColor}12`, color: accentColor }}
+              >
                 <span className="material-symbols-outlined text-[16px]">schedule</span>
                 {config.meeting_duration} min
               </span>
@@ -501,6 +534,44 @@ function BookingPageContent() {
         </div>
       </div>
     </div>
+    <BookingFooter name={headerName} />
+    </>
+  )
+}
+
+// ═══════════ HEADER & FOOTER ═══════════
+function BookingHeader({ name, background, fontHeading }: { name: string; background: string; fontHeading: string }) {
+  return (
+    <header className="text-white" style={{ background }}>
+      <div
+        className="mx-auto flex items-center justify-between"
+        style={{ maxWidth: '1120px', padding: '1rem clamp(1rem, 0.5rem + 2vw, 2rem)' }}
+      >
+        <span
+          className="font-bold text-white"
+          style={{
+            fontFamily: fontHeading,
+            fontSize: 'clamp(1.15rem, 1.05rem + 0.5vw, 1.25rem)',
+          }}
+        >
+          {name}
+        </span>
+        <span className="hidden items-center gap-1.5 text-sm text-white/80 sm:flex">
+          <span className="material-symbols-outlined text-[16px]">schedule</span>
+          Free consultation
+        </span>
+      </div>
+    </header>
+  )
+}
+
+function BookingFooter({ name }: { name: string }) {
+  return (
+    <footer className="border-t border-slate-100 py-6 text-center">
+      <p className="text-xs text-slate-400">
+        &copy; {new Date().getFullYear()} {name}
+      </p>
+    </footer>
   )
 }
 

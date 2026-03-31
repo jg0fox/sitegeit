@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const supabase = getAdminClient()
     const { data: clientConfig } = await supabase
       .from('client_scheduling_config')
-      .select('*, businesses(name, category)')
+      .select('*, businesses(id, name, category, category_slug)')
       .eq('booking_slug', slug)
       .eq('is_active', true)
       .single()
@@ -42,6 +42,46 @@ export async function GET(request: NextRequest) {
 
       // Use client availability if set, otherwise fall back to operator's
       const days = await getAvailableDays(userId, year, m)
+
+      // Fetch branding from the business's generated site theme config
+      const business = clientConfig.businesses as { id: string; name: string; category_slug?: string } | null
+      let branding: { business_name: string; primary_color: string; primary_dark: string; font_heading: string } | null = null
+      if (business?.id) {
+        const { data: site } = await supabase
+          .from('generated_sites')
+          .select('theme_config')
+          .eq('business_id', business.id)
+          .eq('deploy_status', 'live')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (site?.theme_config) {
+          const tc = site.theme_config as {
+            designSystem?: string
+            cssVars?: Record<string, string>
+            palette?: { onPrimaryFixed?: string; primary?: string }
+            colors?: { primary?: string; primaryHover?: string }
+            typography?: { headingFont?: string }
+          }
+          if (tc.designSystem === 'editorial') {
+            branding = {
+              business_name: business.name,
+              primary_color: tc.palette?.onPrimaryFixed || '#101c2c',
+              primary_dark: tc.palette?.primary || '#535f71',
+              font_heading: "'Epilogue', system-ui, sans-serif",
+            }
+          } else if (tc.cssVars) {
+            branding = {
+              business_name: business.name,
+              primary_color: tc.cssVars['--color-primary'] || '#2563eb',
+              primary_dark: tc.cssVars['--color-primary-hover'] || '#1e40af',
+              font_heading: tc.cssVars['--font-heading'] || "'Fraunces', Georgia, serif",
+            }
+          }
+        }
+      }
+
       return NextResponse.json({
         days,
         config: {
@@ -51,18 +91,19 @@ export async function GET(request: NextRequest) {
           booking_page_title: clientConfig.booking_page_title || (
             clientConfig.mode === 'demo'
               ? `Book a Free Consultation`
-              : `Book with ${(clientConfig.businesses as { name: string })?.name || 'us'}`
+              : `Book with ${business?.name || 'us'}`
           ),
           booking_page_subtitle: clientConfig.booking_page_subtitle || (
             clientConfig.mode === 'demo'
-              ? `Schedule a convenient time with ${(clientConfig.businesses as { name: string })?.name || 'us'}.`
+              ? `Schedule a convenient time with ${business?.name || 'us'}.`
               : 'Schedule a convenient time.'
           ),
         },
         client: {
-          business_name: (clientConfig.businesses as { name: string })?.name,
+          business_name: business?.name,
           meeting_types: clientConfig.meeting_types || ['phone'],
           business_id: clientConfig.business_id,
+          branding,
         },
       })
     }
