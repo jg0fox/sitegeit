@@ -120,7 +120,7 @@ export function LandingSitePreview({ intro, siteUrl, screenshotAlt, landingSlug 
               Choose a plan and launch your website today.
             </p>
             <a
-              href={`/sites/go/${landingSlug}/checkout`}
+              href={`/${landingSlug}/checkout`}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-px hover:bg-blue-700 hover:shadow-md"
             >
               <span className="material-symbols-outlined text-[18px]">rocket_launch</span>

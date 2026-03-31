@@ -8,12 +8,12 @@ export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const pathname = request.nextUrl.pathname
 
-  // Check for landing page subdomain (go.goget.im/slug) — must be before general subdomain check
+  // Check for landing page subdomain (go.goget.im/slug/...) — must be before general subdomain check
   if (hostname === `go.${SITE_DOMAIN}`) {
-    const slug = pathname.split('/')[1]
-    if (slug) {
+    // Rewrite full path under /sites/go/ (e.g., /electric-force-inc/checkout → /sites/go/electric-force-inc/checkout)
+    if (pathname && pathname !== '/') {
       const url = request.nextUrl.clone()
-      url.pathname = `/sites/go/${slug}`
+      url.pathname = `/sites/go${pathname}`
       return NextResponse.rewrite(url)
     }
     return updateSession(request)

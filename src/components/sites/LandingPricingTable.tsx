@@ -194,7 +194,7 @@ export function LandingPricingTable({ slug }: LandingPricingTableProps) {
   const [tableExpanded, setTableExpanded] = useState(false)
 
   const getCtaUrl = (tierName: string) =>
-    `/sites/go/${slug}/checkout?tier=${tierName.toLowerCase()}`
+    `/${slug}/checkout?tier=${tierName.toLowerCase()}`
 
   const visibleGroups = tableExpanded
     ? FEATURE_GROUPS

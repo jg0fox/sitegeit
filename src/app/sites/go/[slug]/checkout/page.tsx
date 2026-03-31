@@ -68,7 +68,7 @@ export default async function CheckoutPage({
         <div className="text-center">
           <p className="text-lg text-slate-600">Invalid tier selected.</p>
           <Link
-            href={`/sites/go/${slug}`}
+            href={`/${slug}`}
             className="mt-4 inline-block text-blue-600 hover:underline"
           >
             Back to pricing
@@ -90,7 +90,7 @@ export default async function CheckoutPage({
           style={{ maxWidth: '960px', padding: '1rem clamp(1rem, 0.5rem + 2vw, 2rem)' }}
         >
           <Link
-            href={`/sites/go/${slug}`}
+            href={`/${slug}`}
             className="flex items-center gap-1.5 text-sm text-white/80 transition-colors hover:text-white"
           >
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
