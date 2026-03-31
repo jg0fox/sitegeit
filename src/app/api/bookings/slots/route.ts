@@ -48,8 +48,16 @@ export async function GET(request: NextRequest) {
           meeting_duration: clientConfig.meeting_duration || 15,
           default_meeting_type: clientConfig.meeting_types?.[0] || 'phone',
           timezone: clientConfig.timezone || 'America/Phoenix',
-          booking_page_title: clientConfig.booking_page_title || `Book with ${(clientConfig.businesses as { name: string })?.name || 'us'}`,
-          booking_page_subtitle: clientConfig.booking_page_subtitle || 'Schedule a convenient time.',
+          booking_page_title: clientConfig.booking_page_title || (
+            clientConfig.mode === 'demo'
+              ? `Book a Free Consultation`
+              : `Book with ${(clientConfig.businesses as { name: string })?.name || 'us'}`
+          ),
+          booking_page_subtitle: clientConfig.booking_page_subtitle || (
+            clientConfig.mode === 'demo'
+              ? `Schedule a convenient time with ${(clientConfig.businesses as { name: string })?.name || 'us'}.`
+              : 'Schedule a convenient time.'
+          ),
         },
         client: {
           business_name: (clientConfig.businesses as { name: string })?.name,

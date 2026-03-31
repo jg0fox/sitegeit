@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { RealtimeRefresh } from '@/components/pipeline/RealtimeRefresh'
 import { BusinessesList } from '@/components/businesses/BusinessesList'
 import { ClientMetrics } from '@/components/clients/ClientMetrics'
+import { ManualAddDialog } from '@/components/businesses/ManualAddDialog'
 import Link from 'next/link'
 
 const FILTER_STAGES = [
@@ -166,10 +167,19 @@ export default async function BusinessesPage({
   return (
     <div className="space-y-6">
       <RealtimeRefresh />
-      <div>
+      <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">
           Track prospects through discovery, enrichment, site generation, outreach, and client management.
         </p>
+        <div className="flex items-center gap-2">
+          <ManualAddDialog />
+          <Link href="/discover">
+            <Button size="sm" className="gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">travel_explore</span>
+              Discover leads
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Client metrics strip */}
@@ -307,16 +317,19 @@ export default async function BusinessesPage({
         <EmptyState
           icon="store"
           title={activeFilter === 'all' ? 'No businesses yet' : 'No businesses match this filter'}
-          description="Discover leads to fill your pipeline. Businesses will appear here as they move through each stage."
+          description="Discover leads or add a business manually to get started."
           action={
-            <Button asChild>
-              <Link href="/discover">
-                <span className="material-symbols-outlined text-[18px]">
-                  travel_explore
-                </span>
-                Discover leads
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <ManualAddDialog />
+              <Button asChild>
+                <Link href="/discover">
+                  <span className="material-symbols-outlined text-[18px]">
+                    travel_explore
+                  </span>
+                  Discover leads
+                </Link>
+              </Button>
+            </div>
           }
         />
       ) : (

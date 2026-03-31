@@ -46,5 +46,19 @@ export const addToPipelineSchema = z.object({
   skipEmailSearch: z.boolean().optional(),
 })
 
+export const manualBusinessSchema = z.object({
+  name: z.string().min(1, 'Business name is required'),
+  category: z.string().min(1, 'Category is required'),
+  phone: z.string().optional().default(''),
+  email: z.string().email().optional().or(z.literal('')),
+  address_street: z.string().optional().default(''),
+  address_city: z.string().optional().default(''),
+  address_state: z.string().optional().default(''),
+  address_zip: z.string().optional().default(''),
+  website_url: z.string().url().optional().or(z.literal('')),
+  owner_name: z.string().optional().default(''),
+})
+
 export type SearchParamsInput = z.infer<typeof searchParamsSchema>
 export type AddToPipelineInput = z.infer<typeof addToPipelineSchema>
+export type ManualBusinessInput = z.infer<typeof manualBusinessSchema>
