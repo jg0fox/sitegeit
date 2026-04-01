@@ -79,26 +79,20 @@ async function handler(request: Request) {
       return NextResponse.json({ error: 'Business has no email address' }, { status: 400 })
     }
 
-    // Determine from address — use user-specified from_email, or fall back to sending domain
-    let fromEmail = email.from_email as string | null
+    // Determine from address
+    // Resend requires a verified domain — use simpleinstantsite.com with display name
+    // The user-chosen from_email (e.g., jasonfox@simplesitelab.com) is used as reply-to
+    const replyTo = email.from_email as string | null
 
-    if (!fromEmail) {
-      // Auto-select from sending_domains
-      const { data: domains } = await supabase
-        .from('sending_domains')
-        .select('email_address')
-        .eq('user_id', business.user_id)
-        .in('warmup_status', ['ready', 'warming'])
-        .order('health_score', { ascending: false, nullsFirst: false })
-        .limit(1)
+    // Fetch user name for display
+    const { data: senderUser } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', business.user_id)
+      .single()
 
-      fromEmail = domains?.[0]?.email_address || null
-    }
-
-    if (!fromEmail) {
-      console.error(`[worker/send-email] No from address available for user ${business.user_id}`)
-      return NextResponse.json({ error: 'No sending address configured' }, { status: 400 })
-    }
+    const senderName = senderUser?.full_name || 'Jason Fox'
+    const fromEmail = `${senderName} <jason@simpleinstantsite.com>`
 
     // Send via Resend — one send per recipient
     const emailBody = email.edited_body || email.body
@@ -111,6 +105,7 @@ async function handler(request: Request) {
         to: recipientEmail,
         subject: email.subject,
         html: emailBody,
+        ...(replyTo ? { reply_to: replyTo } : {}),
       })
 
       if (sendError || !result) {
