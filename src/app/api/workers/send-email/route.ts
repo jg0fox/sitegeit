@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'
 import { publishToWorker } from '@/lib/qstash/client'
 import { getAdminClient } from '@/lib/supabase/admin'
-import { sendEmail } from '@/lib/services/instantly'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function handler(request: Request) {
   try {
@@ -77,59 +79,53 @@ async function handler(request: Request) {
       return NextResponse.json({ error: 'Business has no email address' }, { status: 400 })
     }
 
-    // Pick the sending domain — use user-specified from_email if set, otherwise auto-select
-    const { data: domains } = await supabase
-      .from('sending_domains')
-      .select('*')
-      .eq('user_id', business.user_id)
-      .in('warmup_status', ['ready', 'warming'])
-      .order('health_score', { ascending: false, nullsFirst: false })
+    // Determine from address — use user-specified from_email, or fall back to sending domain
+    let fromEmail = email.from_email as string | null
 
-    // If user chose a specific from_email in review, try to use that domain
-    let sendingDomain = email.from_email
-      ? domains?.find((d) => d.email_address === email.from_email && d.emails_sent_today < d.daily_send_limit)
-      : null
+    if (!fromEmail) {
+      // Auto-select from sending_domains
+      const { data: domains } = await supabase
+        .from('sending_domains')
+        .select('email_address')
+        .eq('user_id', business.user_id)
+        .in('warmup_status', ['ready', 'warming'])
+        .order('health_score', { ascending: false, nullsFirst: false })
+        .limit(1)
 
-    // Fall back to auto-selection: prefer 'ready' warmup, then under daily limit
-    if (!sendingDomain) {
-      sendingDomain = domains
-        ?.sort((a, b) => {
-          if (a.warmup_status === 'ready' && b.warmup_status !== 'ready') return -1
-          if (b.warmup_status === 'ready' && a.warmup_status !== 'ready') return 1
-          return 0
-        })
-        .find((d) => d.emails_sent_today < d.daily_send_limit)
+      fromEmail = domains?.[0]?.email_address || null
     }
 
-    if (!sendingDomain) {
-      console.error(`[worker/send-email] No sending domain available for user ${business.user_id}`)
-      return NextResponse.json(
-        { error: domains?.length ? 'Daily send limit reached' : 'No sending domain available' },
-        { status: domains?.length ? 429 : 400 }
-      )
+    if (!fromEmail) {
+      console.error(`[worker/send-email] No from address available for user ${business.user_id}`)
+      return NextResponse.json({ error: 'No sending address configured' }, { status: 400 })
     }
 
-    // Send via Instantly — one send per recipient
+    // Send via Resend — one send per recipient
     const emailBody = email.edited_body || email.body
     const sentAt = new Date().toISOString()
-    let firstInstantlyId: string | null = null
+    let firstMessageId: string | null = null
 
     for (const recipientEmail of recipients) {
-      const result = await sendEmail({
-        from_email: sendingDomain.email_address,
+      const { data: result, error: sendError } = await resend.emails.send({
+        from: fromEmail,
         to: recipientEmail,
         subject: email.subject,
-        body: emailBody,
+        html: emailBody,
       })
 
-      console.log(`[worker/send-email] Sent ${emailId} to ${recipientEmail} via Instantly: ${result.id}`)
-      if (!firstInstantlyId) firstInstantlyId = result.id
+      if (sendError || !result) {
+        console.error(`[worker/send-email] Resend error for ${recipientEmail}:`, sendError)
+        throw new Error(`Failed to send to ${recipientEmail}: ${sendError?.message || 'Unknown error'}`)
+      }
+
+      console.log(`[worker/send-email] Sent ${emailId} to ${recipientEmail} via Resend: ${result.id}`)
+      if (!firstMessageId) firstMessageId = result.id
 
       // Store in email_messages for thread tracking
       await supabase.from('email_messages').insert({
         user_id: business.user_id,
         direction: 'outbound',
-        from_email: sendingDomain.email_address,
+        from_email: fromEmail,
         to_email: recipientEmail,
         subject: email.subject,
         body_html: emailBody,
@@ -139,16 +135,13 @@ async function handler(request: Request) {
         outreach_email_id: emailId,
         instantly_id: result.id,
       })
-
-      // Increment sent counter per email sent
-      await supabase.rpc('increment_sent_today', { domain_id: sendingDomain.id })
     }
 
-    // Update email record with first Instantly ID
+    // Update email record
     await supabase
       .from('outreach_emails')
       .update({
-        instantly_id: firstInstantlyId,
+        instantly_id: firstMessageId,
         sent_at: sentAt,
         review_status: 'sent',
       })
@@ -170,9 +163,9 @@ async function handler(request: Request) {
       event_type: 'email_sent',
       event_data: {
         email_id: emailId,
-        instantly_id: firstInstantlyId,
+        resend_id: firstMessageId,
         sequence_position: email.sequence_position,
-        from: sendingDomain.email_address,
+        from: fromEmail,
         to: recipients,
       },
     })
@@ -184,7 +177,7 @@ async function handler(request: Request) {
       title: 'Email sent',
       body: `Outreach email sent to ${business.name}.`,
       business_id: business.id,
-      href: `/pipeline/${business.id}`,
+      href: `/businesses/${business.id}`,
     })
 
     // Queue follow-ups with delay if this is the primary email
@@ -214,8 +207,8 @@ async function handler(request: Request) {
     return NextResponse.json({
       success: true,
       emailId,
-      instantlyId: firstInstantlyId,
-      from: sendingDomain.email_address,
+      resendId: firstMessageId,
+      from: fromEmail,
       to: recipients,
     })
   } catch (err) {
