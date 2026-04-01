@@ -15,6 +15,16 @@ interface EmailData {
   sequence_position: number
   created_at: string
   business_id: string
+  template_variant?: string | null
+  to_emails?: string[] | null
+}
+
+interface EmailCandidate {
+  id: string
+  email: string
+  source: string
+  confidence: string
+  is_selected: boolean
 }
 
 interface BusinessGroup {
@@ -38,6 +48,20 @@ const SEQUENCE_LABELS: Record<number, string> = {
 const SEQUENCE_DELAY_HINTS: Record<number, string> = {
   2: 'Sends 3 days after primary',
   3: 'Sends 5 days after follow-up 1',
+}
+
+const CONFIDENCE_COLORS: Record<string, string> = {
+  high: 'text-emerald-600 bg-emerald-50',
+  medium: 'text-amber-600 bg-amber-50',
+  low: 'text-gray-500 bg-gray-100',
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  website_scrape: 'Website',
+  web_search: 'Web search',
+  mx_pattern: 'Pattern',
+  hunter: 'Hunter.io',
+  manual: 'Manual',
 }
 
 export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
@@ -64,8 +88,18 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
     return initial
   })
-  const [editingRecipient, setEditingRecipient] = useState<string | null>(null)
-  const [recipientDraft, setRecipientDraft] = useState('')
+  // Multi-recipient: selected email addresses per business
+  const [selectedRecipients, setSelectedRecipients] = useState<Record<string, string[]>>(() => {
+    const initial: Record<string, string[]> = {}
+    for (const g of groups) {
+      if (g.business.email) initial[g.business.id] = [g.business.email]
+    }
+    return initial
+  })
+  // Email candidates per business (loaded on demand)
+  const [candidates, setCandidates] = useState<Record<string, EmailCandidate[]>>({})
+  const [loadingCandidates, setLoadingCandidates] = useState<string | null>(null)
+  const [showCandidates, setShowCandidates] = useState<string | null>(null)
 
   // Load sending accounts for from-address selection
   useEffect(() => {
@@ -86,6 +120,58 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
     loadAccounts()
   }, [])
+
+  async function loadCandidatesForBusiness(businessId: string) {
+    if (candidates[businessId]) return
+    setLoadingCandidates(businessId)
+    try {
+      const res = await fetch(`/api/businesses/${businessId}/email-candidates`)
+      if (res.ok) {
+        const data = await res.json()
+        setCandidates((prev) => ({ ...prev, [businessId]: data || [] }))
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingCandidates(null)
+    }
+  }
+
+  function toggleRecipient(businessId: string, email: string) {
+    setSelectedRecipients((prev) => {
+      const current = prev[businessId] || []
+      if (current.includes(email)) {
+        return { ...prev, [businessId]: current.filter((e) => e !== email) }
+      } else {
+        return { ...prev, [businessId]: [...current, email] }
+      }
+    })
+  }
+
+  async function setPrimaryEmail(businessId: string, email: string) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/businesses/${businessId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) {
+        setBusinessEmails((prev) => ({ ...prev, [businessId]: email }))
+        // Ensure it's in selected recipients
+        setSelectedRecipients((prev) => {
+          const current = prev[businessId] || []
+          if (!current.includes(email)) return { ...prev, [businessId]: [email, ...current] }
+          return prev
+        })
+        toast.success('Primary email updated')
+      }
+    } catch {
+      toast.error('Failed to update email')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function startEditing(email: EmailData) {
     setEditingId(email.id)
@@ -110,7 +196,6 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
       if (!res.ok) throw new Error('Failed to save')
       toast.success('Email updated')
       setEditingId(null)
-      // Update local state
       for (const group of groups) {
         const email = group.emails.find((e) => e.id === emailId)
         if (email) {
@@ -126,15 +211,17 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
   }
 
-  async function approveEmail(emailId: string) {
+  async function approveEmail(emailId: string, businessId?: string) {
     setSaving(true)
     try {
+      const toEmails = businessId ? selectedRecipients[businessId] : undefined
       const res = await fetch(`/api/emails/${emailId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           review_status: 'approved',
           ...(selectedFromEmail ? { from_email: selectedFromEmail } : {}),
+          ...(toEmails && toEmails.length > 0 ? { to_emails: toEmails } : {}),
         }),
       })
       if (!res.ok) throw new Error('Failed to approve')
@@ -147,9 +234,10 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
   }
 
-  async function approveAll(businessEmails: EmailData[]) {
+  async function approveAll(businessEmails: EmailData[], businessId: string) {
     setSaving(true)
     try {
+      const toEmails = selectedRecipients[businessId]
       await Promise.all(
         businessEmails
           .filter((e) => !approvedIds.has(e.id))
@@ -160,6 +248,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
               body: JSON.stringify({
                 review_status: 'approved',
                 ...(selectedFromEmail ? { from_email: selectedFromEmail } : {}),
+                ...(toEmails && toEmails.length > 0 ? { to_emails: toEmails } : {}),
               }),
             })
           )
@@ -193,42 +282,13 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
   }
 
-  function startEditingRecipient(businessId: string) {
-    setRecipientDraft(businessEmails[businessId] ?? '')
-    setEditingRecipient(businessId)
-  }
-
-  async function saveRecipientEmail(businessId: string) {
-    const trimmed = recipientDraft.trim()
-    if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      toast.error('Invalid email address')
-      return
-    }
-    setSaving(true)
-    try {
-      const res = await fetch(`/api/businesses/${businessId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed || null }),
-      })
-      if (!res.ok) throw new Error('Failed to save')
-      setBusinessEmails((prev) => ({ ...prev, [businessId]: trimmed }))
-      setEditingRecipient(null)
-      toast.success(trimmed ? 'Recipient email updated' : 'Recipient email removed')
-    } catch {
-      toast.error('Failed to save recipient email')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const allEmails = groups.flatMap((g) => g.emails)
   const currentEmail = allEmails.find((e) => e.id === activeEmail)
   const currentBusiness = currentEmail
     ? groups.find((g) => g.emails.some((e) => e.id === currentEmail.id))?.business
     : null
-  const currentRecipientEmail = currentBusiness ? businessEmails[currentBusiness.id] : ''
-  const hasRecipientEmail = !!currentRecipientEmail
+  const currentRecipients = currentBusiness ? (selectedRecipients[currentBusiness.id] || []) : []
+  const hasRecipientEmail = currentRecipients.length > 0
   const reviewedCount = allEmails.filter(
     (e) => approvedIds.has(e.id) || skippedIds.has(e.id)
   ).length
@@ -242,7 +302,6 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
       const next = allEmails[(idx + i) % allEmails.length]
       if (!approvedIds.has(next.id) && !skippedIds.has(next.id)) {
         setActiveEmail(next.id)
-        // expand the business group containing this email
         const group = groups.find((g) => g.emails.some((e) => e.id === next.id))
         if (group) setExpandedBusiness(group.business.id)
         return
@@ -253,7 +312,6 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Don't fire when editing
       if (editingId || !currentEmail) return
       const tag = (e.target as HTMLElement).tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
@@ -261,7 +319,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
       switch (e.key.toLowerCase()) {
         case 'a':
           if (!approvedIds.has(currentEmail.id) && !skippedIds.has(currentEmail.id) && hasRecipientEmail) {
-            approveEmail(currentEmail.id)
+            approveEmail(currentEmail.id, currentBusiness?.id)
           }
           break
         case 's':
@@ -300,7 +358,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [editingId, currentEmail, activeEmail, allEmails, approvedIds, skippedIds, groups])
+  }, [editingId, currentEmail, activeEmail, allEmails, approvedIds, skippedIds, groups, hasRecipientEmail, currentBusiness, moveToNext])
 
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
@@ -328,6 +386,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
           const allApproved = group.emails.every(
             (e) => approvedIds.has(e.id) || skippedIds.has(e.id)
           )
+          const recipientCount = (selectedRecipients[group.business.id] || []).length
           return (
             <Card
               key={group.business.id}
@@ -340,6 +399,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                   if (!isExpanded && group.emails[0]) {
                     setActiveEmail(group.emails[0].id)
                     setEditingId(null)
+                    loadCandidatesForBusiness(group.business.id)
                   }
                 }}
               >
@@ -424,9 +484,9 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                     <Button
                       size="sm"
                       className="mt-2 w-full"
-                      onClick={() => approveAll(group.emails.filter((e) => !skippedIds.has(e.id)))}
-                      disabled={saving || !businessEmails[group.business.id]}
-                      title={!businessEmails[group.business.id] ? 'Add a recipient email before approving' : 'Emails will be sent via your next sending window'}
+                      onClick={() => approveAll(group.emails.filter((e) => !skippedIds.has(e.id)), group.business.id)}
+                      disabled={saving || (selectedRecipients[group.business.id] || []).length === 0}
+                      title={(selectedRecipients[group.business.id] || []).length === 0 ? 'Select at least one recipient email' : 'Emails will be sent via your next sending window'}
                     >
                       Approve &amp; queue remaining
                     </Button>
@@ -454,6 +514,11 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                     <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600">
                       <span className="material-symbols-outlined text-[12px]">schedule</span>
                       {SEQUENCE_DELAY_HINTS[currentEmail.sequence_position]}
+                    </span>
+                  )}
+                  {currentEmail.template_variant && currentEmail.sequence_position === 1 && (
+                    <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-600">
+                      {currentEmail.template_variant}
                     </span>
                   )}
                 </div>
@@ -515,9 +580,9 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => approveEmail(currentEmail.id)}
+                          onClick={() => approveEmail(currentEmail.id, currentBusiness?.id)}
                           disabled={saving || !hasRecipientEmail}
-                          title={!hasRecipientEmail ? 'Add a recipient email before approving' : 'Email will be sent via your next sending window'}
+                          title={!hasRecipientEmail ? 'Select at least one recipient email' : 'Email will be sent via your next sending window'}
                         >
                           <span className="material-symbols-outlined text-[16px]">
                             check
@@ -546,61 +611,109 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                 )}
               </div>
             </CardHeader>
-            {/* Recipient email bar */}
+
+            {/* Recipient email bar — with candidates dropdown */}
             {currentBusiness && (
-              <div className={cn(
-                'mx-6 mb-2 flex items-center gap-2 rounded-lg px-4 py-2.5',
-                hasRecipientEmail ? 'bg-gray-50' : 'bg-amber-50 border border-amber-200'
-              )}>
-                <span className={cn(
-                  'material-symbols-outlined text-[18px]',
-                  hasRecipientEmail ? 'text-gray-400' : 'text-amber-500'
+              <div className="mx-6 mb-2 space-y-1">
+                <div className={cn(
+                  'flex items-center gap-2 rounded-lg px-4 py-2.5',
+                  hasRecipientEmail ? 'bg-gray-50' : 'bg-amber-50 border border-amber-200'
                 )}>
-                  {hasRecipientEmail ? 'mail' : 'warning'}
-                </span>
-                {editingRecipient === currentBusiness.id ? (
-                  <input
-                    autoFocus
-                    type="email"
-                    value={recipientDraft}
-                    onChange={(e) => setRecipientDraft(e.target.value)}
-                    onBlur={() => saveRecipientEmail(currentBusiness.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); saveRecipientEmail(currentBusiness.id) }
-                      if (e.key === 'Escape') setEditingRecipient(null)
+                  <span className={cn(
+                    'material-symbols-outlined text-[18px]',
+                    hasRecipientEmail ? 'text-gray-400' : 'text-amber-500'
+                  )}>
+                    {hasRecipientEmail ? 'mail' : 'warning'}
+                  </span>
+                  <div className="flex-1">
+                    {currentRecipients.length > 0 ? (
+                      <p className="text-sm text-gray-700">
+                        To: {currentRecipients.join(', ')}
+                      </p>
+                    ) : (
+                      <p className="text-sm font-medium text-amber-700">
+                        No recipient selected
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (showCandidates === currentBusiness.id) {
+                        setShowCandidates(null)
+                      } else {
+                        setShowCandidates(currentBusiness.id)
+                        loadCandidatesForBusiness(currentBusiness.id)
+                      }
                     }}
-                    placeholder="recipient@example.com"
-                    className="h-7 flex-1 rounded border border-gray-300 px-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                ) : hasRecipientEmail ? (
-                  <button
-                    type="button"
-                    onClick={() => startEditingRecipient(currentBusiness.id)}
-                    className="flex-1 text-left text-sm text-gray-700 hover:text-primary"
-                    title="Click to edit recipient email"
+                    className="text-xs font-medium text-primary hover:underline"
                   >
-                    To: {currentRecipientEmail}
+                    {showCandidates === currentBusiness.id ? 'Hide' : 'Select recipients'}
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => startEditingRecipient(currentBusiness.id)}
-                    className="flex-1 text-left text-sm font-medium text-amber-700 hover:text-amber-900"
-                  >
-                    No recipient email — click to add
-                  </button>
-                )}
-                {editingRecipient !== currentBusiness.id && (
-                  <button
-                    type="button"
-                    onClick={() => startEditingRecipient(currentBusiness.id)}
-                    className="text-gray-400 hover:text-primary"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">edit</span>
-                  </button>
+                </div>
+
+                {/* Candidates dropdown */}
+                {showCandidates === currentBusiness.id && (
+                  <div className="rounded-lg border border-gray-200 bg-white p-3">
+                    {loadingCandidates === currentBusiness.id ? (
+                      <p className="text-xs text-gray-400">Loading candidates...</p>
+                    ) : (candidates[currentBusiness.id] || []).length === 0 ? (
+                      <p className="text-xs text-gray-400">No email candidates found. Add one manually on the business detail page.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Select recipients</p>
+                        {(candidates[currentBusiness.id] || []).map((c) => {
+                          const isSelected = currentRecipients.includes(c.email)
+                          const isPrimary = businessEmails[currentBusiness.id] === c.email
+                          return (
+                            <label
+                              key={c.id}
+                              className={cn(
+                                'flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-gray-50',
+                                isSelected && 'bg-primary/5'
+                              )}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleRecipient(currentBusiness.id, c.email)}
+                                className="h-3.5 w-3.5 rounded border-gray-300 text-primary"
+                              />
+                              <span className="flex-1 text-sm text-gray-800">
+                                {c.email}
+                                {isPrimary && (
+                                  <span className="ml-1.5 text-[10px] font-medium text-primary">primary</span>
+                                )}
+                              </span>
+                              <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-medium', CONFIDENCE_COLORS[c.confidence] || 'text-gray-500 bg-gray-100')}>
+                                {c.confidence}
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {SOURCE_LABELS[c.source] || c.source}
+                              </span>
+                              {!isPrimary && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    setPrimaryEmail(currentBusiness.id, c.email)
+                                  }}
+                                  className="text-[10px] font-medium text-gray-400 hover:text-primary"
+                                  title="Set as primary email"
+                                >
+                                  Set primary
+                                </button>
+                              )}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
+
             {/* From-address selector */}
             {sendingAccounts.length > 0 && (
               <div className="mx-6 mb-2 flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-2.5">
@@ -618,6 +731,7 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                 </select>
               </div>
             )}
+
             <CardContent>
               {editingId === currentEmail.id ? (
                 <textarea
@@ -627,9 +741,10 @@ export function EmailReviewList({ groups }: { groups: BusinessGroup[] }) {
                 />
               ) : (
                 <div className="rounded-lg bg-gray-50 px-6 py-5">
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-700">
-                    {currentEmail.edited_body || currentEmail.body}
-                  </pre>
+                  <div
+                    className="prose prose-sm max-w-none text-gray-700 [&_a]:text-primary [&_a]:underline [&_p]:my-2 [&_p]:leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: currentEmail.edited_body || currentEmail.body }}
+                  />
                 </div>
               )}
             </CardContent>

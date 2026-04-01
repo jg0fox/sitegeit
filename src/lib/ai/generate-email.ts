@@ -3,8 +3,10 @@ import { generateJSON } from './client'
 import {
   EMAIL_SYSTEM_PROMPT,
   buildEmailPrompt,
+  buildEmailSignature,
   type EmailOutput,
 } from './prompts/email'
+import { selectTemplateVariant } from './prompts/email-templates'
 import { getLandingPageUrl } from '@/lib/utils/site-urls'
 
 export async function generateEmail(
@@ -29,6 +31,11 @@ export async function generateEmail(
   const business = businessResult.data
   const landingPage = landingPageResult.data
 
+  // Verify landing page is live
+  if (landingPage.deploy_status !== 'live') {
+    console.warn(`Landing page ${landingPageId} is not live (status: ${landingPage.deploy_status}), proceeding with URL anyway`)
+  }
+
   // Fetch user info for sender details
   const { data: user } = await supabase
     .from('users')
@@ -36,10 +43,10 @@ export async function generateEmail(
     .eq('id', business.user_id)
     .single()
 
-  const senderName = user?.full_name || 'The Simple Instant Site Team'
+  const senderName = user?.full_name || 'Jason Fox'
+  const senderCompany = 'Simple Instant Sites'
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://goget.im'
   const landingPageUrl = getLandingPageUrl(landingPage.deploy_url)
-  // Use the built-in booking page, passing the business ID for pipeline integration
   const bookingUrl = `${appUrl}/book?ref=${businessId}`
 
   // Get a unique detail for personalization
@@ -47,6 +54,9 @@ export async function generateEmail(
   const uniqueDetail =
     business.value_proposition ||
     (services.length > 0 ? `They offer ${services.slice(0, 3).join(', ')}` : `A ${business.category} in ${business.address_city}`)
+
+  // Select template variant for A/B tracking
+  const variant = selectTemplateVariant()
 
   const userPrompt = buildEmailPrompt({
     business_name: business.name,
@@ -56,15 +66,24 @@ export async function generateEmail(
     rating: business.google_rating,
     review_count: business.google_review_count,
     unique_detail: uniqueDetail,
-    landing_page_url: getLandingPageUrl(landingPage.deploy_url),
+    landing_page_url: landingPageUrl,
     sender_name: senderName,
-    sender_company: 'Simple Instant Site',
+    sender_company: senderCompany,
     booking_url: bookingUrl,
   })
 
+  // Inject template variant instructions into the prompt
+  const variantPrompt = `${userPrompt}\n\n## Template Approach\n${variant.promptInstructions}`
+
   const { getEffectivePrompt } = await import('./prompt-overrides')
   const systemPrompt = await getEffectivePrompt(business.user_id, 'email', EMAIL_SYSTEM_PROMPT)
-  const content = await generateJSON<EmailOutput>(systemPrompt, userPrompt)
+  const content = await generateJSON<EmailOutput>(systemPrompt, variantPrompt)
+
+  // Build signature and append to all email bodies
+  const signature = buildEmailSignature(senderName, senderCompany)
+  content.body = content.body + signature
+  content.follow_up_1.body = content.follow_up_1.body + signature
+  content.follow_up_2.body = content.follow_up_2.body + signature
 
   // Delete any existing draft emails for this business (idempotent — retries replace instead of duplicating)
   await supabase
@@ -75,7 +94,7 @@ export async function generateEmail(
 
   const emailIds: string[] = []
 
-  // Create primary email
+  // Create primary email with template variant
   const { data: primaryEmail, error: primaryError } = await supabase
     .from('outreach_emails')
     .insert({
@@ -85,6 +104,7 @@ export async function generateEmail(
       body: content.body,
       review_status: 'draft',
       sequence_position: 1,
+      template_variant: variant.id,
     })
     .select('id')
     .single()
@@ -105,6 +125,7 @@ export async function generateEmail(
       review_status: 'draft',
       sequence_position: 2,
       parent_email_id: primaryEmail.id,
+      template_variant: variant.id,
     })
     .select('id')
     .single()
@@ -125,6 +146,7 @@ export async function generateEmail(
       review_status: 'draft',
       sequence_position: 3,
       parent_email_id: primaryEmail.id,
+      template_variant: variant.id,
     })
     .select('id')
     .single()
@@ -148,6 +170,7 @@ export async function generateEmail(
       email_id: primaryEmail.id,
       landing_page_id: landingPageId,
       follow_up_count: 2,
+      template_variant: variant.id,
     },
   })
 

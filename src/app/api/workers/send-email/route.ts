@@ -21,7 +21,7 @@ async function handler(request: Request) {
       .select(`
         id, subject, body, edited_body, review_status,
         sequence_position, parent_email_id, instantly_id,
-        from_email, business_id,
+        from_email, to_emails, business_id,
         businesses!inner(id, user_id, name, email, status)
       `)
       .eq('id', emailId)
@@ -67,7 +67,12 @@ async function handler(request: Request) {
       return NextResponse.json({ success: true, skipped: true, reason: 'already_sent' })
     }
 
-    if (!business.email) {
+    // Determine recipients: use explicit to_emails if set, else fall back to business.email
+    const recipients: string[] = (email.to_emails as string[] | null)?.filter(Boolean) || []
+    if (recipients.length === 0 && business.email) {
+      recipients.push(business.email)
+    }
+    if (recipients.length === 0) {
       console.error(`[worker/send-email] No email for business ${business.id}`)
       return NextResponse.json({ error: 'Business has no email address' }, { status: 400 })
     }
@@ -104,44 +109,50 @@ async function handler(request: Request) {
       )
     }
 
-    // Send via Instantly
+    // Send via Instantly — one send per recipient
     const emailBody = email.edited_body || email.body
-    const result = await sendEmail({
-      from_email: sendingDomain.email_address,
-      to: business.email,
-      subject: email.subject,
-      body: emailBody,
-    })
-
-    console.log(`[worker/send-email] Sent ${emailId} via Instantly: ${result.id}`)
-
-    // Update email record
     const sentAt = new Date().toISOString()
+    let firstInstantlyId: string | null = null
+
+    for (const recipientEmail of recipients) {
+      const result = await sendEmail({
+        from_email: sendingDomain.email_address,
+        to: recipientEmail,
+        subject: email.subject,
+        body: emailBody,
+      })
+
+      console.log(`[worker/send-email] Sent ${emailId} to ${recipientEmail} via Instantly: ${result.id}`)
+      if (!firstInstantlyId) firstInstantlyId = result.id
+
+      // Store in email_messages for thread tracking
+      await supabase.from('email_messages').insert({
+        user_id: business.user_id,
+        direction: 'outbound',
+        from_email: sendingDomain.email_address,
+        to_email: recipientEmail,
+        subject: email.subject,
+        body_html: emailBody,
+        body_text: emailBody.replace(/<[^>]*>/g, ''),
+        sent_at: sentAt,
+        business_id: business.id,
+        outreach_email_id: emailId,
+        instantly_id: result.id,
+      })
+
+      // Increment sent counter per email sent
+      await supabase.rpc('increment_sent_today', { domain_id: sendingDomain.id })
+    }
+
+    // Update email record with first Instantly ID
     await supabase
       .from('outreach_emails')
       .update({
-        instantly_id: result.id,
+        instantly_id: firstInstantlyId,
         sent_at: sentAt,
         review_status: 'sent',
       })
       .eq('id', emailId)
-
-    // Store in email_messages for thread tracking
-    await supabase.from('email_messages').insert({
-      user_id: business.user_id,
-      direction: 'outbound',
-      from_email: sendingDomain.email_address,
-      to_email: business.email,
-      subject: email.subject,
-      body_html: emailBody,
-      body_text: emailBody.replace(/<[^>]*>/g, ''),
-      sent_at: sentAt,
-      business_id: business.id,
-      outreach_email_id: emailId,
-    })
-
-    // Increment sent today
-    await supabase.rpc('increment_sent_today', { domain_id: sendingDomain.id })
 
     // Update business status to 'sent' if not already past that
     const PRE_SENT_STATUSES = ['discovered', 'enriching', 'enriched', 'generating', 'review_ready']
@@ -159,10 +170,10 @@ async function handler(request: Request) {
       event_type: 'email_sent',
       event_data: {
         email_id: emailId,
-        instantly_id: result.id,
+        instantly_id: firstInstantlyId,
         sequence_position: email.sequence_position,
         from: sendingDomain.email_address,
-        to: business.email,
+        to: recipients,
       },
     })
 
@@ -203,9 +214,9 @@ async function handler(request: Request) {
     return NextResponse.json({
       success: true,
       emailId,
-      instantlyId: result.id,
+      instantlyId: firstInstantlyId,
       from: sendingDomain.email_address,
-      to: business.email,
+      to: recipients,
     })
   } catch (err) {
     console.error('[worker/send-email] Error:', err)
