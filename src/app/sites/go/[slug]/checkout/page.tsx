@@ -1,4 +1,8 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { useParams, useSearchParams } from 'next/navigation'
 
 const TIER_DETAILS: Record<string, { name: string; price: number; features: string[] }> = {
   starter: {
@@ -51,16 +55,13 @@ const TIER_DETAILS: Record<string, { name: string; price: number; features: stri
   },
 }
 
-export default async function CheckoutPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>
-  searchParams: Promise<{ tier?: string }>
-}) {
-  const { slug } = await params
-  const { tier: tierKey } = await searchParams
-  const tier = TIER_DETAILS[(tierKey || 'starter').toLowerCase()]
+export default function CheckoutPage() {
+  const params = useParams<{ slug: string }>()
+  const searchParams = useSearchParams()
+  const slug = params.slug
+  const tierKey = (searchParams.get('tier') || 'starter').toLowerCase()
+  const tier = TIER_DETAILS[tierKey]
+  const [loading, setLoading] = useState(false)
 
   if (!tier) {
     return (
@@ -76,6 +77,33 @@ export default async function CheckoutPage({
         </div>
       </div>
     )
+  }
+
+  async function handleSubscribe() {
+    setLoading(true)
+    try {
+      // We need the businessId — derive from the landing page slug
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId: null, tier: tierKey, slug }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.url) {
+          window.location.href = data.url
+          return
+        }
+      }
+
+      const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+      alert(err.error || 'Failed to start checkout. Please try again.')
+    } catch {
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -162,78 +190,49 @@ export default async function CheckoutPage({
                   fontWeight: 600,
                 }}
               >
-                Payment details
+                Get started
               </h2>
 
-              {/* Placeholder form fields */}
-              <div className="mt-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">
-                    Cardholder name
-                  </label>
-                  <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400">
-                    John Doe
-                  </div>
-                </div>
+              <p className="mt-3 text-sm text-slate-600">
+                Click below to proceed to our secure payment page powered by Stripe.
+                You can cancel anytime from your billing dashboard.
+              </p>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">
-                    Card number
-                  </label>
-                  <div className="mt-1 flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400">
-                    <span className="material-symbols-outlined mr-2 text-[18px] text-slate-300">
-                      credit_card
+              {/* Trust signals */}
+              <div className="mt-6 space-y-3">
+                {[
+                  { icon: 'lock', text: 'Secure payment via Stripe — your card details never touch our servers' },
+                  { icon: 'autorenew', text: 'Cancel anytime — no long-term contracts or cancellation fees' },
+                  { icon: 'support_agent', text: 'Questions? Book a free call and we\'ll walk you through everything' },
+                ].map((item) => (
+                  <div key={item.icon} className="flex items-start gap-3">
+                    <span className="material-symbols-outlined mt-0.5 text-[20px] text-blue-600">
+                      {item.icon}
                     </span>
-                    0000 0000 0000 0000
+                    <p className="text-sm text-slate-600">{item.text}</p>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700">
-                      Expiration
-                    </label>
-                    <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400">
-                      MM / YY
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700">
-                      CVC
-                    </label>
-                    <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400">
-                      123
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Coming soon notice */}
-              <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
-                <div className="flex gap-3">
-                  <span className="material-symbols-outlined text-[20px] text-blue-600">
-                    info
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-blue-900">
-                      Secure checkout is being set up
-                    </p>
-                    <p className="mt-1 text-sm text-blue-700">
-                      In the meantime, book a free call and we&apos;ll get you started right away.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* CTA */}
-              <Link
-                href={`/book?ref=${slug}`}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md"
+              {/* Subscribe CTA */}
+              <button
+                onClick={handleSubscribe}
+                disabled={loading}
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:-translate-y-px hover:shadow-md disabled:opacity-50 disabled:hover:translate-y-0"
                 style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' }}
               >
-                <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-                Book a free call to get started
-              </Link>
+                {loading ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                    Redirecting to Stripe...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[18px]">credit_card</span>
+                    Subscribe — ${tier.price}/mo
+                  </>
+                )}
+              </button>
 
               <p className="mt-3 text-center text-xs text-slate-400">
                 No commitment required. Cancel anytime.

@@ -475,6 +475,7 @@ export default async function BusinessDetailPage({
                 currentRate={business.monthly_rate || 0}
                 status={business.status}
                 convertedAt={business.converted_at}
+                stripeSubscriptionId={business.stripe_subscription_id}
               />
             </CardContent>
           </Card>

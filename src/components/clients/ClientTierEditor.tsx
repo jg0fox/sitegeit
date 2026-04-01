@@ -20,6 +20,7 @@ interface ClientTierEditorProps {
   currentRate: number
   status: string
   convertedAt: string | null
+  stripeSubscriptionId?: string | null
 }
 
 export function ClientTierEditor({
@@ -28,6 +29,7 @@ export function ClientTierEditor({
   currentRate,
   status,
   convertedAt,
+  stripeSubscriptionId,
 }: ClientTierEditorProps) {
   const router = useRouter()
   const [editing, setEditing] = useState(false)
@@ -202,6 +204,36 @@ export function ClientTierEditor({
           <Button size="sm" variant="outline" onClick={handleReactivate} disabled={saving}>
             <span className="material-symbols-outlined text-[16px]">replay</span>
             Reactivate
+          </Button>
+        )}
+        {stripeSubscriptionId && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              setSaving(true)
+              try {
+                const res = await fetch('/api/stripe/portal', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ businessId }),
+                })
+                if (res.ok) {
+                  const data = await res.json()
+                  if (data.url) window.open(data.url, '_blank')
+                } else {
+                  toast.error('Failed to open billing portal')
+                }
+              } catch {
+                toast.error('Failed to open billing portal')
+              } finally {
+                setSaving(false)
+              }
+            }}
+            disabled={saving}
+          >
+            <span className="material-symbols-outlined text-[16px]">credit_card</span>
+            Manage billing
           </Button>
         )}
       </div>
