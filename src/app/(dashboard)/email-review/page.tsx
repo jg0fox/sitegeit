@@ -23,7 +23,13 @@ interface EmailRow {
   }
 }
 
-export default async function EmailReviewPage() {
+export default async function EmailReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ business?: string }>
+}) {
+  const params = await searchParams
+  const focusBusinessId = params.business ?? null
   const supabase = await createClient()
   const {
     data: { user },
@@ -60,13 +66,7 @@ export default async function EmailReviewPage() {
   const groups = Array.from(grouped.values())
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-gray-500">
-          Review, edit, and approve outreach emails before they send.
-        </p>
-      </div>
-
+    <div className="space-y-4">
       {groups.length === 0 ? (
         <EmptyState
           icon="rate_review"
@@ -79,7 +79,7 @@ export default async function EmailReviewPage() {
           }
         />
       ) : (
-        <EmailReviewList groups={groups} />
+        <EmailReviewList groups={groups} focusBusinessId={focusBusinessId} />
       )}
     </div>
   )

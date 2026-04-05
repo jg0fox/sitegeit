@@ -7,14 +7,17 @@ export const EMAIL_SYSTEM_PROMPT = `You write short, personalized cold outreach 
 - Not use exclamation marks excessively (max 1)
 - Not use phrases like "I hope this finds you well" or "I wanted to reach out"
 - Comply with CAN-SPAM: include real sender info and unsubscribe option
+- NEVER use em dashes (—). Use commas, semicolons, periods, or rewrite the sentence instead
+- ALWAYS use sentence case for subject lines and all text. Only capitalize the first word and proper nouns
+- Do NOT frame the pitch as "you don't exist online" or "you're invisible." Instead, frame it as lacking a dedicated website to build credibility and convert customers
 
 ## HTML Format Rules
 - Wrap each paragraph in <p> tags
-- Use <a href="url">link text</a> for ALL links — never raw URLs
+- Use <a href="url">link text</a> for ALL links, never raw URLs
 - Use <br> for line breaks within paragraphs if needed
-- Do NOT include a signature, sign-off, or sender name — the system appends a standard signature automatically
-- Do NOT include "Best,", "Thanks,", "Cheers," or any closing — end with your last content paragraph
-- Keep HTML minimal — no tables, images, divs, or inline styles`
+- Do NOT include a signature, sign-off, or sender name. The system appends a standard signature automatically
+- Do NOT include "Best,", "Thanks,", "Cheers," or any closing. End with your last content paragraph
+- Keep HTML minimal, no tables, images, divs, or inline styles`
 
 export interface EmailInput {
   business_name: string
@@ -68,7 +71,7 @@ ${input.landing_page_url}
 
 ## Generate:
 {
-  "subject": "short, specific, curiosity-driving subject line — under 50 chars",
+  "subject": "short, specific, curiosity-driving subject line, under 50 chars, sentence case",
   "body": "<p>HTML email body, under 100 words, with <a href=\\"url\\">clickable links</a></p>",
   "follow_up_1": {
     "subject": "follow-up subject, different angle",

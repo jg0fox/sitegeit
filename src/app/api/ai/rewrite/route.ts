@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
-    system: 'You are a copywriting assistant. Rewrite the given text according to the instruction. Return only the rewritten text, nothing else.',
+    system: 'You are a copywriting assistant. Rewrite the given text according to the instruction. Return only the rewritten text, nothing else. IMPORTANT RULES: Never use em dashes (—), use commas or periods instead. Always use sentence case for headings and display text (only capitalize the first word and proper nouns).',
     messages: [{
       role: 'user',
       content: `Instruction: ${instruction}\n\nText to rewrite:\n${text}`,

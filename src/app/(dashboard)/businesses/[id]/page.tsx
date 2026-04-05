@@ -19,6 +19,7 @@ import { ClientTierEditor } from '@/components/clients/ClientTierEditor'
 import { ClientBookingSetup } from '@/components/clients/ClientBookingSetup'
 import { EmailCandidates } from '@/components/businesses/EmailCandidates'
 import { ContactInfoCard } from '@/components/businesses/ContactInfoCard'
+import { BusinessEmailReview } from '@/components/businesses/BusinessEmailReview'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -128,7 +129,7 @@ export default async function BusinessDetailPage({
       .limit(1),
     supabase
       .from('outreach_emails')
-      .select('id, subject, review_status, sequence_position, created_at')
+      .select('id, subject, body, edited_body, review_status, sequence_position, template_variant, created_at')
       .eq('business_id', id)
       .order('sequence_position', { ascending: true }),
     supabase
@@ -173,12 +174,6 @@ export default async function BusinessDetailPage({
   const hasReply = engagementEmails.some((e) => e.replied_at)
   const hasBounce = engagementEmails.some((e) => e.bounced)
   const hasEngagement = totalOpens > 0 || totalClicks > 0 || hasReply || hasBounce
-
-  const SEQUENCE_LABELS: Record<number, string> = {
-    1: 'Primary outreach',
-    2: 'Follow-up 1',
-    3: 'Follow-up 2',
-  }
 
   // Enrichment data
   const enrichmentConfidence = business.enrichment_confidence as {
@@ -287,7 +282,7 @@ export default async function BusinessDetailPage({
       />
 
       {/* Generated material grid */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Generated Site */}
         <Card>
           <CardHeader>
@@ -404,59 +399,16 @@ export default async function BusinessDetailPage({
             )}
           </CardContent>
         </Card>
-
-        {/* Email Drafts */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-amber-500">mail</span>
-              <CardTitle>Email drafts</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {emails.length > 0 ? (
-              <div className="space-y-2">
-                {emails.map((email) => (
-                  <div
-                    key={email.id}
-                    className="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-gray-700">
-                        {SEQUENCE_LABELS[email.sequence_position] ?? `Email ${email.sequence_position}`}
-                      </p>
-                      <p className="truncate text-[11px] text-gray-500">{email.subject}</p>
-                    </div>
-                    <span className={`ml-2 flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                      email.review_status === 'approved'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : email.review_status === 'draft'
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {email.review_status}
-                    </span>
-                  </div>
-                ))}
-                {emails.some((e) => e.review_status === 'draft') && (
-                  <Button asChild size="sm" variant="outline" className="mt-1 w-full">
-                    <Link href="/email-review">
-                      <span className="material-symbols-outlined text-[16px]">rate_review</span>
-                      Review emails
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-400">
-                {business.status === 'review_ready'
-                  ? 'No emails found.'
-                  : 'Emails will be drafted after site generation.'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Inline email review */}
+      {emails.length > 0 && (
+        <BusinessEmailReview
+          businessId={id}
+          businessEmail={business.email}
+          emails={emails}
+        />
+      )}
 
       {/* Client-only: Tier & Billing */}
       {isClient && (

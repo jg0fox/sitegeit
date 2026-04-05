@@ -247,7 +247,7 @@ export function PipelineList({ businesses }: { businesses: PipelineBusiness[] })
                   )}
                   {draftEmails.length > 0 && (
                     <Link
-                      href="/email-review"
+                      href={`/email-review?business=${biz.id}`}
                       className="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200 transition-colors hover:bg-amber-100"
                     >
                       <span className="material-symbols-outlined text-[14px]">rate_review</span>

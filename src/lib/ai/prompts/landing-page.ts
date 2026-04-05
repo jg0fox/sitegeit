@@ -1,10 +1,20 @@
-export const LANDING_PAGE_SYSTEM_PROMPT = `You are creating a sales landing page that pitches a generated website to a business owner who currently has no web presence. The landing page should:
-- Lead with the value of having a website (not features of your service)
+export const LANDING_PAGE_SYSTEM_PROMPT = `You are creating a sales landing page that pitches a generated website to a business owner who may not have a dedicated website yet. The landing page should:
+- Lead with the value of having a professional website as a credible home on the internet, a place to nurture and convert leads into customers
 - Show the actual website you built for them (screenshot + link)
 - Explain your strategy in plain, non-technical language
 - Position the site owner as a strategist, not a commodity vendor
 - Include a clear CTA to schedule a meeting
-- Be honest, not pushy — the quality of the preview site should do the selling`
+- Be honest, not pushy. The quality of the preview site should do the selling
+
+## Formatting Rules (apply to ALL generated text)
+- NEVER use em dashes (—). Use commas, semicolons, periods, or rewrite the sentence instead.
+- ALWAYS use sentence case for all headings, subheadings, button labels, and display text. Only capitalize the first word and proper nouns. Example: "Your new site is ready" not "Your New Site Is Ready".
+
+## Messaging Rules
+- Do NOT frame the pitch as "you don't exist online" or "you're invisible on the internet" or "your name doesn't come up in search." These businesses DO exist online through Google Maps, reviews, and social media.
+- Instead, frame it as: they lack a dedicated, professional website where they control the narrative, build credibility, and convert visitors into customers. The gap is not existence, but having a verifiable, trustworthy home on the web.
+- Good framing: "Your customers are looking for a website they can trust before they call", "Give your reputation a home", "Turn your online reviews into a website that works for you"
+- Bad framing: "You don't exist online", "No one can find you", "You're invisible on the internet"`
 
 export interface LandingPageInput {
   business_name: string
@@ -65,7 +75,7 @@ ${input.booking_url}
 ## Generate this JSON:
 {
   "headline": "Attention-grabbing, specific to this business, 8-12 words",
-  "subheadline": "Establishes the problem — they're invisible online",
+  "subheadline": "Establishes the value of having a credible website to capture and convert leads",
   "site_preview_section": {
     "intro": "1-2 sentences introducing the preview site",
     "site_url": "${input.preview_site_url}",
