@@ -81,18 +81,16 @@ async function handler(request: Request) {
 
     // Determine from address
     // Resend requires a verified domain — use simpleinstantsite.com with display name
-    // The user-chosen from_email (e.g., jasonfox@simplesitelab.com) is used as reply-to
-    const replyTo = email.from_email as string | null
-
-    // Fetch user name for display
+    // Reply-to uses the operator's actual email so replies land in their inbox
     const { data: senderUser } = await supabase
       .from('users')
-      .select('full_name')
+      .select('full_name, email')
       .eq('id', business.user_id)
       .single()
 
     const senderName = senderUser?.full_name || 'Jason Fox'
     const fromEmail = `${senderName} <jason@simpleinstantsite.com>`
+    const replyTo = senderUser?.email || null
 
     // Send via Resend — one send per recipient
     const emailBody = email.edited_body || email.body

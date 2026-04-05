@@ -22,7 +22,7 @@ export async function PATCH(
   // Verify the email belongs to the user
   const { data: email } = await supabase
     .from('outreach_emails')
-    .select('id, business_id, businesses!inner(user_id)')
+    .select('id, business_id, sequence_position, businesses!inner(user_id)')
     .eq('id', id)
     .single()
 
@@ -59,13 +59,14 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // When approved, queue the email for sending via Instantly
-  if (review_status === 'approved') {
+  // When approved, only queue PRIMARY emails (sequence_position=1) for immediate sending.
+  // Follow-ups are approved but NOT queued here — they get queued with proper delays
+  // by the primary email's send worker after it successfully sends.
+  if (review_status === 'approved' && email.sequence_position === 1) {
     try {
       await publishToWorker('send-email', { emailId: id })
     } catch (queueErr) {
       console.error(`[emails/${id}] Failed to queue send:`, queueErr)
-      // Don't fail the approval — the email is approved even if queueing fails
     }
   }
 
