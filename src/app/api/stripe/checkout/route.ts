@@ -2,14 +2,7 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getAdminClient } from '@/lib/supabase/admin'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-const PRICE_MAP: Record<string, string | undefined> = {
-  starter: process.env.STRIPE_PRICE_STARTER,
-  growth: process.env.STRIPE_PRICE_GROWTH,
-  pro: process.env.STRIPE_PRICE_PRO,
-  premium: process.env.STRIPE_PRICE_PREMIUM,
-}
+export const runtime = 'nodejs'
 
 const RATE_MAP: Record<string, number> = {
   starter: 25,
@@ -25,6 +18,22 @@ const RATE_MAP: Record<string, number> = {
  */
 export async function POST(request: Request) {
   try {
+    const stripeKey = process.env.STRIPE_SECRET_KEY
+    if (!stripeKey) {
+      return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 })
+    }
+
+    const stripe = new Stripe(stripeKey, {
+      timeout: 30000,
+    })
+
+    const PRICE_MAP: Record<string, string | undefined> = {
+      starter: process.env.STRIPE_PRICE_STARTER,
+      growth: process.env.STRIPE_PRICE_GROWTH,
+      pro: process.env.STRIPE_PRICE_PRO,
+      premium: process.env.STRIPE_PRICE_PREMIUM,
+    }
+
     const { businessId: inputBusinessId, tier, slug } = await request.json()
 
     if (!tier || !slug) {
@@ -83,14 +92,15 @@ export async function POST(request: Request) {
         .eq('id', businessId)
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://goget.im'
+    const siteDomain = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'goget.im'
+    const baseUrl = `https://go.${siteDomain}`
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/sites/go/${slug}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/sites/go/${slug}/checkout?tier=${tier}`,
+      success_url: `${baseUrl}/${slug}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/${slug}/checkout?tier=${tier}`,
       metadata: {
         businessId,
         tier: tier.toLowerCase(),
@@ -105,9 +115,18 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ url: session.url })
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('[stripe/checkout] Error:', err)
-    const message = err instanceof Error ? err.message : 'Failed to create checkout session'
-    return NextResponse.json({ error: message }, { status: 500 })
+
+    // Surface Stripe-specific error details
+    const stripeErr = err as { type?: string; code?: string; statusCode?: number; message?: string }
+    const message = stripeErr.message || 'Failed to create checkout session'
+    const details = {
+      error: message,
+      ...(stripeErr.type ? { type: stripeErr.type } : {}),
+      ...(stripeErr.code ? { code: stripeErr.code } : {}),
+    }
+
+    return NextResponse.json(details, { status: stripeErr.statusCode || 500 })
   }
 }
