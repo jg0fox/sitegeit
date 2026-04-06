@@ -82,23 +82,20 @@ export default function CheckoutPage() {
   async function handleSubscribe() {
     setLoading(true)
     try {
-      // We need the businessId — derive from the landing page slug
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ businessId: null, tier: tierKey, slug }),
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        if (data.url) {
-          window.location.href = data.url
-          return
-        }
+      const data = await res.json()
+
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
       }
 
-      const err = await res.json().catch(() => ({ error: 'Unknown error' }))
-      alert(err.error || 'Failed to start checkout. Please try again.')
+      alert(data.error || 'Failed to start checkout. Please try again.')
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {

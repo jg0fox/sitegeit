@@ -10,6 +10,11 @@ export async function middleware(request: NextRequest) {
 
   // Check for landing page subdomain (go.goget.im/slug/...) — must be before general subdomain check
   if (hostname === `go.${SITE_DOMAIN}`) {
+    // Let API routes pass through without rewriting (e.g., Stripe checkout, contact form)
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next()
+    }
+
     // Rewrite full path under /sites/go/ (e.g., /electric-force-inc/checkout → /sites/go/electric-force-inc/checkout)
     if (pathname && pathname !== '/') {
       const url = request.nextUrl.clone()
